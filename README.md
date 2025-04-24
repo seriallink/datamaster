@@ -1,6 +1,6 @@
 # Data Master Case – Serverless Data Lake on AWS
 
-> Projeto de arquitetura serverless e orientada a eventos para data lakes na AWS — escalável, de baixo custo e pronta para produção. Desenvolvido para a certificação Expert do programa Data Master do Santander.
+> Projeto de arquitetura serverless e orientada a eventos para data lakes na AWS — escalável, de baixo custo e pronta para produção. Desenvolvido para o programa Data Master da F1rst/Santander.
 
 ---
 
