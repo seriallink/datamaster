@@ -1,0 +1,321 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  CloudFormation template to create a standard VPC network infrastructure
+  with public and private subnets across two Availability Zones,
+  an Internet Gateway, a NAT Gateway, Route Tables, and basic Security Groups.
+
+Parameters:
+  EnvironmentName:
+    Description: An environment name prefixed to resource names (e.g., dev, prod).
+    Type: String
+    Default: dev
+
+  VpcCIDR:
+    Description: The IP address range for the VPC.
+    Type: String
+    Default: 10.0.0.0/16
+    AllowedPattern: '^(\d{1,3}\.){3}\d{1,3}/\d{1,2}$'
+
+  PublicSubnet1CIDR:
+    Description: The IP address range for the Public Subnet in the first Availability Zone.
+    Type: String
+    Default: 10.0.1.0/24
+    AllowedPattern: '^(\d{1,3}\.){3}\d{1,3}/\d{1,2}$'
+
+  PublicSubnet2CIDR:
+    Description: The IP address range for the Public Subnet in the second Availability Zone.
+    Type: String
+    Default: 10.0.2.0/24
+    AllowedPattern: '^(\d{1,3}\.){3}\d{1,3}/\d{1,2}$'
+
+  PrivateSubnet1CIDR:
+    Description: The IP address range for the Private Subnet in the first Availability Zone.
+    Type: String
+    Default: 10.0.101.0/24
+    AllowedPattern: '^(\d{1,3}\.){3}\d{1,3}/\d{1,2}$'
+
+  PrivateSubnet2CIDR:
+    Description: The IP address range for the Private Subnet in the second Availability Zone.
+    Type: String
+    Default: 10.0.102.0/24
+    AllowedPattern: '^(\d{1,3}\.){3}\d{1,3}/\d{1,2}$'
+
+  SSHLocation:
+    Description: The IP address range that can SSH to the EC2 instances. Use 0.0.0.0/0 for anywhere (less secure).
+    Type: String
+    MinLength: '9'
+    MaxLength: '18'
+    Default: '0.0.0.0/0' # WARNING: Restrict this in production
+    AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
+    ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x.
+
+Resources:
+  #---------------------------------------------------------------------------
+  # VPC
+  #---------------------------------------------------------------------------
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref VpcCIDR
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: !Sub '${EnvironmentName}-VPC'
+        - Key: Environment
+          Value: !Ref EnvironmentName
+
+  #---------------------------------------------------------------------------
+  # Internet Gateway
+  #---------------------------------------------------------------------------
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Sub '${EnvironmentName}-IGW'
+        - Key: Environment
+          Value: !Ref EnvironmentName
+
+  AttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref InternetGateway
+
+  #---------------------------------------------------------------------------
+  # Subnets (Public & Private across 2 AZs)
+  #---------------------------------------------------------------------------
+  PublicSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Ref PublicSubnet1CIDR
+      AvailabilityZone: !Select [ 0, !GetAZs '' ] # Selects the first AZ in the region
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub '${EnvironmentName}-PublicSubnet-AZ1'
+        - Key: Environment
+          Value: !Ref EnvironmentName
+        - Key: Tier
+          Value: Public
+
+  PublicSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Ref PublicSubnet2CIDR
+      AvailabilityZone: !Select [ 1, !GetAZs '' ] # Selects the second AZ in the region
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub '${EnvironmentName}-PublicSubnet-AZ2'
+        - Key: Environment
+          Value: !Ref EnvironmentName
+        - Key: Tier
+          Value: Public
+
+  PrivateSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Ref PrivateSubnet1CIDR
+      AvailabilityZone: !Select [ 0, !GetAZs '' ]
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: !Sub '${EnvironmentName}-PrivateSubnet-AZ1'
+        - Key: Environment
+          Value: !Ref EnvironmentName
+        - Key: Tier
+          Value: Private
+
+  PrivateSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Ref PrivateSubnet2CIDR
+      AvailabilityZone: !Select [ 1, !GetAZs '' ]
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: !Sub '${EnvironmentName}-PrivateSubnet-AZ2'
+        - Key: Environment
+          Value: !Ref EnvironmentName
+        - Key: Tier
+          Value: Private
+
+  #---------------------------------------------------------------------------
+  # NAT Gateway (Single AZ for cost saving, place in PublicSubnet1)
+  #---------------------------------------------------------------------------
+  NatEIP:
+    Type: AWS::EC2::EIP
+    # DependsOn: AttachGateway # Ensure IGW is attached before allocating EIP that might depend on internet connectivity
+    Properties:
+      Domain: vpc
+      Tags:
+        - Key: Name
+          Value: !Sub '${EnvironmentName}-NatEIP'
+        - Key: Environment
+          Value: !Ref EnvironmentName
+
+  NatGateway:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt NatEIP.AllocationId
+      SubnetId: !Ref PublicSubnet1 # Place NAT Gateway in the first public subnet
+      Tags:
+        - Key: Name
+          Value: !Sub '${EnvironmentName}-NATGateway'
+        - Key: Environment
+          Value: !Ref EnvironmentName
+
+  #---------------------------------------------------------------------------
+  # Route Tables
+  #---------------------------------------------------------------------------
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub '${EnvironmentName}-PublicRouteTable'
+        - Key: Environment
+          Value: !Ref EnvironmentName
+        - Key: Tier
+          Value: Public
+
+  PrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub '${EnvironmentName}-PrivateRouteTable'
+        - Key: Environment
+          Value: !Ref EnvironmentName
+        - Key: Tier
+          Value: Private
+
+  #---------------------------------------------------------------------------
+  # Routes
+  #---------------------------------------------------------------------------
+  PublicRoute: # Route out to Internet Gateway
+    Type: AWS::EC2::Route
+    DependsOn: AttachGateway
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  PrivateRoute: # Route out to NAT Gateway
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NatGateway # Point default route to NAT Gateway
+
+  #---------------------------------------------------------------------------
+  # Route Table Associations
+  #---------------------------------------------------------------------------
+  AssociatePublicSubnet1RouteTable:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet1
+      RouteTableId: !Ref PublicRouteTable
+
+  AssociatePublicSubnet2RouteTable:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet2
+      RouteTableId: !Ref PublicRouteTable
+
+  AssociatePrivateSubnet1RouteTable:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnet1
+      RouteTableId: !Ref PrivateRouteTable
+
+  AssociatePrivateSubnet2RouteTable:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnet2
+      RouteTableId: !Ref PrivateRouteTable
+
+  #---------------------------------------------------------------------------
+  # Security Groups (Basic Examples - Adjust as needed!)
+  #---------------------------------------------------------------------------
+  WebSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: !Sub '${EnvironmentName}-WebSG'
+      GroupDescription: 'Allow HTTP and HTTPS inbound traffic'
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0 # Allow HTTP from anywhere
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0 # Allow HTTPS from anywhere
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: !Ref SSHLocation # Allow SSH from specified location
+      Tags:
+        - Key: Name
+          Value: !Sub '${EnvironmentName}-WebSG'
+        - Key: Environment
+          Value: !Ref EnvironmentName
+
+Outputs:
+  VPCId:
+    Description: The ID of the created VPC
+    Value: !Ref VPC
+    Export:
+      Name: !Sub '${AWS::StackName}-VPCID'
+
+  PublicSubnet1Id:
+    Description: ID of the Public Subnet in AZ1
+    Value: !Ref PublicSubnet1
+    Export:
+      Name: !Sub '${AWS::StackName}-PublicSubnet1ID'
+
+  PublicSubnet2Id:
+    Description: ID of the Public Subnet in AZ2
+    Value: !Ref PublicSubnet2
+    Export:
+      Name: !Sub '${AWS::StackName}-PublicSubnet2ID'
+
+  PrivateSubnet1Id:
+    Description: ID of the Private Subnet in AZ1
+    Value: !Ref PrivateSubnet1
+    Export:
+      Name: !Sub '${AWS::StackName}-PrivateSubnet1ID'
+
+  PrivateSubnet2Id:
+    Description: ID of the Private Subnet in AZ2
+    Value: !Ref PrivateSubnet2
+    Export:
+      Name: !Sub '${AWS::StackName}-PrivateSubnet2ID'
+
+  PublicRouteTableId:
+    Description: ID of the Public Route Table
+    Value: !Ref PublicRouteTable
+    Export:
+      Name: !Sub '${AWS::StackName}-PublicRouteTableID'
+
+  PrivateRouteTableId:
+    Description: ID of the Private Route Table
+    Value: !Ref PrivateRouteTable
+    Export:
+      Name: !Sub '${AWS::StackName}-PrivateRouteTableID'
+
+  WebSecurityGroupId:
+    Description: ID of the basic Web Security Group
+    Value: !Ref WebSecurityGroup
+    Export:
+      Name: !Sub '${AWS::StackName}-WebSecurityGroupID'
