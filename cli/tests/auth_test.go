@@ -2,9 +2,10 @@ package tests
 
 import (
 	"context"
-	"github.com/seriallink/datamaster/cli/core"
 	"os"
 	"testing"
+
+	"github.com/seriallink/datamaster/cli/core"
 
 	"github.com/stretchr/testify/assert"
 )

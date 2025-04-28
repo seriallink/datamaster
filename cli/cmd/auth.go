@@ -2,8 +2,11 @@ package cmd
 
 import (
 	"context"
-	"github.com/abiosoft/ishell"
+
 	"github.com/seriallink/datamaster/cli/core"
+	"github.com/seriallink/datamaster/cli/misc"
+
+	"github.com/abiosoft/ishell"
 )
 
 func AuthCmd() *ishell.Cmd {
@@ -14,7 +17,7 @@ func AuthCmd() *ishell.Cmd {
 			var profileName, accessKey, secretKey, region string
 		loop:
 			for {
-				c.Println(Blue("Select authentication method:"))
+				c.Println(misc.Blue("Select authentication method:"))
 				c.Println("1. Use Profile")
 				c.Println("2. Use Access/Secret Keys")
 				c.Print("Enter option: ")
@@ -34,7 +37,7 @@ func AuthCmd() *ishell.Cmd {
 					break loop
 
 				default:
-					c.Println(Red("Invalid option. Choose 1 or 2."))
+					c.Println(misc.Red("Invalid option. Choose 1 or 2."))
 					continue
 
 				}
@@ -45,17 +48,17 @@ func AuthCmd() *ishell.Cmd {
 
 			err := core.PersistAWSConfig(profileName, accessKey, secretKey, region)
 			if err != nil {
-				c.Println(Red("Error saving AWS credentials: %v", err))
+				c.Println(misc.Red("Error saving AWS credentials: %v", err))
 				return
 			}
 
 			identity, err := core.ValidateAWSCredentials(context.TODO(), core.GetAWSConfig())
 			if err != nil {
-				c.Println(Red("Error testing AWS credentials: %v", err))
+				c.Println(misc.Red("Error testing AWS credentials: %v", err))
 				return
 			}
 
-			c.Println(Green("Authenticated as:\n  UserId: %s\n  Account: %s\n  ARN: %s", *identity.UserId, *identity.Account, *identity.Arn))
+			c.Println(misc.Green("Authenticated as:\n  UserId: %s\n  Account: %s\n  ARN: %s", *identity.UserId, *identity.Account, *identity.Arn))
 			return
 
 		},

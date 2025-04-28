@@ -1,0 +1,78 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Aurora PostgreSQL Stack for Data Master Case
+
+Parameters:
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+    Description: VPC ID
+  SubnetId:
+    Type: AWS::EC2::Subnet::Id
+    Description: Subnet ID (Public Subnet)
+  SecurityGroupId:
+    Type: AWS::EC2::SecurityGroup::Id
+    Description: Security Group ID
+  SecretArn:
+    Type: String
+    Description: ARN of the Secrets Manager secret
+  DatabaseName:
+    Type: String
+    Default: datamasterdb
+    Description: Initial database name
+
+Resources:
+  DBSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: Subnet group for Aurora PostgreSQL
+      SubnetIds:
+        - !Ref SubnetId
+
+  DBClusterParameterGroup:
+    Type: AWS::RDS::DBClusterParameterGroup
+    Properties:
+      Description: Cluster parameter group with CDC enabled
+      Family: aurora-postgresql15
+      Parameters:
+        rds.logical_replication: 1
+
+  DBCluster:
+    Type: AWS::RDS::DBCluster
+    Properties:
+      Engine: aurora-postgresql
+      EngineMode: provisioned
+      DatabaseName: !Ref DatabaseName
+      MasterUsername: !Join
+        - ""
+        - - "{{resolve:secretsmanager:"
+          - !Ref SecretArn
+          - ":SecretString:username}}"
+      MasterUserPassword: !Join
+        - ""
+        - - "{{resolve:secretsmanager:"
+          - !Ref SecretArn
+          - ":SecretString:password}}"
+      VpcSecurityGroupIds:
+        - !Ref SecurityGroupId
+      DBSubnetGroupName: !Ref DBSubnetGroup
+      BackupRetentionPeriod: 1
+      PreferredBackupWindow: 03:00-04:00
+      DeletionProtection: false
+      EnableCloudwatchLogsExports:
+        - postgresql
+      DBClusterParameterGroupName: !Ref DBClusterParameterGroup
+
+  DBInstance:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBClusterIdentifier: !Ref DBCluster
+      DBInstanceClass: db.t3.micro
+      Engine: aurora-postgresql
+      PubliclyAccessible: false
+
+Outputs:
+  ClusterEndpoint:
+    Description: Writer Endpoint of the DB Cluster
+    Value: !GetAtt DBCluster.Endpoint.Address
+  ReaderEndpoint:
+    Description: Reader Endpoint of the DB Cluster
+    Value: !GetAtt DBCluster.ReadEndpoint.Address

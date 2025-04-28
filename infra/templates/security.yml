@@ -1,0 +1,45 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Security Stack for Data Master Case (SG and Secret)
+
+Parameters:
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+    Description: VPC ID to associate the Security Group
+  SecretName:
+    Type: String
+    Default: datamaster-db-credentials
+    Description: Name for the Secrets Manager secret
+
+Resources:
+  DBAccessSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow database access
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          CidrIp: 0.0.0.0/0 # (only for demo, not for prod)
+      Tags:
+        - Key: Name
+          Value: datamaster-db-sg
+
+  DBSecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: !Ref SecretName
+      Description: Credentials for the Aurora PostgreSQL Cluster
+      GenerateSecretString:
+        SecretStringTemplate: '{"username": "datamasteradmin"}'
+        GenerateStringKey: "password"
+        PasswordLength: 16
+        ExcludeCharacters: '"@/\'
+
+Outputs:
+  SecurityGroupId:
+    Description: Security Group ID for Aurora
+    Value: !Ref DBAccessSecurityGroup
+  SecretArn:
+    Description: Secret ARN
+    Value: !Ref DBSecret
