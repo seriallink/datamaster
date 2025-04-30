@@ -1,0 +1,158 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Glue Catalog + Crawlers for Aurora, Stage and Data Lake Layers
+
+Parameters:
+  AuroraHost:
+    Type: String
+    Description: Writer endpoint of the Aurora cluster
+
+  AuroraPort:
+    Type: Number
+    Default: 5432
+    Description: Port number of the Aurora cluster
+
+  SecretArn:
+    Type: String
+    Description: ARN of the Secret for Aurora credentials
+
+  SubnetId:
+    Type: String
+    Description: Subnet for Glue connection (must allow access to Aurora)
+
+  SecurityGroupId:
+    Type: String
+    Description: Security group that allows JDBC traffic to Aurora
+
+  StageBucketName:
+    Type: String
+    Description: Name of the Stage S3 bucket
+
+  DataLakeBucketName:
+    Type: String
+    Description: Name of the Data Lake S3 bucket
+
+Resources:
+
+  GlueDatabase:
+    Type: AWS::Glue::Database
+    Properties:
+      CatalogId: !Ref AWS::AccountId
+      DatabaseInput:
+        Name: dm_catalog
+
+  AuroraConnection:
+    Type: AWS::Glue::Connection
+    Properties:
+      CatalogId: !Ref AWS::AccountId
+      ConnectionInput:
+        Name: dm-aurora-connection
+        ConnectionType: JDBC
+        ConnectionProperties:
+          JDBC_CONNECTION_URL: !Sub "jdbc:postgresql://${AuroraHost}:${AuroraPort}/postgres"
+          SECRET_ID: !Ref SecretArn
+        PhysicalConnectionRequirements:
+          AvailabilityZone: !Select [ 0, !GetAZs "" ]
+          SubnetId: !Ref SubnetId
+          SecurityGroupIdList:
+            - !Ref SecurityGroupId
+
+  AuroraCrawler:
+    Type: AWS::Glue::Crawler
+    Properties:
+      Name: dm-aurora-crawler
+      Role: !GetAtt GlueServiceRole.Arn
+      DatabaseName: !Ref GlueDatabase
+      Targets:
+        JdbcTargets:
+          - ConnectionName: !Ref AuroraConnection
+            Path: "public/%"
+      RecrawlPolicy:
+        RecrawlBehavior: CRAWL_EVERYTHING
+      SchemaChangePolicy:
+        DeleteBehavior: DELETE_FROM_DATABASE
+        UpdateBehavior: UPDATE_IN_DATABASE
+
+  StageCrawler:
+    Type: AWS::Glue::Crawler
+    Properties:
+      Name: dm-stage-crawler
+      Role: !GetAtt GlueServiceRole.Arn
+      DatabaseName: !Ref GlueDatabase
+      Targets:
+        S3Targets:
+          - Path: !Sub "s3://${StageBucketName}/"
+      RecrawlPolicy:
+        RecrawlBehavior: CRAWL_EVERYTHING
+      SchemaChangePolicy:
+        DeleteBehavior: DELETE_FROM_DATABASE
+        UpdateBehavior: UPDATE_IN_DATABASE
+
+  DataLakeCrawler:
+    Type: AWS::Glue::Crawler
+    Properties:
+      Name: dm-datalake-crawler
+      Role: !GetAtt GlueServiceRole.Arn
+      DatabaseName: !Ref GlueDatabase
+      Targets:
+        S3Targets:
+          - Path: !Sub "s3://${DataLakeBucketName}/"
+      RecrawlPolicy:
+        RecrawlBehavior: CRAWL_EVERYTHING
+      SchemaChangePolicy:
+        DeleteBehavior: DELETE_FROM_DATABASE
+        UpdateBehavior: UPDATE_IN_DATABASE
+
+  GlueServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: dm-glue-role
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: glue.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole
+      Policies:
+        - PolicyName: GlueCustomAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - secretsmanager:GetSecretValue
+                  - glue:*
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                  - s3:GetObject
+                  - s3:PutObject
+                  - s3:ListBucket
+                Resource: "*"
+
+Outputs:
+  GlueDatabaseName:
+    Description: Glue database for catalog
+    Value: !Ref GlueDatabase
+    Export:
+      Name: dm-glue-database
+
+  AuroraCrawlerName:
+    Description: Aurora Crawler name
+    Value: !Ref AuroraCrawler
+    Export:
+      Name: dm-glue-aurora-crawler
+
+  StageCrawlerName:
+    Description: Stage Crawler name
+    Value: !Ref StageCrawler
+    Export:
+      Name: dm-glue-stage-crawler
+
+  DataLakeCrawlerName:
+    Description: Data Lake Crawler name
+    Value: !Ref DataLakeCrawler
+    Export:
+      Name: dm-glue-datalake-crawler

@@ -1,0 +1,29 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Athena for the Data Master consumption layer
+
+Parameters:
+  LogsBucketName:
+    Type: String
+    Description: Bucket used for Athena query output
+
+Resources:
+
+  AthenaWorkgroup:
+    Type: AWS::Athena::WorkGroup
+    Properties:
+      Name: dm-workgroup
+      State: ENABLED
+      Description: Workgroup for Data Master Athena queries
+      RecursiveDeleteOption: true
+      WorkGroupConfiguration:
+        BytesScannedCutoffPerQuery: 1000000000  # 1GB
+        ResultConfiguration:
+          OutputLocation: !Sub "s3://${LogsBucketName}/athena/"
+        EnforceWorkGroupConfiguration: true
+
+Outputs:
+  AthenaWorkgroup:
+    Description: Workgroup used for Athena queries
+    Value: !Ref AthenaWorkgroup
+    Export:
+      Name: dm-athena-workgroup

@@ -1,0 +1,179 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: DMS CDC Aurora PostgreSQL to S3 (Parquet)
+
+Parameters:
+  AuroraHost:
+    Type: String
+    Description: Writer endpoint of the Aurora cluster
+
+  AuroraPort:
+    Type: Number
+    Default: 5432
+    Description: Port number of the Aurora cluster
+
+  SecretArn:
+    Type: String
+    Description: ARN of the Secrets Manager secret with credentials
+
+  StageBucketName:
+    Type: String
+    Description: Name of the Stage S3 bucket (DMS Target)
+
+Resources:
+  DMSSourceEndpoint:
+    Type: AWS::DMS::Endpoint
+    Properties:
+      EndpointIdentifier: dm-source-endpoint
+      EndpointType: source
+      EngineName: postgres
+      ServerName: !Ref AuroraHost
+      Port: !Ref AuroraPort
+      DatabaseName: postgres
+      Username: !Join ["", ["{{resolve:secretsmanager:", !Ref SecretArn, ":SecretString:username}}"]]
+      Password: !Join ["", ["{{resolve:secretsmanager:", !Ref SecretArn, ":SecretString:password}}"]]
+
+  DMSTargetAccessRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: dm-dms-s3-access-role
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: dms.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: DmsS3AccessPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:PutObject
+                  - s3:GetObject
+                  - s3:ListBucket
+                Resource:
+                  - !Sub "arn:aws:s3:::${StageBucketName}"
+                  - !Sub "arn:aws:s3:::${StageBucketName}/*"
+
+  DMSTargetEndpoint:
+    Type: AWS::DMS::Endpoint
+    Properties:
+      EndpointIdentifier: dm-target-endpoint
+      EndpointType: target
+      EngineName: s3
+      ServiceAccessRoleArn: !GetAtt DMSTargetAccessRole.Arn
+      S3Settings:
+        BucketName: !Ref StageBucketName
+        BucketFolder: dms/
+        CompressionType: GZIP
+        DataFormat: parquet
+        TimestampColumnName: dms_timestamp
+        ParquetVersion: parquet-2-0
+
+  DMSReplicationInstance:
+    Type: AWS::DMS::ReplicationInstance
+    Properties:
+      ReplicationInstanceIdentifier: dm-replication-instance
+      ReplicationInstanceClass: dms.t3.micro
+      AllocatedStorage: 50
+      PubliclyAccessible: false
+      MultiAZ: false
+      AutoMinorVersionUpgrade: true
+      EngineVersion: 3.5.1
+
+  DMSReplicationTask:
+    Type: AWS::DMS::ReplicationTask
+    Properties:
+      ReplicationTaskIdentifier: dm-cdc-task
+      SourceEndpointArn: !Ref DMSSourceEndpoint
+      TargetEndpointArn: !Ref DMSTargetEndpoint
+      ReplicationInstanceArn: !Ref DMSReplicationInstance
+      MigrationType: cdc
+      TableMappings: |
+        {
+          "rules": [
+            {
+              "rule-type": "selection",
+              "rule-id": "1",
+              "rule-name": "1",
+              "object-locator": {
+                "schema-name": "public",
+                "table-name": "%"
+              },
+              "rule-action": "include"
+            }
+          ]
+        }
+      ReplicationTaskSettings: |
+        {
+          "TargetMetadata": {
+            "TargetSchema": "",
+            "SupportLobs": true,
+            "FullLobMode": false,
+            "LobChunkSize": 64,
+            "LimitedSizeLobMode": true,
+            "LobMaxSize": 32,
+            "InlineLobMaxSize": 0,
+            "LoadMaxFileSize": 0,
+            "ParallelLoadThreads": 0,
+            "ParallelLoadBufferSize": 0,
+            "BatchApplyEnabled": false
+          },
+          "FullLoadSettings": {
+            "TargetTablePrepMode": "DO_NOTHING",
+            "CreatePkAfterFullLoad": false,
+            "StopTaskCachedChangesApplied": false,
+            "StopTaskCachedChangesNotApplied": false,
+            "MaxFullLoadSubTasks": 8,
+            "TransactionConsistencyTimeout": 600,
+            "CommitRate": 10000
+          },
+          "Logging": {
+            "EnableLogging": true
+          },
+          "ControlTablesSettings": {
+            "historyTimeslotInMinutes": 5,
+            "ControlSchema": "",
+            "historyTableEnabled": true,
+            "SuspendedTablesTableEnabled": true,
+            "StatusTableEnabled": true
+          },
+          "ChangeProcessingDdlHandlingPolicy": {
+            "HandleSourceTableDropped": true,
+            "HandleSourceTableTruncated": true,
+            "HandleSourceTableAltered": true
+          },
+          "ChangeProcessingPolicy": {
+            "EnableTransactionConsistency": true,
+            "TransactionConsistencyTimeout": 600,
+            "MemoryLimitTotal": 1024,
+            "CommitBatchSize": 1000
+          }
+        }
+
+Outputs:
+  DMSReplicationInstanceArn:
+    Description: DMS Replication Instance ARN
+    Value: !Ref DMSReplicationInstance
+    Export:
+      Name: dm-dms-replication-instance
+
+  DMSReplicationTaskName:
+    Description: DMS CDC Task Name
+    Value: !Ref DMSReplicationTask
+    Export:
+      Name: dm-dms-cdc-task
+
+  DMSSourceEndpointArn:
+    Description: DMS Source Endpoint ARN
+    Value: !Ref DMSSourceEndpoint
+    Export:
+      Name: dm-dms-source-endpoint
+
+  DMSTargetEndpointArn:
+    Description: DMS Target (S3) Endpoint ARN
+    Value: !Ref DMSTargetEndpoint
+    Export:
+      Name: dm-dms-target-endpoint

@@ -25,7 +25,7 @@ Resources:
       VpcId: !Ref VPC
       InternetGatewayId: !Ref InternetGateway
 
-  PublicSubnet:
+  PublicSubnetAZ1:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref VPC
@@ -34,7 +34,18 @@ Resources:
       MapPublicIpOnLaunch: true
       Tags:
         - Key: Name
-          Value: datamaster-public-subnet
+          Value: datamaster-public-subnet-az1
+
+  PublicSubnetAZ2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.2.0/24
+      AvailabilityZone: !Select [ 1, !GetAZs '' ]
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: datamaster-public-subnet-az2
 
   RouteTable:
     Type: AWS::EC2::RouteTable
@@ -51,16 +62,22 @@ Resources:
       DestinationCidrBlock: 0.0.0.0/0
       GatewayId: !Ref InternetGateway
 
-  SubnetRouteTableAssociation:
+  SubnetRouteTableAssociationAZ1:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
-      SubnetId: !Ref PublicSubnet
+      SubnetId: !Ref PublicSubnetAZ1
+      RouteTableId: !Ref RouteTable
+
+  SubnetRouteTableAssociationAZ2:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnetAZ2
       RouteTableId: !Ref RouteTable
 
 Outputs:
   VpcId:
     Description: VPC ID
     Value: !Ref VPC
-  SubnetId:
-    Description: Public Subnet ID
-    Value: !Ref PublicSubnet
+  SubnetIds:
+    Description: Public Subnet IDs
+    Value: !Join [",", [!Ref PublicSubnetAZ1, !Ref PublicSubnetAZ2]]

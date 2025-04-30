@@ -17,10 +17,14 @@ func DeployCmd(templates embed.FS) *ishell.Cmd {
 		Help: "Deploy all infrastructure stacks",
 		Func: func(c *ishell.Context) {
 			c.Println(misc.Blue("You are about to deploy all stacks."))
-			c.Println("This will deploy the following stacks:")
 			c.Println("- Network")
 			c.Println("- Security")
-			c.Println("- Aurora PostgreSQL")
+			c.Println("- Database")
+			c.Println("- Storage")
+			c.Println("- Catalog")
+			c.Println("- Governance")
+			c.Println("- Streaming")
+			c.Println("- Observability")
 			c.Print("Type 'go' to continue: ")
 
 			if strings.ToLower(c.ReadLine()) != "go" {

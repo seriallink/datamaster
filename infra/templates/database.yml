@@ -1,13 +1,13 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: Aurora PostgreSQL Stack for Data Master Case
+Description: Aurora PostgreSQL Serverless v2 Stack for Data Master Case
 
 Parameters:
   VpcId:
     Type: AWS::EC2::VPC::Id
     Description: VPC ID
-  SubnetId:
-    Type: AWS::EC2::Subnet::Id
-    Description: Subnet ID (Public Subnet)
+  SubnetIds:
+    Type: List<AWS::EC2::Subnet::Id>
+    Description: Subnet IDs in different AZs
   SecurityGroupId:
     Type: AWS::EC2::SecurityGroup::Id
     Description: Security Group ID
@@ -24,14 +24,13 @@ Resources:
     Type: AWS::RDS::DBSubnetGroup
     Properties:
       DBSubnetGroupDescription: Subnet group for Aurora PostgreSQL
-      SubnetIds:
-        - !Ref SubnetId
+      SubnetIds: !Ref SubnetIds
 
   DBClusterParameterGroup:
     Type: AWS::RDS::DBClusterParameterGroup
     Properties:
       Description: Cluster parameter group with CDC enabled
-      Family: aurora-postgresql15
+      Family: aurora-postgresql16
       Parameters:
         rds.logical_replication: 1
 
@@ -40,6 +39,10 @@ Resources:
     Properties:
       Engine: aurora-postgresql
       EngineMode: provisioned
+      EngineVersion: 16.6
+      ServerlessV2ScalingConfiguration:
+        MinCapacity: 0.5
+        MaxCapacity: 1
       DatabaseName: !Ref DatabaseName
       MasterUsername: !Join
         - ""
@@ -60,14 +63,6 @@ Resources:
       EnableCloudwatchLogsExports:
         - postgresql
       DBClusterParameterGroupName: !Ref DBClusterParameterGroup
-
-  DBInstance:
-    Type: AWS::RDS::DBInstance
-    Properties:
-      DBClusterIdentifier: !Ref DBCluster
-      DBInstanceClass: db.t3.micro
-      Engine: aurora-postgresql
-      PubliclyAccessible: false
 
 Outputs:
   ClusterEndpoint:

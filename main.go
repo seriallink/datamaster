@@ -22,7 +22,7 @@ func main() {
 	shell.Println(misc.Yellow(" / /_/ / /_/ / /_/ /_/ /  / /  / / /_/ (__  ) /_/  __/ /     "))
 	shell.Println(misc.Yellow("/_____/\\__,_/\\__/\\__,_/  /_/  /_/\\__,_/____/\\__/\\___/_/"))
 
-	shell.Println("\nWelcome to DataMaster CLI! Enter 'help' for a list of commands.")
+	shell.Println("\nWelcome to Data Master CLI! Enter 'help' for a list of commands.")
 
 	shell.AddCmd(cmd.AuthCmd())
 	shell.AddCmd(cmd.WhoAmICmd())

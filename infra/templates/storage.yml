@@ -1,0 +1,47 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Storage Buckets for Data Master Case
+
+Resources:
+  SourceBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "dm-source-${AWS::AccountId}"
+
+  StageBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "dm-stage-${AWS::AccountId}"
+
+  DataLakeBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "dm-datalake-${AWS::AccountId}"
+      VersioningConfiguration:
+        Status: Enabled
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+
+  ObserverBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "dm-observer-${AWS::AccountId}"
+
+Outputs:
+  SourceBucketName:
+    Description: Name of the Source (Batch Ingest) bucket
+    Value: !Ref SourceBucket
+
+  StageBucketName:
+    Description: Name of the Stage (Parquet Landing) bucket
+    Value: !Ref StageBucket
+
+  DataLakeBucketName:
+    Description: Name of the Data Lake bucket
+    Value: !Ref DataLakeBucket
+
+  ObserverBucketName:
+    Description: Name of the Observer bucket
+    Value: !Ref ObserverBucket
