@@ -3,23 +3,6 @@ Description: Observability stack with AWS Managed Grafana for Data Master
 
 Resources:
 
-  GrafanaServiceRole:
-    Type: AWS::IAM::Role
-    Properties:
-      RoleName: dm-grafana-role
-      AssumeRolePolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service: grafana.amazonaws.com
-            Action: sts:AssumeRole
-      ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/AmazonAthenaFullAccess
-        - arn:aws:iam::aws:policy/CloudWatchReadOnlyAccess
-        - arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
-        - arn:aws:iam::aws:policy/AWSGlueConsoleFullAccess
-
   GrafanaWorkspace:
     Type: AWS::Grafana::Workspace
     Properties:
@@ -27,8 +10,8 @@ Resources:
       AuthenticationProviders:
         - AWS_SSO
       PermissionType: SERVICE_MANAGED
-      RoleArn: !GetAtt GrafanaServiceRole.Arn
-      Name: datamaster-grafana
+      RoleArn: !ImportValue dm-grafana-role-arn
+      Name: dm-grafana
       DataSources:
         - ATHENA
         - CLOUDWATCH
@@ -37,9 +20,15 @@ Resources:
         - CLOUDWATCH
       WorkspaceDescription: Grafana workspace for Data Master observability
       WorkspaceOrganizationalUnits: []
-      WorkspaceRoleArn: !GetAtt GrafanaServiceRole.Arn
+      WorkspaceRoleArn: !ImportValue dm-grafana-role-arn
+      Tags:
+        - Key: Project
+          Value: DataMaster
+        - Key: Component
+          Value: Observability
 
 Outputs:
+
   GrafanaWorkspaceURL:
     Description: URL to access the Grafana Workspace
     Value: !GetAtt GrafanaWorkspace.Endpoint
@@ -50,4 +39,4 @@ Outputs:
     Description: Workspace ID
     Value: !Ref GrafanaWorkspace
     Export:
-      Name: dm-grafana-id
+      Name: dm-grafana-workspace-id

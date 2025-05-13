@@ -1,71 +1,36 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: Governance stack for Lake Formation registration and access control
-
-Parameters:
-  DataLakeBucketName:
-    Type: String
-    Description: Name of the Data Lake S3 bucket
-
-  GlueDatabaseName:
-    Type: String
-    Description: Name of the Glue database to manage permissions
+Description: Governance Stack for the Data Master Project (Lake Formation)
 
 Resources:
-
-  LakeFormationAccessRole:
-    Type: AWS::IAM::Role
-    Properties:
-      RoleName: dm-lakeformation-role
-      AssumeRolePolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service: lakeformation.amazonaws.com
-            Action: sts:AssumeRole
-      ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/AWSLakeFormationDataAdmin
-      Policies:
-        - PolicyName: AllowS3AccessToLake
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              - Effect: Allow
-                Action:
-                  - s3:ListBucket
-                  - s3:GetObject
-                  - s3:PutObject
-                Resource:
-                  - !Sub "arn:aws:s3:::${DataLakeBucketName}"
-                  - !Sub "arn:aws:s3:::${DataLakeBucketName}/*"
 
   RegisterLakeLocation:
     Type: AWS::LakeFormation::Resource
     Properties:
-      ResourceArn: !Sub "arn:aws:s3:::${DataLakeBucketName}"
-      RoleArn: !GetAtt LakeFormationAccessRole.Arn
+      ResourceArn:
+        Fn::Sub:
+          - "arn:aws:s3:::${Bucket}"
+          - Bucket: !ImportValue dm-datalake-bucket
+      RoleArn: !ImportValue dm-lakeformation-role-arn
       UseServiceLinkedRole: false
 
   GrantLakeFormationDatabasePermission:
     Type: AWS::LakeFormation::Permissions
     Properties:
       DataLakePrincipal:
-        DataLakePrincipalIdentifier: !GetAtt LakeFormationAccessRole.Arn
+        DataLakePrincipalIdentifier: !ImportValue dm-lakeformation-role-arn
       Resource:
         DatabaseResource:
-          Name: !Ref GlueDatabaseName
+          Name: !ImportValue dm-glue-database-name
       Permissions:
         - ALL
 
 Outputs:
-  LakeFormationRoleArn:
-    Description: IAM Role for Lake Formation access
-    Value: !GetAtt LakeFormationAccessRole.Arn
-    Export:
-      Name: dm-lakeformation-role
 
   LakeResourceArn:
     Description: Registered S3 location in Lake Formation
-    Value: !Sub "arn:aws:s3:::${DataLakeBucketName}"
+    Value:
+      Fn::Sub:
+        - "arn:aws:s3:::${Bucket}"
+        - Bucket: !ImportValue dm-datalake-bucket
     Export:
-      Name: dm-lakeformation-resource
+      Name: dm-lakeformation-s3-arn

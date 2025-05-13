@@ -1,16 +1,27 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: Storage Buckets for Data Master Case
+Description: Storage Buckets for the Data Master Project
 
 Resources:
+
   SourceBucket:
     Type: AWS::S3::Bucket
     Properties:
       BucketName: !Sub "dm-source-${AWS::AccountId}"
+      Tags:
+        - Key: Project
+          Value: DataMaster
+        - Key: Component
+          Value: Storage
 
   StageBucket:
     Type: AWS::S3::Bucket
     Properties:
       BucketName: !Sub "dm-stage-${AWS::AccountId}"
+      Tags:
+        - Key: Project
+          Value: DataMaster
+        - Key: Component
+          Value: Storage
 
   DataLakeBucket:
     Type: AWS::S3::Bucket
@@ -23,25 +34,60 @@ Resources:
         BlockPublicPolicy: true
         IgnorePublicAcls: true
         RestrictPublicBuckets: true
+      Tags:
+        - Key: Project
+          Value: DataMaster
+        - Key: Component
+          Value: Storage
 
   ObserverBucket:
     Type: AWS::S3::Bucket
     Properties:
       BucketName: !Sub "dm-observer-${AWS::AccountId}"
+      Tags:
+        - Key: Project
+          Value: DataMaster
+        - Key: Component
+          Value: Storage
+
+  ArtifactsBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub dm-artifacts-${AWS::AccountId}
+      Tags:
+        - Key: Project
+          Value: DataMaster
+        - Key: Component
+          Value: Storage
 
 Outputs:
+
   SourceBucketName:
     Description: Name of the Source (Batch Ingest) bucket
     Value: !Ref SourceBucket
+    Export:
+      Name: dm-source-bucket
 
   StageBucketName:
     Description: Name of the Stage (Parquet Landing) bucket
     Value: !Ref StageBucket
+    Export:
+      Name: dm-stage-bucket
 
   DataLakeBucketName:
     Description: Name of the Data Lake bucket
     Value: !Ref DataLakeBucket
+    Export:
+      Name: dm-datalake-bucket
 
   ObserverBucketName:
     Description: Name of the Observer bucket
     Value: !Ref ObserverBucket
+    Export:
+      Name: dm-observer-bucket
+
+  ArtifactsBucketName:
+    Description: Name of the Artifacts bucket
+    Value: !Ref ArtifactsBucket
+    Export:
+      Name: dm-artifacts-bucket

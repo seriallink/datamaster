@@ -1,7 +1,8 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: Minimal Network Stack for Data Master Case
+Description: Network Stack for the Data Master Project (VPC, Subnets, Routing)
 
 Resources:
+
   VPC:
     Type: AWS::EC2::VPC
     Properties:
@@ -10,14 +11,22 @@ Resources:
       EnableDnsSupport: true
       Tags:
         - Key: Name
-          Value: datamaster-vpc
+          Value: dm-vpc
+        - Key: Project
+          Value: DataMaster
+        - Key: Component
+          Value: Network
 
   InternetGateway:
     Type: AWS::EC2::InternetGateway
     Properties:
       Tags:
         - Key: Name
-          Value: datamaster-igw
+          Value: dm-igw
+        - Key: Project
+          Value: DataMaster
+        - Key: Component
+          Value: Network
 
   AttachGateway:
     Type: AWS::EC2::VPCGatewayAttachment
@@ -34,7 +43,11 @@ Resources:
       MapPublicIpOnLaunch: true
       Tags:
         - Key: Name
-          Value: datamaster-public-subnet-az1
+          Value: dm-subnet-az1
+        - Key: Project
+          Value: DataMaster
+        - Key: Component
+          Value: Network
 
   PublicSubnetAZ2:
     Type: AWS::EC2::Subnet
@@ -45,7 +58,11 @@ Resources:
       MapPublicIpOnLaunch: true
       Tags:
         - Key: Name
-          Value: datamaster-public-subnet-az2
+          Value: dm-subnet-az2
+        - Key: Project
+          Value: DataMaster
+        - Key: Component
+          Value: Network
 
   RouteTable:
     Type: AWS::EC2::RouteTable
@@ -53,7 +70,11 @@ Resources:
       VpcId: !Ref VPC
       Tags:
         - Key: Name
-          Value: datamaster-public-rt
+          Value: dm-public-rt
+        - Key: Project
+          Value: DataMaster
+        - Key: Component
+          Value: Network
 
   Route:
     Type: AWS::EC2::Route
@@ -75,9 +96,27 @@ Resources:
       RouteTableId: !Ref RouteTable
 
 Outputs:
+
   VpcId:
-    Description: VPC ID
+    Description: ID of the created VPC
     Value: !Ref VPC
+    Export:
+      Name: dm-vpc-id
+
   SubnetIds:
-    Description: Public Subnet IDs
+    Description: List of public subnet IDs across two Availability Zones
     Value: !Join [",", [!Ref PublicSubnetAZ1, !Ref PublicSubnetAZ2]]
+    Export:
+      Name: dm-subnet-ids
+
+  PublicSubnetAZ1Id:
+    Description: ID of public subnet in AZ1
+    Value: !Ref PublicSubnetAZ1
+    Export:
+      Name: dm-public-subnet-az1-id
+
+  PublicSubnetAZ2Id:
+    Description: ID of public subnet in AZ2
+    Value: !Ref PublicSubnetAZ2
+    Export:
+      Name: dm-public-subnet-az2-id

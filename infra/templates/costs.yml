@@ -1,0 +1,77 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Cost Governance and Alerting for the Data Master Project
+
+Parameters:
+
+  BudgetLimitUSD:
+    Type: Number
+    Default: 10
+    Description: Monthly budget limit in USD
+
+  AlertEmail:
+    Type: String
+    Default: marcelo.monaco@gmail.com
+    Description: Email address to receive budget alerts
+
+Resources:
+
+  BudgetNotificationTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: dm-budget-alerts
+
+  BudgetNotificationSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      Protocol: email
+      Endpoint: !Ref AlertEmail
+      TopicArn: !Ref BudgetNotificationTopic
+
+  DataMasterBudget:
+    Type: AWS::Budgets::Budget
+    Properties:
+      Budget:
+        BudgetLimit:
+          Amount: !Ref BudgetLimitUSD
+          Unit: USD
+        TimeUnit: MONTHLY
+        BudgetType: COST
+        BudgetName: dm-cost-budget
+        CostFilters:
+          "TagKeyValue": [
+            "Project$DataMaster"
+          ]
+      NotificationsWithSubscribers:
+        - Notification:
+            NotificationType: ACTUAL
+            ComparisonOperator: GREATER_THAN
+            Threshold: 80
+          Subscribers:
+            - SubscriptionType: SNS
+              Address: !Ref BudgetNotificationTopic
+
+  AthenaQueryAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: dm-athena-expensive-queries
+      Namespace: AWS/Athena
+      MetricName: QueryRuntime
+      Dimensions:
+        - Name: QueryState
+          Value: SUCCEEDED
+      Statistic: Average
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 60
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmDescription: Alert if average Athena query duration exceeds 60s
+      ActionsEnabled: false
+
+Outputs:
+
+  BudgetTopicArn:
+    Description: SNS Topic ARN for budget alerts
+    Value: !Ref BudgetNotificationTopic
+    Export:
+      Name: dm-budget-topic-arn

@@ -1,35 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: Glue Catalog + Crawlers for Aurora, Stage and Data Lake Layers
-
-Parameters:
-  AuroraHost:
-    Type: String
-    Description: Writer endpoint of the Aurora cluster
-
-  AuroraPort:
-    Type: Number
-    Default: 5432
-    Description: Port number of the Aurora cluster
-
-  SecretArn:
-    Type: String
-    Description: ARN of the Secret for Aurora credentials
-
-  SubnetId:
-    Type: String
-    Description: Subnet for Glue connection (must allow access to Aurora)
-
-  SecurityGroupId:
-    Type: String
-    Description: Security group that allows JDBC traffic to Aurora
-
-  StageBucketName:
-    Type: String
-    Description: Name of the Stage S3 bucket
-
-  DataLakeBucketName:
-    Type: String
-    Description: Name of the Data Lake S3 bucket
+Description: Glue Catalog and Crawlers for Aurora, Stage and Data Lake Integration
 
 Resources:
 
@@ -48,111 +18,117 @@ Resources:
         Name: dm-aurora-connection
         ConnectionType: JDBC
         ConnectionProperties:
-          JDBC_CONNECTION_URL: !Sub "jdbc:postgresql://${AuroraHost}:${AuroraPort}/postgres"
-          SECRET_ID: !Ref SecretArn
+          JDBC_CONNECTION_URL: !Join ["", ["jdbc:postgresql://", !ImportValue dm-db-writer-endpoint, ":", !ImportValue dm-db-port, "/postgres"]]
+          SECRET_ID: !ImportValue dm-db-secret-arn
         PhysicalConnectionRequirements:
           AvailabilityZone: !Select [ 0, !GetAZs "" ]
-          SubnetId: !Ref SubnetId
+          SubnetId: !ImportValue dm-public-subnet-az1-id
           SecurityGroupIdList:
-            - !Ref SecurityGroupId
+            - !ImportValue dm-db-sg-id
 
   AuroraCrawler:
     Type: AWS::Glue::Crawler
     Properties:
       Name: dm-aurora-crawler
-      Role: !GetAtt GlueServiceRole.Arn
+      Role: !ImportValue dm-glue-role-arn
       DatabaseName: !Ref GlueDatabase
       Targets:
         JdbcTargets:
           - ConnectionName: !Ref AuroraConnection
-            Path: "public/%"
+            Path: "dm/%"
       RecrawlPolicy:
         RecrawlBehavior: CRAWL_EVERYTHING
       SchemaChangePolicy:
         DeleteBehavior: DELETE_FROM_DATABASE
         UpdateBehavior: UPDATE_IN_DATABASE
+      Tags:
+        Project: DataMaster
+        Component: Catalog
 
   StageCrawler:
     Type: AWS::Glue::Crawler
     Properties:
       Name: dm-stage-crawler
-      Role: !GetAtt GlueServiceRole.Arn
+      Role: !ImportValue dm-glue-role-arn
       DatabaseName: !Ref GlueDatabase
       Targets:
         S3Targets:
-          - Path: !Sub "s3://${StageBucketName}/"
+          - Path: !Join ["", ["s3://", !ImportValue dm-stage-bucket, "/"]]
       RecrawlPolicy:
         RecrawlBehavior: CRAWL_EVERYTHING
       SchemaChangePolicy:
         DeleteBehavior: DELETE_FROM_DATABASE
         UpdateBehavior: UPDATE_IN_DATABASE
+      Tags:
+        Project: DataMaster
+        Component: Catalog
 
   DataLakeCrawler:
     Type: AWS::Glue::Crawler
     Properties:
       Name: dm-datalake-crawler
-      Role: !GetAtt GlueServiceRole.Arn
+      Role: !ImportValue dm-glue-role-arn
       DatabaseName: !Ref GlueDatabase
       Targets:
         S3Targets:
-          - Path: !Sub "s3://${DataLakeBucketName}/"
+          - Path: !Join ["", ["s3://", !ImportValue dm-datalake-bucket, "/"]]
       RecrawlPolicy:
         RecrawlBehavior: CRAWL_EVERYTHING
       SchemaChangePolicy:
         DeleteBehavior: DELETE_FROM_DATABASE
         UpdateBehavior: UPDATE_IN_DATABASE
+      Tags:
+        Project: DataMaster
+        Component: Catalog
 
-  GlueServiceRole:
-    Type: AWS::IAM::Role
+  FirehoseTable:
+    Type: AWS::Glue::Table
     Properties:
-      RoleName: dm-glue-role
-      AssumeRolePolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service: glue.amazonaws.com
-            Action: sts:AssumeRole
-      ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole
-      Policies:
-        - PolicyName: GlueCustomAccess
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              - Effect: Allow
-                Action:
-                  - secretsmanager:GetSecretValue
-                  - glue:*
-                  - logs:CreateLogGroup
-                  - logs:CreateLogStream
-                  - logs:PutLogEvents
-                  - s3:GetObject
-                  - s3:PutObject
-                  - s3:ListBucket
-                Resource: "*"
+      CatalogId: !Ref AWS::AccountId
+      DatabaseName: !Ref GlueDatabase
+      TableInput:
+        Name: firehose_stream
+        TableType: EXTERNAL_TABLE
+        Parameters:
+          classification: parquet
+          EXTERNAL: "TRUE"
+        StorageDescriptor:
+          Columns:
+            - Name: payload
+              Type: string
+          Location: !Join ["", ["s3://", !ImportValue dm-stage-bucket, "/streaming/"]]
+          InputFormat: org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat
+          OutputFormat: org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat
+          Compressed: true
+          NumberOfBuckets: -1
+          SerdeInfo:
+            SerializationLibrary: org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe
+            Parameters:
+              serialization.format: "1"
+          StoredAsSubDirectories: false
 
 Outputs:
+
   GlueDatabaseName:
     Description: Glue database for catalog
     Value: !Ref GlueDatabase
     Export:
-      Name: dm-glue-database
+      Name: dm-glue-database-name
 
   AuroraCrawlerName:
     Description: Aurora Crawler name
     Value: !Ref AuroraCrawler
     Export:
-      Name: dm-glue-aurora-crawler
+      Name: dm-aurora-crawler-name
 
   StageCrawlerName:
     Description: Stage Crawler name
     Value: !Ref StageCrawler
     Export:
-      Name: dm-glue-stage-crawler
+      Name: dm-stage-crawler-name
 
   DataLakeCrawlerName:
     Description: Data Lake Crawler name
     Value: !Ref DataLakeCrawler
     Export:
-      Name: dm-glue-datalake-crawler
+      Name: dm-datalake-crawler-name

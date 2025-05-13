@@ -1,0 +1,153 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Processing pipeline triggered by S3 events using EMR Serverless
+
+Resources:
+
+  EMRProcessingApp:
+    Type: AWS::EMRServerless::Application
+    Properties:
+      Name: dm-processing-app
+      ReleaseLabel: emr-6.9.0
+      Type: Spark
+      AutoStartConfiguration:
+        Enabled: true
+      AutoStopConfiguration:
+        Enabled: true
+      NetworkConfiguration:
+        SubnetIds:
+          - !ImportValue dm-glue-subnet-id
+        SecurityGroupIds:
+          - !ImportValue dm-db-sg-id
+      MaximumCapacity:
+        Cpu: 4
+        Memory: 16
+        Disk: 100
+      InitialCapacity:
+        - InitialCapacityType: Driver
+          InitialCapacityConfig:
+            WorkerCount: 1
+            WorkerConfiguration:
+              Cpu: 2
+              Memory: 4
+        - InitialCapacityType: Executor
+          InitialCapacityConfig:
+            WorkerCount: 2
+            WorkerConfiguration:
+              Cpu: 2
+              Memory: 4
+      ExecutionRoleArn: !ImportValue dm-processing-emr-role-arn
+      Tags:
+        - Key: Project
+          Value: DataMaster
+        - Key: Component
+          Value: Processing
+
+  ProcessingStepFunction:
+    Type: AWS::StepFunctions::StateMachine
+    Properties:
+      StateMachineName: dm-processing-orchestration
+      RoleArn: !ImportValue dm-processing-sfn-role-arn
+      TracingConfiguration:
+        Enabled: true
+      DefinitionString:
+        Fn::Sub:
+          - |
+            {
+              "StartAt": "StageToBronze",
+              "States": {
+                "StageToBronze": {
+                  "Type": "Task",
+                  "Resource": "arn:aws:states:::emr-serverless:startJobRun.sync",
+                  "Parameters": {
+                    "ApplicationId": "${AppId}",
+                    "ExecutionRoleArn": "${ExecutionRole}",
+                    "JobDriver": {
+                      "SparkSubmit": {
+                        "EntryPoint": "s3://${StageBucket}/jobs/stage_to_bronze.py",
+                        "EntryPointArguments": [
+                          "--input", "s3://${StageBucket}/${$.detail.object.key}",
+                          "--output", "s3://${DataLakeBucket}/bronze/"
+                        ]
+                      }
+                    }
+                  },
+                  "Next": "BronzeToSilver"
+                },
+                "BronzeToSilver": {
+                  "Type": "Task",
+                  "Resource": "arn:aws:states:::emr-serverless:startJobRun.sync",
+                  "Parameters": {
+                    "ApplicationId": "${AppId}",
+                    "ExecutionRoleArn": "${ExecutionRole}",
+                    "JobDriver": {
+                      "SparkSubmit": {
+                        "EntryPoint": "s3://${StageBucket}/jobs/bronze_to_silver.py",
+                        "EntryPointArguments": [
+                          "--input", "s3://${DataLakeBucket}/bronze/",
+                          "--output", "s3://${DataLakeBucket}/silver/"
+                        ]
+                      }
+                    }
+                  },
+                  "Next": "SilverToGold"
+                },
+                "SilverToGold": {
+                  "Type": "Task",
+                  "Resource": "arn:aws:states:::emr-serverless:startJobRun.sync",
+                  "Parameters": {
+                    "ApplicationId": "${AppId}",
+                    "ExecutionRoleArn": "${ExecutionRole}",
+                    "JobDriver": {
+                      "SparkSubmit": {
+                        "EntryPoint": "s3://${StageBucket}/jobs/silver_to_gold.py",
+                        "EntryPointArguments": [
+                          "--input", "s3://${DataLakeBucket}/silver/",
+                          "--output", "s3://${DataLakeBucket}/gold/"
+                        ]
+                      }
+                    }
+                  },
+                  "End": true
+                }
+              }
+            }
+          - AppId: !Ref EMRProcessingApp
+            ExecutionRole: !ImportValue dm-processing-emr-role-arn
+            StageBucket: !ImportValue dm-stage-bucket
+            DataLakeBucket: !ImportValue dm-datalake-bucket
+
+  ProcessingTriggerRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: dm-processing-trigger
+      EventPattern:
+        source:
+          - aws.s3
+        detail-type:
+          - Object Created
+        detail:
+          bucket:
+            name:
+              - !ImportValue dm-stage-bucket
+          object:
+            key:
+              prefix:
+                - "streaming/"
+                - "batch/"
+      Targets:
+        - Arn: !GetAtt ProcessingStepFunction.Arn
+          Id: TriggerProcessingSFN
+
+Outputs:
+
+  EMRProcessingAppId:
+    Description: ID of the EMR Serverless application
+    Value: !Ref EMRProcessingApp
+    Export:
+      Name: dm-processing-app-id
+
+  ProcessingStepFunctionName:
+    Description: Step Function for processing orchestration
+    Value: !Ref ProcessingStepFunction
+    Export:
+      Name: dm-processing-sfn-name

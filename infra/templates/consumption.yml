@@ -1,10 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: Athena for the Data Master consumption layer
-
-Parameters:
-  LogsBucketName:
-    Type: String
-    Description: Bucket used for Athena query output
+Description: Athena workgroup configuration for the Data Master consumption layer
 
 Resources:
 
@@ -18,10 +13,19 @@ Resources:
       WorkGroupConfiguration:
         BytesScannedCutoffPerQuery: 1000000000  # 1GB
         ResultConfiguration:
-          OutputLocation: !Sub "s3://${LogsBucketName}/athena/"
+          OutputLocation:
+            Fn::Sub:
+              - "s3://${Bucket}/athena/"
+              - Bucket: !ImportValue dm-observer-bucket
         EnforceWorkGroupConfiguration: true
+      Tags:
+        - Key: Project
+          Value: DataMaster
+        - Key: Component
+          Value: Consumption
 
 Outputs:
+
   AthenaWorkgroup:
     Description: Workgroup used for Athena queries
     Value: !Ref AthenaWorkgroup

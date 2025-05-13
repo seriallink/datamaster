@@ -1,0 +1,403 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: All IAM roles required for the Data Master project
+
+Resources:
+
+  DMSVpcRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: dms-vpc-role
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: dms.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonDMSVPCManagementRole
+      Tags:
+        - Key: Project
+          Value: DataMaster
+        - Key: Component
+          Value: Roles
+
+  DMSKinesisAccessRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: dm-dms-kinesis-role
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: dms.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: DmsKinesisAccessPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - kinesis:PutRecord
+                  - kinesis:PutRecords
+                Resource: "*"
+      Tags:
+        - Key: Project
+          Value: DataMaster
+        - Key: Component
+          Value: Roles
+
+  FirehoseAccessRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: dm-firehose-role
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - firehose.amazonaws.com
+                - dms.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: FirehoseAccessPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:PutObject
+                  - s3:GetObject
+                  - s3:ListBucket
+                  - kinesis:GetRecords
+                  - kinesis:GetShardIterator
+                  - kinesis:DescribeStream
+                  - kinesis:ListStreams
+                  - kinesis:PutRecord
+                  - kinesis:PutRecords
+                  - glue:GetTable
+                  - glue:GetTableVersion
+                  - glue:GetTableVersions
+                Resource: "*"
+      Tags:
+        - Key: Project
+          Value: DataMaster
+        - Key: Component
+          Value: Roles
+
+  GlueServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: dm-glue-role
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: glue.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole
+      Policies:
+        - PolicyName: GlueInlinePermissions
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - glue:*
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - secretsmanager:GetSecretValue
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - logs:*
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                  - s3:ListBucket
+                Resource: "*"
+      Tags:
+        - Key: Project
+          Value: DataMaster
+        - Key: Component
+          Value: Roles
+
+  LakeFormationAccessRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: dm-lakeformation-role
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lakeformation.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AWSLakeFormationDataAdmin
+      Policies:
+        - PolicyName: AllowS3AccessToLake
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:ListBucket
+                  - s3:GetObject
+                  - s3:PutObject
+                Resource: "*"
+      Tags:
+        - Key: Project
+          Value: DataMaster
+        - Key: Component
+          Value: Roles
+
+  EMRServerlessExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: dm-emr-batch-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: emr-serverless.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: DMEMRAccessPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                  - s3:ListBucket
+                  - glue:*
+                  - logs:*
+                Resource: '*'
+      Tags:
+        - Key: Project
+          Value: DataMaster
+        - Key: Component
+          Value: Roles
+
+  ValidateContractRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: dm-validate-contract-role
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: ContractAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - glue:GetTable
+                  - s3:GetObject
+                Resource: '*'
+      Tags:
+        - Key: Project
+          Value: DataMaster
+        - Key: Component
+          Value: Roles
+
+  BatchETLStepFunctionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: dm-batch-sfn-role
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: states.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: BatchStepFnPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - emr-serverless:StartJobRun
+                  - emr-serverless:GetJobRun
+                  - lambda:InvokeFunction
+                  - iam:PassRole
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - logs:*
+                Resource: '*'
+      Tags:
+        - Key: Project
+          Value: DataMaster
+        - Key: Component
+          Value: Roles
+
+  EMRProcessingExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: dm-processing-emr-role
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: emr-serverless.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: ProcessingAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:*
+                  - glue:*
+                  - logs:*
+                Resource: "*"
+      Tags:
+        - Key: Project
+          Value: DataMaster
+        - Key: Component
+          Value: Roles
+
+  ProcessingStateMachineRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: dm-processing-sfn-role
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: states.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: ProcessingStepFnPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - emr-serverless:StartJobRun
+                  - emr-serverless:GetJobRun
+                  - iam:PassRole
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - logs:*
+                Resource: "*"
+      Tags:
+        - Key: Project
+          Value: DataMaster
+        - Key: Component
+          Value: Roles
+
+  GrafanaServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: dm-grafana-role
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: grafana.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonAthenaFullAccess
+        - arn:aws:iam::aws:policy/CloudWatchReadOnlyAccess
+        - arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
+        - arn:aws:iam::aws:policy/AWSGlueConsoleFullAccess
+      Tags:
+        - Key: Project
+          Value: DataMaster
+        - Key: Component
+          Value: Roles
+
+Outputs:
+
+  DMSVpcRoleArn:
+    Description: Role for DMS VPC access
+    Value: !GetAtt DMSVpcRole.Arn
+    Export:
+      Name: dm-dms-vpc-role-arn
+
+  DMSKinesisRoleArn:
+    Description: Role for DMS to write to Kinesis
+    Value: !GetAtt DMSKinesisAccessRole.Arn
+    Export:
+      Name: dm-dms-kinesis-role-arn
+
+  FirehoseRoleArn:
+    Description: Role used by Firehose and DMS target endpoint
+    Value: !GetAtt FirehoseAccessRole.Arn
+    Export:
+      Name: dm-firehose-role-arn
+
+  GlueServiceRoleArn:
+    Description: Glue crawler execution role
+    Value: !GetAtt GlueServiceRole.Arn
+    Export:
+      Name: dm-glue-role-arn
+
+  LakeFormationRoleArn:
+    Description: Lake Formation registration and access role
+    Value: !GetAtt LakeFormationAccessRole.Arn
+    Export:
+      Name: dm-lakeformation-role-arn
+
+  EMRBatchRoleArn:
+    Description: Role used by EMR Serverless for batch workloads
+    Value: !GetAtt EMRServerlessExecutionRole.Arn
+    Export:
+      Name: dm-emr-batch-role-arn
+
+  ValidateContractRoleArn:
+    Description: Lambda role for contract validation
+    Value: !GetAtt ValidateContractRole.Arn
+    Export:
+      Name: dm-validate-contract-role-arn
+
+  BatchStepFunctionRoleArn:
+    Description: IAM role for Step Function in batch pipeline
+    Value: !GetAtt BatchETLStepFunctionRole.Arn
+    Export:
+      Name: dm-batch-sfn-role-arn
+
+  EMRProcessingRoleArn:
+    Description: Role for EMR Serverless in processing pipeline
+    Value: !GetAtt EMRProcessingExecutionRole.Arn
+    Export:
+      Name: dm-processing-emr-role-arn
+
+  ProcessingStepFunctionRoleArn:
+    Description: Step Function role for data processing pipeline
+    Value: !GetAtt ProcessingStateMachineRole.Arn
+    Export:
+      Name: dm-processing-sfn-role-arn
+
+  GrafanaServiceRoleArn:
+    Description: IAM role used by Amazon Managed Grafana
+    Value: !GetAtt GrafanaServiceRole.Arn
+    Export:
+      Name: dm-grafana-role-arn

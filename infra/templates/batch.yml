@@ -1,0 +1,114 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Batch Pipeline with Data Contract Validation for the Data Master Project
+
+Resources:
+
+  ValidateContractFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: dm-validate-data-contract
+      Handler: bootstrap
+      Runtime: provided.al2
+      Role: !ImportValue dm-validate-contract-role-arn
+      Code:
+        S3Bucket: !ImportValue dm-artifacts-bucket
+        S3Key: validate-contract.zip
+      TracingConfig:
+        Mode: Active
+      Tags:
+        - Key: Project
+          Value: DataMaster
+        - Key: Component
+          Value: Batch
+
+  GlueBatchJob:
+    Type: AWS::Glue::Job
+    Properties:
+      Name: dm-batch-glue-job
+      Role: !ImportValue dm-glue-role-arn
+      Command:
+        Name: glueetl
+        ScriptLocation: !Join ["", ["s3://", !ImportValue dm-stage-bucket, "/jobs/batch-etl.py"]]
+      DefaultArguments:
+        --job-language: python
+        --TempDir: !Join ["", ["s3://", !ImportValue dm-stage-bucket, "/temp/"]]
+      GlueVersion: 4.0
+      NumberOfWorkers: 5
+      WorkerType: G.1X
+      Tags:
+        Project: DataMaster
+        Component: Batch
+
+  BatchETLRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: dm-batch-trigger-rule
+      EventPattern:
+        source:
+          - aws.s3
+        detail-type:
+          - Object Created
+        detail:
+          bucket:
+            name:
+              - !ImportValue dm-source-bucket
+      Targets:
+        - Arn: !GetAtt BatchETLStepFunction.Arn
+          Id: TriggerBatchStepFunction
+
+  BatchETLStepFunction:
+    Type: AWS::StepFunctions::StateMachine
+    Properties:
+      StateMachineName: dm-batch-etl-sfn
+      RoleArn: !ImportValue dm-batch-sfn-role-arn
+      TracingConfiguration:
+        Enabled: true
+      DefinitionString:
+        Fn::Sub:
+          - |
+            {
+              "StartAt": "ValidateContract",
+              "States": {
+                "ValidateContract": {
+                  "Type": "Task",
+                  "Resource": "arn:aws:states:::lambda:invoke",
+                  "Parameters": {
+                    "FunctionName": "dm-validate-data-contract",
+                    "Payload": {
+                      "bucket": "${SourceBucketName}",
+                      "key": "$.detail.object.key"
+                    }
+                  },
+                  "Next": "StartGlueJob"
+                },
+                "StartGlueJob": {
+                  "Type": "Task",
+                  "Resource": "arn:aws:states:::glue:startJobRun.sync",
+                  "Parameters": {
+                    "JobName": "${GlueJobName}",
+                    "Arguments": {
+                      "--input": "s3://${SourceBucketName}/",
+                      "--output": "s3://${StageBucket}/batch/"
+                    }
+                  },
+                  "End": true
+                }
+              }
+            }
+          - SourceBucketName: !ImportValue dm-source-bucket
+            StageBucket: !ImportValue dm-stage-bucket
+            GlueJobName: !Ref GlueBatchJob
+
+Outputs:
+
+  GlueBatchJobName:
+    Description: Name of the Glue Job for batch processing
+    Value: !Ref GlueBatchJob
+    Export:
+      Name: dm-glue-batch-job-name
+
+  BatchStepFunctionName:
+    Description: Step Function to trigger Glue batch job
+    Value: !Ref BatchETLStepFunction
+    Export:
+      Name: dm-batch-sfn-name

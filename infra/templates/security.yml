@@ -1,29 +1,34 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: Security Stack for Data Master Case (SG and Secret)
+Description: Security Stack for the Data Master Project
 
 Parameters:
-  VpcId:
-    Type: AWS::EC2::VPC::Id
-    Description: VPC ID to associate the Security Group
+
   SecretName:
     Type: String
-    Default: datamaster-db-credentials
+    Default: dm-db-credentials
     Description: Name for the Secrets Manager secret
 
+  DeployerArn:
+    Type: String
+    Description: ARN of the principal allowed to retrieve the secret
+
 Resources:
+
   DBAccessSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: Allow database access
-      VpcId: !Ref VpcId
+      VpcId: !ImportValue dm-vpc-id
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 5432
           ToPort: 5432
-          CidrIp: 0.0.0.0/0 # (only for demo, not for prod)
+          CidrIp: 0.0.0.0/0
       Tags:
-        - Key: Name
-          Value: datamaster-db-sg
+        - Key: Project
+          Value: DataMaster
+        - Key: Component
+          Value: Security
 
   DBSecret:
     Type: AWS::SecretsManager::Secret
@@ -31,15 +36,40 @@ Resources:
       Name: !Ref SecretName
       Description: Credentials for the Aurora PostgreSQL Cluster
       GenerateSecretString:
-        SecretStringTemplate: '{"username": "datamasteradmin"}'
+        SecretStringTemplate: '{"username": "dmadmin"}'
         GenerateStringKey: "password"
-        PasswordLength: 16
-        ExcludeCharacters: '"@/\'
+        PasswordLength: 20
+        ExcludeCharacters: ";+%@\"'/\\`"
+      Tags:
+        - Key: Project
+          Value: DataMaster
+        - Key: Component
+          Value: Security
+
+  DBSecretResourcePolicy:
+    Type: AWS::SecretsManager::ResourcePolicy
+    Properties:
+      SecretId: !Ref DBSecret
+      ResourcePolicy:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: AllowAccessToDeployer
+            Effect: Allow
+            Principal:
+              AWS: !Ref DeployerArn
+            Action: secretsmanager:GetSecretValue
+            Resource: "*"
 
 Outputs:
+
   SecurityGroupId:
     Description: Security Group ID for Aurora
     Value: !Ref DBAccessSecurityGroup
+    Export:
+      Name: dm-db-sg-id
+
   SecretArn:
     Description: Secret ARN
     Value: !Ref DBSecret
+    Export:
+      Name: dm-db-secret-arn
