@@ -12,6 +12,9 @@ import (
 //go:embed infra/templates/*.yml
 var templates embed.FS
 
+//go:embed database/migrations/*.sql
+var scripts embed.FS
+
 func main() {
 
 	shell := ishell.New()
@@ -26,7 +29,12 @@ func main() {
 
 	shell.AddCmd(cmd.AuthCmd())
 	shell.AddCmd(cmd.WhoAmICmd())
+	shell.AddCmd(cmd.StacksCmd(templates))
 	shell.AddCmd(cmd.DeployCmd(templates))
+	shell.AddCmd(cmd.MigrationCmd(scripts))
+	shell.AddCmd(cmd.ExitCmd(shell))
+	shell.AddCmd(cmd.ClearCmd(shell))
+	shell.AddCmd(cmd.Help())
 
 	shell.Run()
 

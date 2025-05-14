@@ -18,7 +18,7 @@ func TestAuthWithKeys(t *testing.T) {
 	config, err := core.LoadAWSConfig("", accessKey, secretKey, region)
 	assert.NoError(t, err)
 
-	identity, err := core.ValidateAWSCredentials(context.TODO(), config)
+	identity, err := core.GetCallerIdentity(context.TODO(), config)
 	assert.NoError(t, err)
 	assert.NotNil(t, identity)
 

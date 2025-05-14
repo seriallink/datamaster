@@ -46,7 +46,7 @@ func LoadAWSConfig(profile, accessKey, secretKey, region string) (aws.Config, er
 
 }
 
-func ValidateAWSCredentials(ctx context.Context, cfg aws.Config) (*sts.GetCallerIdentityOutput, error) {
+func GetCallerIdentity(ctx context.Context, cfg aws.Config) (*sts.GetCallerIdentityOutput, error) {
 	client := sts.NewFromConfig(cfg)
 	return client.GetCallerIdentity(ctx, &sts.GetCallerIdentityInput{})
 }

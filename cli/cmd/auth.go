@@ -12,7 +12,7 @@ import (
 func AuthCmd() *ishell.Cmd {
 	return &ishell.Cmd{
 		Name: "auth",
-		Help: "Choose your AWS authentication method",
+		Help: "Authenticate with AWS",
 		Func: func(c *ishell.Context) {
 			var profileName, accessKey, secretKey, region string
 		loop:
@@ -52,7 +52,7 @@ func AuthCmd() *ishell.Cmd {
 				return
 			}
 
-			identity, err := core.ValidateAWSCredentials(context.TODO(), core.GetAWSConfig())
+			identity, err := core.GetCallerIdentity(context.TODO(), core.GetAWSConfig())
 			if err != nil {
 				c.Println(misc.Red("Error testing AWS credentials: %v", err))
 				return

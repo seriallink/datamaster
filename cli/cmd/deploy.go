@@ -2,43 +2,97 @@ package cmd
 
 import (
 	"embed"
+	"flag"
+	"fmt"
+	"io"
 	"strings"
 
 	"github.com/seriallink/datamaster/cli/core"
 	"github.com/seriallink/datamaster/cli/misc"
 
 	"github.com/abiosoft/ishell"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/cloudformation/types"
 	"github.com/fatih/color"
 )
 
 func DeployCmd(templates embed.FS) *ishell.Cmd {
 	return &ishell.Cmd{
 		Name: "deploy",
-		Help: "Deploy all infrastructure stacks",
-		Func: func(c *ishell.Context) {
-			c.Println(misc.Blue("You are about to deploy all stacks."))
-			c.Println("- Network")
-			c.Println("- Security")
-			c.Println("- Database")
-			c.Println("- Storage")
-			c.Println("- Catalog")
-			c.Println("- Governance")
-			c.Println("- Streaming")
-			c.Println("- Observability")
-			c.Print("Type 'go' to continue: ")
+		Help: "Deploy infrastructure",
+		Func: WithAuth(func(c *ishell.Context) {
+			fs := flag.NewFlagSet("deploy", flag.ContinueOnError)
+			fs.SetOutput(io.Discard)
 
+			stackName := fs.String("stack", "", "Stack name to deploy")
+			params := fs.String("params", "", "Comma-separated list of key=value pairs")
+
+			if err := fs.Parse(c.Args); err != nil {
+				c.Println(misc.Red(fmt.Sprintf("Invalid arguments: %v", err)))
+				return
+			}
+			if fs.NArg() > 0 {
+				c.Println(misc.Red(fmt.Sprintf("Unexpected argument: %s", fs.Arg(0))))
+				return
+			}
+
+			// Parse --params into []types.Parameter
+			var parsedParams []types.Parameter
+			if *params != "" {
+				for _, pair := range strings.Split(*params, ",") {
+					kv := strings.SplitN(pair, "=", 2)
+					if len(kv) == 2 {
+						parsedParams = append(parsedParams, types.Parameter{
+							ParameterKey:   aws.String(kv[0]),
+							ParameterValue: aws.String(kv[1]),
+						})
+					}
+				}
+			}
+
+			// Deploy a specific stack
+			if *stackName != "" {
+				stack := core.Stack{
+					Name:   *stackName,
+					Params: parsedParams,
+				}
+
+				if _, err := stack.GetTemplateBody(templates); err != nil {
+					c.Println(misc.Red(fmt.Sprintf("Stack '%s' does not exist.", stack.Name)))
+					c.Println("Run the command 'stacks' to list available stack names.")
+					return
+				}
+
+				c.Println(misc.Blue("You are about to deploy stack:"), stack.FullStackName())
+				c.Print("Type 'go' to continue: ")
+				if strings.ToLower(c.ReadLine()) != "go" {
+					c.Println(misc.Red("Deployment cancelled.\n"))
+					return
+				}
+
+				if err := core.DeployStack(&stack, templates); err != nil {
+					c.Println(misc.Red(fmt.Sprintf("Deployment failed: %v", err)))
+					return
+				}
+
+				c.Println(color.HiGreenString("Stack '%s' deployed successfully!\n", stack.FullStackName()))
+				return
+			}
+
+			// Deploy all stacks
+			c.Println(misc.Blue("You are about to deploy all stacks."))
+			c.Print("Type 'go' to continue: ")
 			if strings.ToLower(c.ReadLine()) != "go" {
 				c.Println(misc.Red("Deployment cancelled.\n"))
 				return
 			}
 
-			err := core.DeployAllStacks(c, templates)
-			if err != nil {
-				c.Println(misc.Red("Deployment failed: %v", err))
+			if err := core.DeployAllStacks(templates); err != nil {
+				c.Println(misc.Red(fmt.Sprintf("Deployment failed: %v", err)))
 				return
 			}
 
 			c.Println(color.HiGreenString("All stacks deployed successfully!\n"))
-		},
+		}),
 	}
 }
