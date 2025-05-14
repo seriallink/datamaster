@@ -2,7 +2,7 @@ package misc
 
 const (
 	DefaultStackPrefix = "dm"
-	TemplatesPath      = "infra/templates/"
+	TemplatesPath      = "infra/templates"
 	TemplateExtension  = ".yml"
 )
 

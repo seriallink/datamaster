@@ -30,7 +30,7 @@ func (s *Stack) FullStackName() string {
 }
 
 func (s *Stack) TemplateFilePath() string {
-	return misc.TemplatesPath + s.Name + misc.TemplateExtension
+	return misc.TemplatesPath + "/" + s.Name + misc.TemplateExtension
 }
 
 func (s *Stack) GetTemplateBody(templates embed.FS) ([]byte, error) {
