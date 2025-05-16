@@ -148,11 +148,10 @@ func LoadAuroraTablesWithColumns(schema string, tables ...string) (classes []dia
 //
 // Returns:
 //   - []types.Column: Glue column definitions.
-func ConvertPgAttributesToGlueColumns(class *dialect.PgClass) (columns []types.Column) {
+func ConvertPgAttributesToGlueColumns(class *dialect.PgClass, db *gorm.DB) (columns []types.Column) {
 	for _, attr := range class.PgAttributes {
 		columnName := attr.AttName.String
-		dataType := attr.PgType.TypName.String
-		glueType := MapPostgresToGlueType(dataType)
+		glueType := CastPgType(attr, *attr.PgType, db)
 		columns = append(columns, types.Column{
 			Name: aws.String(columnName),
 			Type: aws.String(glueType),
@@ -161,36 +160,104 @@ func ConvertPgAttributesToGlueColumns(class *dialect.PgClass) (columns []types.C
 	return
 }
 
-// MapPostgresToGlueType maps a PostgreSQL type name to a corresponding AWS Glue-compatible type.
+// CastPgType converts a PostgreSQL type (from pg_type and pg_attribute)
+// into a logical representation used for Glue, Iceberg, or other downstream systems.
 //
-// Falls back to "string" for unrecognized or complex types.
+// It handles scalar types, arrays, enums, user-defined types, and falls back based on category.
 //
 // Parameters:
-//   - pgType: PostgreSQL type as string.
+//   - pgattribute: the pg_attribute entry for the column.
+//   - pgtype: the pg_type definition for the column's data type.
+//   - db: GORM DB instance used for recursive type resolution (e.g., array elements).
 //
 // Returns:
-//   - string: Glue-compatible type.
-func MapPostgresToGlueType(pgType string) string {
-	switch strings.ToLower(pgType) {
-	case "int", "int4", "integer":
-		return "int"
-	case "int8", "bigint":
-		return "bigint"
-	case "bool", "boolean":
-		return "boolean"
-	case "numeric", "decimal":
-		return "decimal"
-	case "float4", "real":
-		return "float"
-	case "float8", "double precision":
-		return "double"
-	case "timestamp", "timestamp without time zone", "timestamp with time zone":
-		return "timestamp"
-	case "date":
-		return "date"
-	default:
-		return "string" // fallback for unsupported or complex types
+//   - string: logical type (e.g., "string", "int", "timestamp", "map", "array").
+//
+// Panics:
+//   - if a type cannot be mapped or an array element's type fails to load.
+func CastPgType(pgattribute dialect.PgAttribute, pgtype dialect.PgType, db *gorm.DB) (def string) {
+
+	// init def
+	def = "%s"
+
+	// check if type is defined as an array
+	if pgattribute.PgType.TypCategory.String == "A" {
+		def = "array"
 	}
+
+	switch pgtype.TypName.String {
+
+	case "bytea":
+		def = "binary"
+
+	case "bool":
+		def = fmt.Sprintf(def, "boolean")
+
+	case "bpchar", "char", "name", "text", "varchar", "inet":
+		def = fmt.Sprintf(def, "string")
+
+	case "int2", "int4", "int8":
+		def = fmt.Sprintf(def, "int")
+
+	case "float4", "float8", "numeric":
+		def = fmt.Sprintf(def, "decimal")
+
+	case "date", "time", "timestamp", "timestamptz":
+		def = fmt.Sprintf(def, "timestamp")
+
+	case "interval":
+		def = fmt.Sprintf(def, "string")
+
+	case "uuid":
+		def = fmt.Sprintf(def, "string")
+
+	case "json", "jsonb":
+		def = fmt.Sprintf(def, "map")
+
+	default:
+
+		switch pgtype.TypCategory.String {
+
+		case "A": // array type
+
+			// set criteria
+			pgelement := dialect.PgType{
+				Oid: pgtype.TypElem,
+			}
+
+			// get element type
+			err := db.Take(&pgelement).Error
+			if err != nil {
+				panic(err)
+			}
+
+			// recursively cast type to array
+			return CastPgType(pgattribute, pgelement, db)
+
+		case "C": // composite type
+			def = fmt.Sprintf(def, "string")
+
+		case "D": // date/time types
+			def = fmt.Sprintf(def, "timestamp")
+
+		case "E": // enum type
+			def = fmt.Sprintf(def, "string")
+
+		case "U": // user-defined type (should be mapped to an object)
+			def = fmt.Sprintf(def, "map")
+
+		case "S": // string type
+			def = fmt.Sprintf(def, "string")
+
+		default: // not mapped
+			panic(fmt.Sprintf("type could not be casted %s", pgtype.TypName.String))
+
+		}
+
+	}
+
+	return
+
 }
 
 // SyncCatalogFromDatabaseSchema inspects a lakehouse layer (bronze, silver, or gold),
@@ -205,6 +272,12 @@ func MapPostgresToGlueType(pgType string) string {
 //   - error: if any step of the synchronization process fails.
 func SyncCatalogFromDatabaseSchema(layerType string, tableList ...string) error {
 
+	// open database connection here to avoid multiple and unnecessary connections
+	db, err := GetConnection()
+	if err != nil {
+		return err
+	}
+
 	schemaName := NameWithPrefix(LayerToSchema(layerType))
 
 	tables, err := LoadAuroraTablesWithColumns(schemaName, tableList...)
@@ -213,7 +286,7 @@ func SyncCatalogFromDatabaseSchema(layerType string, tableList ...string) error 
 	}
 
 	for _, table := range tables {
-		if err = SyncGlueTable(layerType, table.RelName.String, ConvertPgAttributesToGlueColumns(&table)); err != nil {
+		if err = SyncGlueTable(layerType, table.RelName.String, ConvertPgAttributesToGlueColumns(&table, db)); err != nil {
 			return fmt.Errorf("failed to create or update table %s: %w", table.RelName.String, err)
 		}
 	}
