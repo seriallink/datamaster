@@ -58,7 +58,7 @@ func AuthCmd() *ishell.Cmd {
 				return
 			}
 
-			c.Println(misc.Green("Authenticated as:\n  UserId: %s\n  Account: %s\n  ARN: %s", *identity.UserId, *identity.Account, *identity.Arn))
+			c.Println(misc.Green("Authenticated as:\n  UserId: %s\n  Account: %s\n  ARN: %s\n", *identity.UserId, *identity.Account, *identity.Arn))
 			return
 
 		},

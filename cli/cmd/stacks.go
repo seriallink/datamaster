@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"embed"
+	"fmt"
 	"sort"
 	"strings"
 
@@ -17,7 +18,7 @@ func StacksCmd(templates embed.FS) *ishell.Cmd {
 		Func: func(c *ishell.Context) {
 			entries, err := templates.ReadDir(misc.TemplatesPath)
 			if err != nil {
-				c.Println(misc.Red("Failed to read stack templates: %v", err))
+				c.Println(misc.Red(fmt.Sprintf("Failed to read stack templates: %v", err)))
 				return
 			}
 

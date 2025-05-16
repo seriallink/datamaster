@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/seriallink/datamaster/cli/core"
 	"github.com/seriallink/datamaster/cli/misc"
@@ -17,7 +18,7 @@ func WhoAmICmd() *ishell.Cmd {
 
 			identity, err := core.GetCallerIdentity(context.TODO(), core.GetAWSConfig())
 			if err != nil {
-				c.Println(misc.Red("Error retrieving AWS identity: %v\n", err))
+				c.Println(misc.Red(fmt.Sprintf("Error retrieving AWS identity: %v\n", err)))
 				return
 			}
 
