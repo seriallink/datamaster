@@ -1,91 +1,41 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: Glue Catalog and Crawlers for Aurora, Stage and Data Lake Integration
+Description: Glue Catalog for the Data Master Project
 
 Resources:
 
-  GlueDatabase:
+  StageCatalog:
     Type: AWS::Glue::Database
     Properties:
       CatalogId: !Ref AWS::AccountId
       DatabaseInput:
-        Name: dm_catalog
+        Name: dm_stage
 
-  AuroraConnection:
-    Type: AWS::Glue::Connection
+  BronzeCatalog:
+    Type: AWS::Glue::Database
     Properties:
       CatalogId: !Ref AWS::AccountId
-      ConnectionInput:
-        Name: dm-aurora-connection
-        ConnectionType: JDBC
-        ConnectionProperties:
-          JDBC_CONNECTION_URL: !Join ["", ["jdbc:postgresql://", !ImportValue dm-db-writer-endpoint, ":", !ImportValue dm-db-port, "/postgres"]]
-          SECRET_ID: !ImportValue dm-db-secret-arn
-        PhysicalConnectionRequirements:
-          AvailabilityZone: !Select [ 0, !GetAZs "" ]
-          SubnetId: !ImportValue dm-public-subnet-az1-id
-          SecurityGroupIdList:
-            - !ImportValue dm-db-sg-id
+      DatabaseInput:
+        Name: dm_bronze
 
-  AuroraCrawler:
-    Type: AWS::Glue::Crawler
+  SilverCatalog:
+    Type: AWS::Glue::Database
     Properties:
-      Name: dm-aurora-crawler
-      Role: !ImportValue dm-glue-role-arn
-      DatabaseName: !Ref GlueDatabase
-      Targets:
-        JdbcTargets:
-          - ConnectionName: !Ref AuroraConnection
-            Path: "dm/%"
-      RecrawlPolicy:
-        RecrawlBehavior: CRAWL_EVERYTHING
-      SchemaChangePolicy:
-        DeleteBehavior: DELETE_FROM_DATABASE
-        UpdateBehavior: UPDATE_IN_DATABASE
-      Tags:
-        Project: DataMaster
-        Component: Catalog
+      CatalogId: !Ref AWS::AccountId
+      DatabaseInput:
+        Name: dm_silver
 
-  StageCrawler:
-    Type: AWS::Glue::Crawler
+  GoldCatalog:
+    Type: AWS::Glue::Database
     Properties:
-      Name: dm-stage-crawler
-      Role: !ImportValue dm-glue-role-arn
-      DatabaseName: !Ref GlueDatabase
-      Targets:
-        S3Targets:
-          - Path: !Join ["", ["s3://", !ImportValue dm-stage-bucket, "/"]]
-      RecrawlPolicy:
-        RecrawlBehavior: CRAWL_EVERYTHING
-      SchemaChangePolicy:
-        DeleteBehavior: DELETE_FROM_DATABASE
-        UpdateBehavior: UPDATE_IN_DATABASE
-      Tags:
-        Project: DataMaster
-        Component: Catalog
-
-  DataLakeCrawler:
-    Type: AWS::Glue::Crawler
-    Properties:
-      Name: dm-datalake-crawler
-      Role: !ImportValue dm-glue-role-arn
-      DatabaseName: !Ref GlueDatabase
-      Targets:
-        S3Targets:
-          - Path: !Join ["", ["s3://", !ImportValue dm-datalake-bucket, "/"]]
-      RecrawlPolicy:
-        RecrawlBehavior: CRAWL_EVERYTHING
-      SchemaChangePolicy:
-        DeleteBehavior: DELETE_FROM_DATABASE
-        UpdateBehavior: UPDATE_IN_DATABASE
-      Tags:
-        Project: DataMaster
-        Component: Catalog
+      CatalogId: !Ref AWS::AccountId
+      DatabaseInput:
+        Name: dm_gold
 
   FirehoseTable:
     Type: AWS::Glue::Table
     Properties:
       CatalogId: !Ref AWS::AccountId
-      DatabaseName: !Ref GlueDatabase
+      DatabaseName: !Ref StageCatalog
       TableInput:
         Name: firehose_stream
         TableType: EXTERNAL_TABLE
@@ -109,26 +59,26 @@ Resources:
 
 Outputs:
 
-  GlueDatabaseName:
-    Description: Glue database for catalog
-    Value: !Ref GlueDatabase
+  StageDatabaseName:
+    Description: Glue database for staging layer
+    Value: !Ref StageCatalog
     Export:
-      Name: dm-glue-database-name
+      Name: dm-stage-db
 
-  AuroraCrawlerName:
-    Description: Aurora Crawler name
-    Value: !Ref AuroraCrawler
+  BronzeDatabaseName:
+    Description: Glue database for bronze layer
+    Value: !Ref BronzeCatalog
     Export:
-      Name: dm-aurora-crawler-name
+      Name: dm-bronze-db
 
-  StageCrawlerName:
-    Description: Stage Crawler name
-    Value: !Ref StageCrawler
+  SilverDatabaseName:
+    Description: Glue database for silver layer
+    Value: !Ref SilverCatalog
     Export:
-      Name: dm-stage-crawler-name
+      Name: dm-silver-db
 
-  DataLakeCrawlerName:
-    Description: Data Lake Crawler name
-    Value: !Ref DataLakeCrawler
+  GoldDatabaseName:
+    Description: Glue database for gold layer
+    Value: !Ref GoldCatalog
     Export:
-      Name: dm-datalake-crawler-name
+      Name: dm-gold-db
