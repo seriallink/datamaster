@@ -2,8 +2,10 @@ package main
 
 import (
 	"embed"
+	"fmt"
 
 	"github.com/seriallink/datamaster/cli/cmd"
+	"github.com/seriallink/datamaster/cli/core"
 	"github.com/seriallink/datamaster/cli/misc"
 
 	"github.com/abiosoft/ishell"
@@ -16,6 +18,12 @@ var templates embed.FS
 var scripts embed.FS
 
 func main() {
+
+	defer func() {
+		if err := core.CloseConnection(); err != nil {
+			fmt.Println(misc.Red("Error closing db connection: %v\n", err))
+		}
+	}()
 
 	shell := ishell.New()
 
@@ -32,6 +40,7 @@ func main() {
 	shell.AddCmd(cmd.StacksCmd(templates))
 	shell.AddCmd(cmd.DeployCmd(templates))
 	shell.AddCmd(cmd.MigrationCmd(scripts))
+	shell.AddCmd(cmd.CatalogCmd())
 	shell.AddCmd(cmd.ExitCmd(shell))
 	shell.AddCmd(cmd.ClearCmd(shell))
 	shell.AddCmd(cmd.Help())
