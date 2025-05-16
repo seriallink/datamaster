@@ -1,20 +1,18 @@
 package misc
 
+// Defaults used throughout the CLI.
 const (
-	DefaultStackPrefix = "dm"
-	TemplatesPath      = "infra/templates"
-	TemplateExtension  = ".yml"
+	DefaultProjectPrefix = "dm"
+	TemplatesPath        = "infra/templates"
+	TemplateExtension    = ".yml"
+	DefaultScript        = "database/migrations/data-master.sql"
 )
 
-const (
-	DefaultScript = "database/migrations/data-master.sql"
-)
-
+// Logical names of all stacks managed by the CLI.
 const (
 	StackNameNetwork       = "network"
 	StackNameRoles         = "roles"
 	StackNameSecurity      = "security"
-	StackNameJumpbox       = "jumpbox"
 	StackNameDatabase      = "database"
 	StackNameStorage       = "storage"
 	StackNameCatalog       = "catalog"
@@ -25,4 +23,24 @@ const (
 	StackNameConsumption   = "consumption"
 	StackNameObservability = "observability"
 	StackNameCosts         = "costs"
+)
+
+const (
+	RelKindTable     = "r"
+	RelKindPartition = "p"
+	RelKindView      = "v"
+)
+
+// Logical names of all schemas managed by the CLI.
+const (
+	SchemaCore = "core"
+	SchemaView = "view"
+	SchemaMart = "mart"
+)
+
+// Logical names of all layers managed by the CLI.
+const (
+	LayerBronze = "bronze"
+	LayerSilver = "silver"
+	LayerGold   = "gold"
 )
