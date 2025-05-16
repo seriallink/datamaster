@@ -30,6 +30,26 @@ Resources:
         - Key: Component
           Value: Security
 
+  GlueSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow internal Glue access (Spark jobs)
+      VpcId: !ImportValue dm-vpc-id
+      Tags:
+        - Key: Project
+          Value: DataMaster
+        - Key: Component
+          Value: Security
+
+  GlueSecurityGroupSelfIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref GlueSecurityGroup
+      IpProtocol: -1
+      FromPort: 0
+      ToPort: 65535
+      SourceSecurityGroupId: !Ref GlueSecurityGroup
+
   DBSecret:
     Type: AWS::SecretsManager::Secret
     Properties:
@@ -67,6 +87,12 @@ Outputs:
     Value: !Ref DBAccessSecurityGroup
     Export:
       Name: dm-db-sg-id
+
+  GlueSecurityGroupId:
+    Description: Security Group ID for Glue Connections
+    Value: !Ref GlueSecurityGroup
+    Export:
+      Name: dm-glue-sg-id
 
   SecretArn:
     Description: Secret ARN

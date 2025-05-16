@@ -13,14 +13,47 @@ Resources:
       RoleArn: !ImportValue dm-lakeformation-role-arn
       UseServiceLinkedRole: false
 
-  GrantLakeFormationDatabasePermission:
+  GrantLakePermissionStage:
     Type: AWS::LakeFormation::Permissions
     Properties:
       DataLakePrincipal:
         DataLakePrincipalIdentifier: !ImportValue dm-lakeformation-role-arn
       Resource:
         DatabaseResource:
-          Name: !ImportValue dm-glue-database-name
+          Name: !ImportValue dm-stage-db
+      Permissions:
+        - ALL
+
+  GrantLakePermissionBronze:
+    Type: AWS::LakeFormation::Permissions
+    Properties:
+      DataLakePrincipal:
+        DataLakePrincipalIdentifier: !ImportValue dm-lakeformation-role-arn
+      Resource:
+        DatabaseResource:
+          Name: !ImportValue dm-bronze-db
+      Permissions:
+        - ALL
+
+  GrantLakePermissionSilver:
+    Type: AWS::LakeFormation::Permissions
+    Properties:
+      DataLakePrincipal:
+        DataLakePrincipalIdentifier: !ImportValue dm-lakeformation-role-arn
+      Resource:
+        DatabaseResource:
+          Name: !ImportValue dm-silver-db
+      Permissions:
+        - ALL
+
+  GrantLakePermissionGold:
+    Type: AWS::LakeFormation::Permissions
+    Properties:
+      DataLakePrincipal:
+        DataLakePrincipalIdentifier: !ImportValue dm-lakeformation-role-arn
+      Resource:
+        DatabaseResource:
+          Name: !ImportValue dm-gold-db
       Permissions:
         - ALL
 

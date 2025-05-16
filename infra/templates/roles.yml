@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: All IAM roles required for the Data Master project
+Description: All IAM Roles for the Data Master Project
 
 Resources:
 
@@ -107,22 +107,22 @@ Resources:
             Version: "2012-10-17"
             Statement:
               - Effect: Allow
-                Action:
-                  - glue:*
+                Action: glue:*
                 Resource: "*"
               - Effect: Allow
-                Action:
-                  - secretsmanager:GetSecretValue
+                Action: secretsmanager:GetSecretValue
                 Resource: "*"
               - Effect: Allow
-                Action:
-                  - logs:*
+                Action: logs:*
                 Resource: "*"
               - Effect: Allow
                 Action:
                   - s3:GetObject
                   - s3:PutObject
                   - s3:ListBucket
+                Resource: "*"
+              - Effect: Allow
+                Action: iam:PassRole
                 Resource: "*"
       Tags:
         - Key: Project

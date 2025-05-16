@@ -95,6 +95,22 @@ Resources:
       SubnetId: !Ref PublicSubnetAZ2
       RouteTableId: !Ref RouteTable
 
+  S3VPCEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.s3
+      VpcId: !Ref VPC
+      RouteTableIds:
+        - !Ref RouteTable
+      VpcEndpointType: Gateway
+      Tags:
+        - Key: Name
+          Value: dm-s3-endpoint
+        - Key: Project
+          Value: DataMaster
+        - Key: Component
+          Value: Network
+
 Outputs:
 
   VpcId:
@@ -120,3 +136,9 @@ Outputs:
     Value: !Ref PublicSubnetAZ2
     Export:
       Name: dm-public-subnet-az2-id
+
+  S3VPCEndpointId:
+    Description: ID of the S3 VPC Endpoint
+    Value: !Ref S3VPCEndpoint
+    Export:
+      Name: dm-s3-vpc-endpoint-id
