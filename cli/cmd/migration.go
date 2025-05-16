@@ -36,7 +36,7 @@ func MigrationCmd(migrations embed.FS) *ishell.Cmd {
 			}
 
 			if err := core.RunMigration(migrations, *script); err != nil {
-				c.Println(misc.Red("Migration failed:", err))
+				c.Println(misc.Red(fmt.Sprintf("Migration failed: %v", err)))
 				return
 			}
 
