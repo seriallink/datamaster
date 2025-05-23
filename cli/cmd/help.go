@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"embed"
+	"fmt"
 	"sort"
 	"strings"
 
@@ -8,102 +10,7 @@ import (
 	"github.com/seriallink/datamaster/cli/misc"
 )
 
-var helpDetails map[string]string
-
-func init() {
-
-	helpDetails = make(map[string]string)
-
-	helpDetails["auth"] = misc.Trim(`
-
-		Authenticate with AWS.
-
-		You can authenticate using:
-		  - A named AWS profile
-		  - An access key and secret
-
-		The CLI will guide you through the process interactively.
-
-	`)
-
-	helpDetails["whoami"] = misc.Trim(`
-
-			Show the AWS identity used in the current session.
-
-			Displays:
-			  - AWS Account ID
-			  - IAM Role/User
-			  - Region
-
-		`)
-
-	helpDetails["deploy"] = misc.Trim(`
-
-			Deploy infrastructure.
-
-			Usage:
-			  deploy
-			      Deploy all infrastructure stacks in the correct order.
-
-			  deploy --stack <name> [--params <k1=v1,...>]
-			      Deploy a specific stack and optionally pass parameters.
-
-			Examples:
-			  deploy --stack network
-			  deploy --stack storage --params "Environment=prod,EnableLogs=true"
-
-			Note:
-			  To see a list of available stack names, run: stacks
-
-		`)
-
-	helpDetails["migration"] = misc.Trim(`
-
-			Run Aurora database migrations.
-
-			Usage:
-			  migration
-			      Executes the default migration script (data-master.sql) against Aurora.
-
-			  migration --script <filename>
-			      Executes a specific migration script embedded in the binary.
-
-			Examples:
-			  migration
-			  migration --script database/data-master.sql
-
-			Note:
-			  To see a list of available scripts, run: scripts
-
-		`)
-
-	helpDetails["catalog"] = misc.Trim(`
-
-		Create or update Glue Catalog tables from Aurora schemas.
-
-		Usage:
-		  catalog
-		      Populate all tables in all standard layers (bronze, silver, gold).
-
-		  catalog --layer <name>
-		      Populate all tables in a specific layer.
-
-		  catalog --layer <name> --tables <name1,name2,...>
-		      Populate specific tables in a specific layer.
-
-		Examples:
-		  catalog
-		  catalog --layer bronze
-		  catalog --layer bronze --tables order,customer
-
-		Note:
-		  Tables will be created if they do not exist, or updated if they do.
-
-	`)
-
-}
-
-func Help() *ishell.Cmd {
+func Help(helps embed.FS) *ishell.Cmd {
 	return &ishell.Cmd{
 		Name: "help",
 		Help: "Show help for commands. Use 'help <command>' for details.",
@@ -126,13 +33,18 @@ func Help() *ishell.Cmd {
 			}
 
 			cmdName := c.Args[0]
+			filename := fmt.Sprintf("cli/help/%s.tmpl", cmdName)
+
+			content, err := helps.ReadFile(filename)
+			if err == nil {
+				c.Printf("Command: %s\n\n%s\n", cmdName, string(content))
+				return
+			}
+
+			// fallback to built-in command help
 			for _, cmd := range cmds {
 				if cmd.Name == cmdName {
-					if detailed, ok := helpDetails[cmdName]; ok {
-						c.Printf("Command: %s\n\n%s\n", cmd.Name, detailed)
-					} else {
-						c.Printf("Command: %s\n\n%s\n", cmd.Name, cmd.Help)
-					}
+					c.Printf("Command: %s\n\n%s\n", cmd.Name, cmd.Help)
 					return
 				}
 			}
