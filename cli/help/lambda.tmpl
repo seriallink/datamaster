@@ -1,0 +1,22 @@
+Deploy AWS Lambda functions using embedded artifacts.
+
+Usage:
+  lambda
+      Deploy all embedded Lambda functions with default configuration.
+
+  lambda --name <function> [--memory <mb>] [--timeout <seconds>]
+      Deploy a specific Lambda function with optional memory and timeout settings.
+
+Flags:
+  --name       Lambda function name (omit to deploy all embedded functions)
+  --memory     Memory size in MB (default: 128)
+  --timeout    Timeout in seconds (default: 10)
+
+Examples:
+  lambda --name firehose-processor
+  lambda --name validate-contract --memory 256 --timeout 15
+  lambda
+
+Note:
+  ZIP artifacts are embedded in the CLI and automatically uploaded to S3 during deployment.
+  To see a list of available Lambda artifacts, run: artifacts
