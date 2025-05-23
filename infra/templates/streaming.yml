@@ -10,6 +10,8 @@ Resources:
       StreamModeDetails:
         StreamMode: ON_DEMAND
       Tags:
+        - Key: Name
+          Value: dm-cdc-stream
         - Key: Project
           Value: DataMaster
         - Key: Component
@@ -18,33 +20,60 @@ Resources:
   FirehoseDeliveryStream:
     Type: AWS::KinesisFirehose::DeliveryStream
     Properties:
-      DeliveryStreamName: dm-firehose-stream
-      DeliveryStreamType: KinesisStreamAsSource
-      KinesisStreamSourceConfiguration:
-        KinesisStreamARN: !GetAtt KinesisStream.Arn
-        RoleARN: !ImportValue dm-firehose-role-arn
+      DeliveryStreamType: DirectPut  # ← EventBridge Pipe
       ExtendedS3DestinationConfiguration:
         BucketARN:
           Fn::Sub:
             - "arn:aws:s3:::${Bucket}"
             - Bucket: !ImportValue dm-stage-bucket
-        Prefix: streaming/
-        CompressionFormat: UNCOMPRESSED
-        DataFormatConversionConfiguration:
-          Enabled: true
-          InputFormatConfiguration:
-            Deserializer:
-              OpenXJsonSerDe: {}
-          OutputFormatConfiguration:
-            Serializer:
-              ParquetSerDe:
-                Compression: GZIP
-          SchemaConfiguration:
-            DatabaseName: "dm_catalog"
-            TableName: "firehose_stream"
-            RoleARN: !ImportValue dm-firehose-role-arn
         RoleARN: !ImportValue dm-firehose-role-arn
+        Prefix: raw/!{partitionKeyFromLambda:table_name}/  # <- Lambda
+        ErrorOutputPrefix: errors/
+        BufferingHints:
+          SizeInMBs: 64
+          IntervalInSeconds: 300 # 5 minutes
+        CompressionFormat: GZIP
+        DynamicPartitioningConfiguration:
+          Enabled: true
+        CloudWatchLoggingOptions:
+          Enabled: true
+          LogGroupName: !Ref FirehoseLogGroup
+          LogStreamName: !Ref FirehoseLogStream
+        ProcessingConfiguration:
+          Enabled: true
+          Processors:
+            - Type: Lambda
+              Parameters:
+                - ParameterName: LambdaArn
+                  ParameterValue: !ImportValue dm-firehose-processor-arn
       Tags:
+        - Key: Project
+          Value: DataMaster
+        - Key: Component
+          Value: Streaming
+
+  FirehoseLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/kinesisfirehose/dm-cdc-stream
+      RetentionInDays: 7
+
+  FirehoseLogStream:
+    Type: AWS::Logs::LogStream
+    Properties:
+      LogGroupName: !Ref FirehoseLogGroup
+
+  DMSSubnetGroup:
+    Type: AWS::DMS::ReplicationSubnetGroup
+    Properties:
+      ReplicationSubnetGroupIdentifier: dm-subnet-group
+      ReplicationSubnetGroupDescription: Subnet group for DMS
+      SubnetIds:
+        - !ImportValue dm-public-subnet-az1-id
+        - !ImportValue dm-public-subnet-az2-id
+      Tags:
+        - Key: Name
+          Value: dm-dms-subnet-group
         - Key: Project
           Value: DataMaster
         - Key: Component
@@ -59,6 +88,7 @@ Resources:
       ServerName: !ImportValue dm-db-writer-endpoint
       Port: !ImportValue dm-db-port
       DatabaseName: !ImportValue dm-db-name
+      SslMode: require
       Username: !Join ["", ["{{resolve:secretsmanager:", !ImportValue dm-db-secret-arn, ":SecretString:username}}"]]
       Password: !Join ["", ["{{resolve:secretsmanager:", !ImportValue dm-db-secret-arn, ":SecretString:password}}"]]
       Tags:
@@ -76,48 +106,170 @@ Resources:
       KinesisSettings:
         MessageFormat: json
         StreamArn: !GetAtt KinesisStream.Arn
-        ServiceAccessRoleArn: !ImportValue dm-firehose-role-arn
+        ServiceAccessRoleArn: !ImportValue dm-kinesis-role-arn
       Tags:
         - Key: Project
           Value: DataMaster
         - Key: Component
           Value: Streaming
 
-  DMSReplicationConfig:
-    Type: AWS::DMS::ReplicationConfig
+  DMSReplicationInstance:
+    Type: AWS::DMS::ReplicationInstance
     Properties:
-      ReplicationConfigIdentifier: dm-cdc-config
-      ReplicationType: cdc
-      SourceEndpointArn: !Ref DMSSourceEndpoint
-      TargetEndpointArn: !Ref DMSTargetEndpoint
-      ComputeConfig:
-        MinCapacityUnits: 2
-        MaxCapacityUnits: 4
-      TableMappings:
-        rules:
-          - rule-type: selection
-            rule-id: "1"
-            rule-name: "1"
-            object-locator:
-              schema-name: dm
-              table-name: "%"
-            rule-action: include
+      ReplicationInstanceIdentifier: dm-cdc-instance
+      ReplicationInstanceClass: dms.t3.micro
+      AllocatedStorage: 100
+      VpcSecurityGroupIds:
+        - !ImportValue dm-dms-vpc-sg-id
+      ReplicationSubnetGroupIdentifier: !Ref DMSSubnetGroup
+      PubliclyAccessible: true
+      AutoMinorVersionUpgrade: true
+      MultiAZ: false
       Tags:
         - Key: Project
           Value: DataMaster
         - Key: Component
           Value: Streaming
+
+  DMSReplicationTask:
+    Type: AWS::DMS::ReplicationTask
+    Properties:
+      ReplicationTaskIdentifier: dm-cdc-task
+      SourceEndpointArn: !Ref DMSSourceEndpoint
+      TargetEndpointArn: !Ref DMSTargetEndpoint
+      ReplicationInstanceArn: !Ref DMSReplicationInstance
+      MigrationType: full-load-and-cdc
+      TableMappings: !Sub |
+        {
+          "rules": [
+            {
+              "rule-type": "selection",
+              "rule-id": "1",
+              "rule-name": "dm-include-all-core-rule",
+              "object-locator": {
+                "schema-name": "dm_core",
+                "table-name": "%"
+              },
+              "rule-action": "include"
+            }
+          ]
+        }
+      ReplicationTaskSettings: !Sub |
+        {
+          "Logging": {
+            "EnableLogging": true,
+            "LogComponents": [
+              { "Id": "SOURCE_UNLOAD", "Severity": "LOGGER_SEVERITY_DEFAULT" },
+              { "Id": "TARGET_LOAD", "Severity": "LOGGER_SEVERITY_DEFAULT" },
+              { "Id": "TASK_MANAGER", "Severity": "LOGGER_SEVERITY_DEFAULT" }
+            ]
+          },
+          "TargetMetadata": {
+            "TargetSchema": "",
+            "SupportLobs": true,
+            "FullLobMode": false,
+            "LobChunkSize": 64,
+            "LimitedSizeLobMode": true,
+            "LobMaxSize": 32,
+            "BatchApplyEnabled": true,
+            "ParallelApplyThreads": 4,
+            "ParallelApplyBufferSize": 1000,
+            "ParallelApplyQueuesPerThread": 1
+          },
+          "FullLoadSettings": {
+            "TargetTablePrepMode": "DO_NOTHING",
+            "CreatePkAfterFullLoad": false,
+            "StopTaskCachedChangesApplied": false,
+            "StopTaskCachedChangesNotApplied": false,
+            "MaxFullLoadSubTasks": 8,
+            "TransactionConsistencyTimeout": 600
+          }
+        }
+      Tags:
+        - Key: Project
+          Value: DataMaster
+        - Key: Component
+          Value: Streaming
+
+  #  DMSReplicationConfig:
+#    Type: AWS::DMS::ReplicationConfig
+#    Properties:
+#      ReplicationConfigIdentifier: dm-cdc-config
+#      ReplicationType: cdc
+#      SourceEndpointArn: !Ref DMSSourceEndpoint
+#      TargetEndpointArn: !Ref DMSTargetEndpoint
+#      ComputeConfig:
+#        MinCapacityUnits: 2
+#        MaxCapacityUnits: 4
+#      TableMappings:
+#        rules:
+#          - rule-type: selection
+#            rule-id: "1"
+#            rule-name: "dm-include-all-core-rule"
+#            object-locator:
+#              schema-name: dm_core
+#              table-name: "%"
+#            rule-action: include
+#      Tags:
+#        - Key: Project
+#          Value: DataMaster
+#        - Key: Component
+#          Value: Streaming
+
+  FirehoseProcessorPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !ImportValue dm-firehose-processor-arn
+      Action: lambda:InvokeFunction
+      Principal: firehose.amazonaws.com
+      SourceAccount: !Ref AWS::AccountId
 
 Outputs:
 
   KinesisStreamArn:
-    Description: Kinesis Stream ARN
+    Description: Kinesis stream ARN
     Value: !GetAtt KinesisStream.Arn
     Export:
       Name: dm-kinesis-stream-arn
 
-  DMSReplicationConfigId:
-    Description: DMS Serverless Replication Config ID
-    Value: !Ref DMSReplicationConfig
+  FirehoseStreamArn:
+    Description: Firehose stream ARN
+    Value: !GetAtt FirehoseDeliveryStream.Arn
     Export:
-      Name: dm-dms-replication-config-id
+      Name: dm-firehose-stream-arn
+
+  DMSSubnetGroupId:
+    Description: Replication Subnet Group ID
+    Value: !Ref DMSSubnetGroup
+    Export:
+      Name: dm-subnet-group-id
+
+  DMSSourceEndpoint:
+    Description: DMS source endpoint ARN
+    Value: !Ref DMSSourceEndpoint
+    Export:
+      Name: dm-dms-source-endpoint
+
+  DMSTargetEndpoint:
+    Description: DMS target endpoint ARN
+    Value: !Ref DMSTargetEndpoint
+    Export:
+      Name: dm-dms-target-endpoint
+
+  DMSReplicationInstanceArn:
+    Description: ARN of the DMS replication instance
+    Value: !Ref DMSReplicationInstance
+    Export:
+      Name: dm-dms-instance-arn
+
+  DMSReplicationTaskArn:
+    Description: ARN of the DMS replication task
+    Value: !Ref DMSReplicationTask
+    Export:
+      Name: dm-dms-task-arn
+
+#  DMSReplicationConfig:
+#    Description: DMS replication config identifier
+#    Value: !Ref DMSReplicationConfig
+#    Export:
+#      Name: dm-dms-replication-config

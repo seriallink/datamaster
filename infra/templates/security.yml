@@ -80,6 +80,26 @@ Resources:
             Action: secretsmanager:GetSecretValue
             Resource: "*"
 
+  DMSVpcSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security Group for DMS Replication Instance
+      VpcId: !ImportValue dm-vpc-id
+      Tags:
+        - Key: Project
+          Value: DataMaster
+        - Key: Component
+          Value: Security
+
+  DMSIngressToAurora:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref DBAccessSecurityGroup
+      IpProtocol: tcp
+      FromPort: 5432
+      ToPort: 5432
+      SourceSecurityGroupId: !Ref DMSVpcSecurityGroup
+
 Outputs:
 
   SecurityGroupId:
@@ -99,3 +119,9 @@ Outputs:
     Value: !Ref DBSecret
     Export:
       Name: dm-db-secret-arn
+
+  DMSVpcSecurityGroup:
+    Description: Security Group ID for DMS Replication Instance
+    Value: !Ref DMSVpcSecurityGroup
+    Export:
+      Name: dm-dms-vpc-sg-id

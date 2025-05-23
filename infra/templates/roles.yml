@@ -16,16 +16,70 @@ Resources:
             Action: sts:AssumeRole
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AmazonDMSVPCManagementRole
+      Policies:
+        - PolicyName: DMSVpcInlinePermissions
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: AllowAssumeKinesisRole
+                Effect: Allow
+                Action: sts:AssumeRole
+                Resource: arn:aws:iam::833222420550:role/dm-kinesis-role
+              - Sid: AllowCloudWatchLogs
+                Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:DescribeLogGroups
+                  - logs:DescribeLogStreams
+                  - logs:PutLogEvents
+                Resource: arn:aws:logs:*:*:log-group:/aws/dms/*
       Tags:
         - Key: Project
           Value: DataMaster
         - Key: Component
           Value: Roles
 
-  DMSKinesisAccessRole:
+  PipeExecutionRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: dm-dms-kinesis-role
+      RoleName: dm-pipe-execution-role
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: pipes.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: PipeKinesisToFirehosePolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - kinesis:GetRecords
+                  - kinesis:GetShardIterator
+                  - kinesis:DescribeStream
+                  - kinesis:ListShards
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - firehose:PutRecord
+                  - firehose:PutRecordBatch
+                Resource: "*"
+      Tags:
+        - Key: Name
+          Value: dm-pipe-execution-role
+        - Key: Project
+          Value: DataMaster
+        - Key: Component
+          Value: Roles
+
+  KinesisAccessRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: dm-kinesis-role
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
@@ -34,12 +88,13 @@ Resources:
               Service: dms.amazonaws.com
             Action: sts:AssumeRole
       Policies:
-        - PolicyName: DmsKinesisAccessPolicy
+        - PolicyName: KinesisAccessPolicy
           PolicyDocument:
             Version: "2012-10-17"
             Statement:
               - Effect: Allow
                 Action:
+                  - kinesis:DescribeStream
                   - kinesis:PutRecord
                   - kinesis:PutRecords
                 Resource: "*"
@@ -81,12 +136,47 @@ Resources:
                   - glue:GetTable
                   - glue:GetTableVersion
                   - glue:GetTableVersions
+                  - lambda:InvokeFunction
                 Resource: "*"
       Tags:
         - Key: Project
           Value: DataMaster
         - Key: Component
           Value: Roles
+
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: dm-lambda-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: dm-lambda-policy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: arn:aws:logs:*:*:*
+              - Effect: Allow
+                Action:
+                  - firehose:PutRecord
+                  - firehose:PutRecordBatch
+                Resource: arn:aws:firehose:*:*:*
+              - Effect: Allow
+                Action:
+                  - s3:PutObject
+                  - s3:GetObject
+                Resource: arn:aws:s3:::dm-*/*
+
 
   GlueServiceRole:
     Type: AWS::IAM::Role
@@ -342,17 +432,29 @@ Outputs:
     Export:
       Name: dm-dms-vpc-role-arn
 
-  DMSKinesisRoleArn:
+  KinesisRoleArn:
     Description: Role for DMS to write to Kinesis
-    Value: !GetAtt DMSKinesisAccessRole.Arn
+    Value: !GetAtt KinesisAccessRole.Arn
     Export:
-      Name: dm-dms-kinesis-role-arn
+      Name: dm-kinesis-role-arn
+
+  PipeExecutionRoleArn:
+    Description: Role for EventBridge Pipe to write to Firehose
+    Value: !GetAtt PipeExecutionRole.Arn
+    Export:
+      Name: dm-pipe-execution-role-arn
 
   FirehoseRoleArn:
     Description: Role used by Firehose and DMS target endpoint
     Value: !GetAtt FirehoseAccessRole.Arn
     Export:
       Name: dm-firehose-role-arn
+
+  LambdaExecutionRoleArn:
+    Description: ARN of the IAM role used by Lambda functions
+    Value: !GetAtt LambdaExecutionRole.Arn
+    Export:
+      Name: dm-lambda-role-arn
 
   GlueServiceRoleArn:
     Description: Glue crawler execution role

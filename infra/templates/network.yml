@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: Network Stack for the Data Master Project (VPC, Subnets, Routing)
+Description: Network Stack for the Data Master Project
 
 Resources:
 
@@ -43,7 +43,7 @@ Resources:
       MapPublicIpOnLaunch: true
       Tags:
         - Key: Name
-          Value: dm-subnet-az1
+          Value: dm-public-subnet-az1
         - Key: Project
           Value: DataMaster
         - Key: Component
@@ -58,7 +58,7 @@ Resources:
       MapPublicIpOnLaunch: true
       Tags:
         - Key: Name
-          Value: dm-subnet-az2
+          Value: dm-public-subnet-az2
         - Key: Project
           Value: DataMaster
         - Key: Component
@@ -95,17 +95,31 @@ Resources:
       SubnetId: !Ref PublicSubnetAZ2
       RouteTableId: !Ref RouteTable
 
-  S3VPCEndpoint:
-    Type: AWS::EC2::VPCEndpoint
+  PrivateSubnetAZ1:
+    Type: AWS::EC2::Subnet
     Properties:
-      ServiceName: !Sub com.amazonaws.${AWS::Region}.s3
       VpcId: !Ref VPC
-      RouteTableIds:
-        - !Ref RouteTable
-      VpcEndpointType: Gateway
+      CidrBlock: 10.0.11.0/24
+      AvailabilityZone: us-east-1a
+      MapPublicIpOnLaunch: false
       Tags:
         - Key: Name
-          Value: dm-s3-endpoint
+          Value: dm-private-subnet-az1
+        - Key: Project
+          Value: DataMaster
+        - Key: Component
+          Value: Network
+
+  PrivateSubnetAZ2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.12.0/24
+      AvailabilityZone: us-east-1b
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: dm-private-subnet-az2
         - Key: Project
           Value: DataMaster
         - Key: Component
@@ -137,8 +151,20 @@ Outputs:
     Export:
       Name: dm-public-subnet-az2-id
 
-  S3VPCEndpointId:
-    Description: ID of the S3 VPC Endpoint
-    Value: !Ref S3VPCEndpoint
+  PrivateSubnetAZ1Id:
+    Description: First private subnet
+    Value: !Ref PrivateSubnetAZ1
     Export:
-      Name: dm-s3-vpc-endpoint-id
+      Name: dm-private-subnet-az1
+
+  PrivateSubnetAZ2Id:
+    Description: Second private subnet
+    Value: !Ref PrivateSubnetAZ2
+    Export:
+      Name: dm-private-subnet-az2
+
+  RouteTableId:
+    Description: Public Route Table ID for S3 VPCEndpoint
+    Value: !Ref RouteTable
+    Export:
+      Name: dm-public-rt-id

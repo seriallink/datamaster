@@ -11,11 +11,17 @@ import (
 	"github.com/abiosoft/ishell"
 )
 
+//go:embed cli/help/*.tmpl
+var helps embed.FS
+
 //go:embed infra/templates/*.yml
-var templates embed.FS
+var stacks embed.FS
 
 //go:embed database/migrations/*.sql
 var scripts embed.FS
+
+//go:embed artifacts/*.zip
+var artifacts embed.FS
 
 func main() {
 
@@ -37,13 +43,18 @@ func main() {
 
 	shell.AddCmd(cmd.AuthCmd())
 	shell.AddCmd(cmd.WhoAmICmd())
-	shell.AddCmd(cmd.StacksCmd(templates))
-	shell.AddCmd(cmd.DeployCmd(templates))
+	shell.AddCmd(cmd.StacksCmd(stacks))
+	shell.AddCmd(cmd.DeployCmd(stacks))
 	shell.AddCmd(cmd.MigrationCmd(scripts))
 	shell.AddCmd(cmd.CatalogCmd())
+	shell.AddCmd(cmd.PipeCmd())
+	shell.AddCmd(cmd.ArtifactsCmd(artifacts))
+	shell.AddCmd(cmd.LambdaCmd(artifacts))
+	shell.AddCmd(cmd.StreamCmd())
+	shell.AddCmd(cmd.InspectCmd())
 	shell.AddCmd(cmd.ExitCmd(shell))
 	shell.AddCmd(cmd.ClearCmd(shell))
-	shell.AddCmd(cmd.Help())
+	shell.AddCmd(cmd.Help(helps))
 
 	shell.Run()
 
