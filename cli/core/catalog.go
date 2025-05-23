@@ -75,7 +75,7 @@ func GetStorageLocation(layerType, tableName string) (string, error) {
 }
 
 // LoadAuroraTablesWithColumns queries PostgreSQL system catalogs to load user-defined tables,
-// their columns and data types from a given schema.
+// their columns, and data types from a given schema.
 //
 // Optionally filters by table name. Returns a slice of PgClass structs populated with PgAttributes.
 //
@@ -272,7 +272,7 @@ func CastPgType(pgattribute dialect.PgAttribute, pgtype dialect.PgType, db *gorm
 //   - error: if any step of the synchronization process fails.
 func SyncCatalogFromDatabaseSchema(layerType string, tableList ...string) error {
 
-	// open database connection here to avoid multiple and unnecessary connections
+	// open a database connection here to avoid multiple and unnecessary connections
 	db, err := GetConnection()
 	if err != nil {
 		return err

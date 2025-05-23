@@ -1,0 +1,19 @@
+Create or update Glue Catalog tables from Aurora schemas.
+
+Usage:
+  catalog
+      Populate all tables in all standard layers (bronze, silver, gold).
+
+  catalog --layer <name>
+      Populate all tables in a specific layer.
+
+  catalog --layer <name> --tables <name1,name2,...>
+      Populate specific tables in a specific layer.
+
+Examples:
+  catalog
+  catalog --layer bronze
+  catalog --layer bronze --tables order,customer
+
+Note:
+  Tables will be created if they do not exist, or updated if they do.

@@ -3,14 +3,12 @@ package cmd
 import (
 	"flag"
 	"fmt"
-	"io"
 	"strings"
 
 	"github.com/seriallink/datamaster/cli/core"
 	"github.com/seriallink/datamaster/cli/misc"
 
 	"github.com/abiosoft/ishell"
-	"github.com/fatih/color"
 )
 
 func CatalogCmd() *ishell.Cmd {
@@ -18,18 +16,11 @@ func CatalogCmd() *ishell.Cmd {
 		Name: "catalog",
 		Help: "Create or update catalog tables",
 		Func: WithAuth(func(c *ishell.Context) {
-			fs := flag.NewFlagSet("catalog", flag.ContinueOnError)
-			fs.SetOutput(io.Discard)
 
+			fs := flag.NewFlagSet("catalog", flag.ContinueOnError)
 			layer := fs.String("layer", "", "Catalog layer (bronze, silver, gold)")
 			tables := fs.String("tables", "", "Comma-separated list of table names to include")
-
-			if err := fs.Parse(c.Args); err != nil {
-				c.Println(misc.Red(fmt.Sprintf("Invalid arguments: %v", err)))
-				return
-			}
-			if fs.NArg() > 0 {
-				c.Println(misc.Red(fmt.Sprintf("Unexpected argument: %s", fs.Arg(0))))
+			if !ParseShellFlags(c, fs) {
 				return
 			}
 
@@ -82,7 +73,7 @@ func CatalogCmd() *ishell.Cmd {
 				}
 			}
 
-			c.Println(color.HiGreenString("Catalog creation completed successfully.\n"))
+			c.Println(misc.Green("Catalog creation completed successfully.\n"))
 		}),
 	}
 }
