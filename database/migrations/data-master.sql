@@ -1,6 +1,6 @@
 ﻿/*
 Created: 5/6/2025
-Modified: 5/15/2025
+Modified: 5/16/2025
 Project: Data Master
 Model: DataMaster
 Author: Marcelo Monaco
@@ -21,7 +21,7 @@ CREATE TYPE dm_core.delivery_status_enum AS ENUM
 ;
 
 CREATE TYPE dm_core.gender_enum AS ENUM
-  ( 'male', 'female', 'undisclosed' )
+  ( 'masculine','feminine' )
 ;
 
 CREATE TYPE dm_core.purchase_status_enum AS ENUM
@@ -127,7 +127,7 @@ ALTER TABLE dm_core.delivery ADD CONSTRAINT PK_delivery PRIMARY KEY (delivery_id
 CREATE TABLE dm_core.product
 (
   product_id UUID NOT NULL,
-  category_id UUID,
+  category_id UUID NOT NULL,
   product_name Text NOT NULL,
   current_stock Numeric NOT NULL,
   unit_price Numeric NOT NULL,
