@@ -1,0 +1,15 @@
+Deploy infrastructure.
+
+Usage:
+  deploy
+      Deploy all infrastructure stacks in the correct order.
+
+  deploy --stack <name> [--params <k1=v1,...>]
+      Deploy a specific stack and optionally pass parameters.
+
+Examples:
+  deploy --stack network
+  deploy --stack storage --params "Environment=prod,EnableLogs=true"
+
+Note:
+  To see a list of available stack names, run: stacks

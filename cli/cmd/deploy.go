@@ -4,7 +4,6 @@ import (
 	"embed"
 	"flag"
 	"fmt"
-	"io"
 	"strings"
 
 	"github.com/seriallink/datamaster/cli/core"
@@ -13,7 +12,6 @@ import (
 	"github.com/abiosoft/ishell"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/cloudformation/types"
-	"github.com/fatih/color"
 )
 
 func DeployCmd(templates embed.FS) *ishell.Cmd {
@@ -21,18 +19,11 @@ func DeployCmd(templates embed.FS) *ishell.Cmd {
 		Name: "deploy",
 		Help: "Deploy infrastructure",
 		Func: WithAuth(func(c *ishell.Context) {
-			fs := flag.NewFlagSet("deploy", flag.ContinueOnError)
-			fs.SetOutput(io.Discard)
 
+			fs := flag.NewFlagSet("deploy", flag.ContinueOnError)
 			stackName := fs.String("stack", "", "Stack name to deploy")
 			params := fs.String("params", "", "Comma-separated list of key=value pairs")
-
-			if err := fs.Parse(c.Args); err != nil {
-				c.Println(misc.Red(fmt.Sprintf("Invalid arguments: %v", err)))
-				return
-			}
-			if fs.NArg() > 0 {
-				c.Println(misc.Red(fmt.Sprintf("Unexpected argument: %s", fs.Arg(0))))
+			if !ParseShellFlags(c, fs) {
 				return
 			}
 
@@ -75,7 +66,7 @@ func DeployCmd(templates embed.FS) *ishell.Cmd {
 					return
 				}
 
-				c.Println(color.HiGreenString("Stack '%s' deployed successfully!\n", stack.FullStackName()))
+				c.Println(misc.Green("Stack '%s' deployed successfully!\n", stack.FullStackName()))
 				return
 			}
 
@@ -92,7 +83,7 @@ func DeployCmd(templates embed.FS) *ishell.Cmd {
 				return
 			}
 
-			c.Println(color.HiGreenString("All stacks deployed successfully!\n"))
+			c.Println(misc.Green("All stacks deployed successfully!\n"))
 		}),
 	}
 }

@@ -203,3 +203,37 @@ func GetStackOutputs(stack *Stack) (map[string]string, error) {
 	return outputs, nil
 
 }
+
+// GetStackOutput retrieves a specific output value from a given CloudFormation stack.
+//
+// Parameters:
+//   - stack: the stack to query.
+//   - key: the name of the output key to retrieve.
+//
+// Returns:
+//   - string: the value associated with the given output key.
+//   - error: if the stack cannot be described or the output key is not found.
+func GetStackOutput(stack *Stack, key string) (string, error) {
+
+	outputs, err := GetStackOutputs(stack)
+	if err != nil {
+		return "", fmt.Errorf("failed to get outputs for stack %s: %w", stack.Name, err)
+	}
+
+	value := outputs[key]
+	if value == "" {
+		return "", fmt.Errorf("output %q not found in stack %s", key, stack.Name)
+	}
+
+	return value, nil
+
+}
+
+// ExtractNameFromArn extracts the resource name from a full AWS ARN.
+func ExtractNameFromArn(arn string) string {
+	parts := strings.Split(arn, "/")
+	if len(parts) > 1 {
+		return parts[len(parts)-1]
+	}
+	return arn
+}
