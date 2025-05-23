@@ -17,8 +17,6 @@ func handler(ctx context.Context, event events.KinesisFirehoseEvent) (events.Kin
 
 	for _, record := range event.Records {
 
-		log.Println("Processing record...")
-
 		var recordMap map[string]interface{}
 		if err := json.Unmarshal(record.Data, &recordMap); err != nil {
 			log.Printf("Failed to parse JSON: %v", err)
