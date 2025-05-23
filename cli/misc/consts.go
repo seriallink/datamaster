@@ -6,6 +6,7 @@ const (
 	TemplatesPath        = "infra/templates"
 	TemplateExtension    = ".yml"
 	DefaultScript        = "database/migrations/data-master.sql"
+	ArtifactsPath        = "artifacts"
 )
 
 // Logical names of all stacks managed by the CLI.
