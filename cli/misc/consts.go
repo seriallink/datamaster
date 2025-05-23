@@ -3,10 +3,10 @@ package misc
 // Defaults used throughout the CLI.
 const (
 	DefaultProjectPrefix = "dm"
-	TemplatesPath        = "infra/templates"
+	TemplatesPath        = "stacks"
+	ArtifactsPath        = "artifacts"
 	TemplateExtension    = ".yml"
 	DefaultScript        = "database/migrations/data-master.sql"
-	ArtifactsPath        = "artifacts"
 )
 
 // Logical names of all stacks managed by the CLI.

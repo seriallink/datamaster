@@ -14,7 +14,7 @@ import (
 //go:embed cli/help/*.tmpl
 var helps embed.FS
 
-//go:embed infra/templates/*.yml
+//go:embed stacks/*.yml
 var stacks embed.FS
 
 //go:embed database/migrations/*.sql
