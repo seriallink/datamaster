@@ -1,0 +1,22 @@
+Simulate streaming data into Aurora tables.
+
+Usage:
+  stream
+      Simulate all supported scenarios concurrently (default behavior).
+
+  stream --scenario <name>
+      Simulate a specific scenario with controlled behavior.
+
+Flags:
+  --scenario       Name of the scenario to simulate (customer, product, purchase, delivery)
+                   If omitted or set to 'all', all scenarios will be executed.
+  --rps            Records per second per parallel stream (default: 10)
+  --duration       Total duration of simulation, e.g., 30s, 2m (default: 30s)
+  --parallel       Number of goroutines per scenario (default: 1)
+  --quality        Data quality level: high (default), medium, low
+  --event-type     Event type: insert, update, delete, or mix (default: insert)
+
+Examples:
+  stream
+  stream --scenario purchase --rps 100 --duration 1m
+  stream --scenario delivery --quality low --parallel 4
