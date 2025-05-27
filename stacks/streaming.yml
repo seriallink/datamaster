@@ -20,6 +20,7 @@ Resources:
   FirehoseDeliveryStream:
     Type: AWS::KinesisFirehose::DeliveryStream
     Properties:
+      DeliveryStreamName: dm-firehose-stream
       DeliveryStreamType: DirectPut  # ← EventBridge Pipe
       ExtendedS3DestinationConfiguration:
         BucketARN:
