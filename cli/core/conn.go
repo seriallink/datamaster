@@ -52,25 +52,25 @@ func GetConnection() (*gorm.DB, error) {
 func openConnection() error {
 	var (
 		err             error
+		secretArn       string
 		secretOutput    *secretsmanager.GetSecretValueOutput
-		securityOutputs map[string]string
 		databaseOutputs map[string]string
 	)
 
 	svc := secretsmanager.NewFromConfig(GetAWSConfig())
 
-	if securityOutputs, err = GetStackOutputs(&Stack{Name: misc.StackNameSecurity}); err != nil {
-		return err
+	stackSecurity := &Stack{Name: misc.StackNameSecurity}
+	stackDatabase := &Stack{Name: misc.StackNameDatabase}
+
+	secretArn, err = stackSecurity.GetStackOutput("SecretArn")
+	if err != nil {
+		return fmt.Errorf("failed to get SecretArn from stack %s: %w", stackSecurity.Name, err)
 	}
 
 	secretOutput, err = svc.GetSecretValue(context.TODO(), &secretsmanager.GetSecretValueInput{
-		SecretId: aws.String(securityOutputs["SecretArn"]),
+		SecretId: aws.String(secretArn),
 	})
 	if err != nil {
-		return err
-	}
-
-	if databaseOutputs, err = GetStackOutputs(&Stack{Name: misc.StackNameDatabase}); err != nil {
 		return err
 	}
 
@@ -80,6 +80,10 @@ func openConnection() error {
 	}{}
 
 	if err = json.Unmarshal([]byte(*secretOutput.SecretString), &dbSecret); err != nil {
+		return err
+	}
+
+	if databaseOutputs, err = stackDatabase.GetStackOutputs(); err != nil {
 		return err
 	}
 
@@ -113,6 +117,7 @@ func openConnection() error {
 	}
 
 	return nil
+
 }
 
 // CloseConnection gracefully closes the underlying database connection if it's open.

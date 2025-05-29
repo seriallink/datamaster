@@ -45,12 +45,12 @@ func DeployLambdaFromArtifact(artifacts embed.FS, name string, memory, timeout i
 		return fmt.Errorf("failed to upload artifact: %w", err)
 	}
 
-	role, err = GetStackOutput(&Stack{Name: misc.StackNameRoles}, "LambdaExecutionRoleArn")
+	role, err = (&Stack{Name: misc.StackNameRoles}).GetStackOutput("LambdaExecutionRoleArn")
 	if err != nil {
 		return fmt.Errorf("failed to get LambdaExecutionRoleArn: %w", err)
 	}
 
-	bucket, err = GetStackOutput(&Stack{Name: misc.StackNameStorage}, "ArtifactsBucketName")
+	bucket, err = (&Stack{Name: misc.StackNameStorage}).GetStackOutput("ArtifactsBucketName")
 	if err != nil {
 		return fmt.Errorf("failed to get ArtifactsBucketName: %w", err)
 	}
@@ -136,7 +136,7 @@ func UploadArtifacts(artifacts embed.FS, functions ...string) error {
 
 	client := s3.NewFromConfig(GetAWSConfig())
 
-	bucket, err = GetStackOutput(&Stack{Name: misc.StackNameStorage}, "ArtifactsBucketName")
+	bucket, err = (&Stack{Name: misc.StackNameStorage}).GetStackOutput("ArtifactsBucketName")
 	if err != nil {
 		return fmt.Errorf("ArtifactsBucketName not found in stack outputs")
 	}

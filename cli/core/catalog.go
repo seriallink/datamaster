@@ -60,13 +60,10 @@ func LayerToSchema(layerType string) string {
 //   - error: if fetching stack outputs or mapping schema fails.
 func GetStorageLocation(layerType, tableName string) (string, error) {
 
-	storageOutputs, err := GetStackOutputs(&Stack{Name: misc.StackNameStorage})
-	if err != nil {
-		return "", err
-	}
+	stack := &Stack{Name: misc.StackNameStorage}
 
-	bucketName, ok := storageOutputs["DataLakeBucketName"]
-	if !ok {
+	bucketName, err := stack.GetStackOutput("DataLakeBucketName")
+	if err != nil {
 		return "", fmt.Errorf("DataLakeBucketName not found in stack outputs")
 	}
 

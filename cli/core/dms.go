@@ -17,15 +17,11 @@ import (
 var cdcOnce sync.Once
 
 func StartReplication() error {
+
 	client := databasemigrationservice.NewFromConfig(GetAWSConfig())
 
-	outputs, err := GetStackOutputs(&Stack{Name: misc.StackNameStreaming})
+	taskArn, err := (&Stack{Name: misc.StackNameStreaming}).GetStackOutput("DMSReplicationTaskArn")
 	if err != nil {
-		return fmt.Errorf("failed to get stack outputs: %w", err)
-	}
-
-	taskArn := outputs["DMSReplicationTaskArn"]
-	if taskArn == "" {
 		return fmt.Errorf("DMSReplicationTaskArn not found in stack outputs")
 	}
 
@@ -72,6 +68,7 @@ func StartReplication() error {
 	}
 
 	return waitUntilTaskRunning(client, taskArn)
+
 }
 
 func waitUntilTaskRunning(client *databasemigrationservice.Client, taskArn string) error {
