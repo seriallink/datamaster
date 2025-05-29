@@ -1,0 +1,63 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Lambda Functions for the Data Master Project
+
+Resources:
+
+  FirehoseProcessorFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: dm-firehose-processor
+      Description: Sets the Firehose prefix dynamically based on the table-name field.
+      Role: !ImportValue dm-firehose-processor-role-arn
+      Runtime: provided.al2023
+      Handler: bootstrap
+      Code:
+        S3Bucket: !ImportValue dm-artifacts-bucket
+        S3Key: firehose-processor.zip
+      Architectures:
+        - x86_64
+      MemorySize: 128
+      Timeout: 900
+      Tags:
+        - Key: Project
+          Value: DataMaster
+        - Key: Component
+          Value: Functions
+
+  ProcessingControllerFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: dm-processing-controller
+      Description: Lambda function responsible for registering incoming raw S3 objects in the processing control table.
+      Role: !ImportValue dm-processing-controller-role-arn
+      Runtime: provided.al2023
+      Handler: bootstrap
+      Code:
+        S3Bucket: !ImportValue dm-artifacts-bucket
+        S3Key: processing-controller.zip
+      Architectures:
+        - x86_64
+      MemorySize: 128
+      Timeout: 120
+      Environment:
+        Variables:
+          CONTROL_TABLE_NAME: dm-processing-control
+      Tags:
+        - Key: Project
+          Value: DataMaster
+        - Key: Component
+          Value: Functions
+
+Outputs:
+
+  FirehoseProcessorFunctionArn:
+    Description: ARN of the Lambda used to set dynamic prefixes in Firehose delivery
+    Value: !GetAtt FirehoseProcessorFunction.Arn
+    Export:
+      Name: dm-firehose-processor-arn
+
+  ProcessingControllerFunctionArn:
+    Description: ARN of the Lambda used to register ingestion processes into the DynamoDB control table
+    Value: !GetAtt ProcessingControllerFunction.Arn
+    Export:
+      Name: dm-processing-controller-arn

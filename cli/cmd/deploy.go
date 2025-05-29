@@ -14,7 +14,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/cloudformation/types"
 )
 
-func DeployCmd(templates embed.FS) *ishell.Cmd {
+func DeployCmd(templates, artifacts embed.FS) *ishell.Cmd {
 	return &ishell.Cmd{
 		Name: "deploy",
 		Help: "Deploy infrastructure",
@@ -61,7 +61,7 @@ func DeployCmd(templates embed.FS) *ishell.Cmd {
 					return
 				}
 
-				if err := core.DeployStack(&stack, templates); err != nil {
+				if err := core.DeployStack(&stack, templates, artifacts); err != nil {
 					c.Println(misc.Red(fmt.Sprintf("Deployment failed: %v", err)))
 					return
 				}
@@ -78,7 +78,7 @@ func DeployCmd(templates embed.FS) *ishell.Cmd {
 				return
 			}
 
-			if err := core.DeployAllStacks(templates); err != nil {
+			if err := core.DeployAllStacks(templates, artifacts); err != nil {
 				c.Println(misc.Red(fmt.Sprintf("Deployment failed: %v", err)))
 				return
 			}

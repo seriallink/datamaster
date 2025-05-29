@@ -1,153 +1,59 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: Processing pipeline triggered by S3 events using EMR Serverless
+Description: Orchestrates the data pipeline process for the Data Master Project
 
 Resources:
 
-  EMRProcessingApp:
-    Type: AWS::EMRServerless::Application
+  ProcessingControlTable:
+    Type: AWS::DynamoDB::Table
     Properties:
-      Name: dm-processing-app
-      ReleaseLabel: emr-6.9.0
-      Type: Spark
-      AutoStartConfiguration:
-        Enabled: true
-      AutoStopConfiguration:
-        Enabled: true
-      NetworkConfiguration:
-        SubnetIds:
-          - !ImportValue dm-glue-subnet-id
-        SecurityGroupIds:
-          - !ImportValue dm-db-sg-id
-      MaximumCapacity:
-        Cpu: 4
-        Memory: 16
-        Disk: 100
-      InitialCapacity:
-        - InitialCapacityType: Driver
-          InitialCapacityConfig:
-            WorkerCount: 1
-            WorkerConfiguration:
-              Cpu: 2
-              Memory: 4
-        - InitialCapacityType: Executor
-          InitialCapacityConfig:
-            WorkerCount: 2
-            WorkerConfiguration:
-              Cpu: 2
-              Memory: 4
-      ExecutionRoleArn: !ImportValue dm-processing-emr-role-arn
+      TableName: "dm-processing-control"
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: object_key
+          AttributeType: S
+      KeySchema:
+        - AttributeName: object_key
+          KeyType: HASH
+      StreamSpecification:
+        StreamViewType: NEW_IMAGE
       Tags:
         - Key: Project
           Value: DataMaster
         - Key: Component
           Value: Processing
 
-  ProcessingStepFunction:
-    Type: AWS::StepFunctions::StateMachine
-    Properties:
-      StateMachineName: dm-processing-orchestration
-      RoleArn: !ImportValue dm-processing-sfn-role-arn
-      TracingConfiguration:
-        Enabled: true
-      DefinitionString:
-        Fn::Sub:
-          - |
-            {
-              "StartAt": "StageToBronze",
-              "States": {
-                "StageToBronze": {
-                  "Type": "Task",
-                  "Resource": "arn:aws:states:::emr-serverless:startJobRun.sync",
-                  "Parameters": {
-                    "ApplicationId": "${AppId}",
-                    "ExecutionRoleArn": "${ExecutionRole}",
-                    "JobDriver": {
-                      "SparkSubmit": {
-                        "EntryPoint": "s3://${StageBucket}/jobs/stage_to_bronze.py",
-                        "EntryPointArguments": [
-                          "--input", "s3://${StageBucket}/${$.detail.object.key}",
-                          "--output", "s3://${DataLakeBucket}/bronze/"
-                        ]
-                      }
-                    }
-                  },
-                  "Next": "BronzeToSilver"
-                },
-                "BronzeToSilver": {
-                  "Type": "Task",
-                  "Resource": "arn:aws:states:::emr-serverless:startJobRun.sync",
-                  "Parameters": {
-                    "ApplicationId": "${AppId}",
-                    "ExecutionRoleArn": "${ExecutionRole}",
-                    "JobDriver": {
-                      "SparkSubmit": {
-                        "EntryPoint": "s3://${StageBucket}/jobs/bronze_to_silver.py",
-                        "EntryPointArguments": [
-                          "--input", "s3://${DataLakeBucket}/bronze/",
-                          "--output", "s3://${DataLakeBucket}/silver/"
-                        ]
-                      }
-                    }
-                  },
-                  "Next": "SilverToGold"
-                },
-                "SilverToGold": {
-                  "Type": "Task",
-                  "Resource": "arn:aws:states:::emr-serverless:startJobRun.sync",
-                  "Parameters": {
-                    "ApplicationId": "${AppId}",
-                    "ExecutionRoleArn": "${ExecutionRole}",
-                    "JobDriver": {
-                      "SparkSubmit": {
-                        "EntryPoint": "s3://${StageBucket}/jobs/silver_to_gold.py",
-                        "EntryPointArguments": [
-                          "--input", "s3://${DataLakeBucket}/silver/",
-                          "--output", "s3://${DataLakeBucket}/gold/"
-                        ]
-                      }
-                    }
-                  },
-                  "End": true
-                }
-              }
-            }
-          - AppId: !Ref EMRProcessingApp
-            ExecutionRole: !ImportValue dm-processing-emr-role-arn
-            StageBucket: !ImportValue dm-stage-bucket
-            DataLakeBucket: !ImportValue dm-datalake-bucket
-
-  ProcessingTriggerRule:
-    Type: AWS::Events::Rule
-    Properties:
-      Name: dm-processing-trigger
-      EventPattern:
-        source:
-          - aws.s3
-        detail-type:
-          - Object Created
-        detail:
-          bucket:
-            name:
-              - !ImportValue dm-stage-bucket
-          object:
-            key:
-              prefix:
-                - "streaming/"
-                - "batch/"
-      Targets:
-        - Arn: !GetAtt ProcessingStepFunction.Arn
-          Id: TriggerProcessingSFN
+#  ProcessPipelineRule:
+#    Type: AWS::Events::Rule
+#    Properties:
+#      Name: dm-process-pipeline-rule
+#      EventPattern:
+#        source:
+#          - "dm.pipeline"
+#        detail-type:
+#          - "ProcessObject"
+#      Targets:
+#        - Arn: !GetAtt ProcessPipelineFunction.Arn
+#          Id: ProcessPipelineFunctionTarget
+#          InputPath: "$.detail"
+#
+#  ProcessPipelinePermission:
+#    Type: AWS::Lambda::Permission
+#    Properties:
+#      FunctionName: !Ref BronzeProcessorFunction
+#      Action: lambda:InvokeFunction
+#      Principal: events.amazonaws.com
+#      SourceArn: !GetAtt ProcessPipelineRule.Arn
 
 Outputs:
 
-  EMRProcessingAppId:
-    Description: ID of the EMR Serverless application
-    Value: !Ref EMRProcessingApp
+  ProcessingControlTableName:
+    Description: Name of the DynamoDB table used for tracking processed S3 objects
+    Value: !Ref ProcessingControlTable
     Export:
-      Name: dm-processing-app-id
+      Name: dm-processing-control-table-name
 
-  ProcessingStepFunctionName:
-    Description: Step Function for processing orchestration
-    Value: !Ref ProcessingStepFunction
+  ProcessingControlStreamArn:
+    Description: ARN of the DynamoDB stream for processing control table
+    Value: !GetAtt ProcessingControlTable.StreamArn
     Export:
-      Name: dm-processing-sfn-name
+      Name: dm-processing-control-stream-arn

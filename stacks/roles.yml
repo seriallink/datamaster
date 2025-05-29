@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: All IAM Roles for the Data Master Project
+Description: IAM Roles for the Data Master Project
 
 Resources:
 
@@ -17,7 +17,7 @@ Resources:
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AmazonDMSVPCManagementRole
       Policies:
-        - PolicyName: DMSVpcInlinePermissions
+        - PolicyName: dm-dms-vpc-policy
           PolicyDocument:
             Version: "2012-10-17"
             Statement:
@@ -52,7 +52,7 @@ Resources:
               Service: pipes.amazonaws.com
             Action: sts:AssumeRole
       Policies:
-        - PolicyName: PipeKinesisToFirehosePolicy
+        - PolicyName: dm-pipe-kinesis-to-firehose-policy
           PolicyDocument:
             Version: "2012-10-17"
             Statement:
@@ -88,7 +88,7 @@ Resources:
               Service: dms.amazonaws.com
             Action: sts:AssumeRole
       Policies:
-        - PolicyName: KinesisAccessPolicy
+        - PolicyName: dm-kinesis-access-policy
           PolicyDocument:
             Version: "2012-10-17"
             Statement:
@@ -118,7 +118,7 @@ Resources:
                 - dms.amazonaws.com
             Action: sts:AssumeRole
       Policies:
-        - PolicyName: FirehoseAccessPolicy
+        - PolicyName: dm-firehose-access-policy
           PolicyDocument:
             Version: "2012-10-17"
             Statement:
@@ -156,7 +156,7 @@ Resources:
               Service: lambda.amazonaws.com
             Action: sts:AssumeRole
       Policies:
-        - PolicyName: dm-lambda-policy
+        - PolicyName: dm-lambda-execution-policy
           PolicyDocument:
             Version: '2012-10-17'
             Statement:
@@ -192,7 +192,7 @@ Resources:
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole
       Policies:
-        - PolicyName: GlueInlinePermissions
+        - PolicyName: dm-glue-service-policy
           PolicyDocument:
             Version: "2012-10-17"
             Statement:
@@ -234,7 +234,7 @@ Resources:
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/AWSLakeFormationDataAdmin
       Policies:
-        - PolicyName: AllowS3AccessToLake
+        - PolicyName: dm-allow-s3-access-to-datalake-policy
           PolicyDocument:
             Version: "2012-10-17"
             Statement:
@@ -262,7 +262,7 @@ Resources:
               Service: emr-serverless.amazonaws.com
             Action: sts:AssumeRole
       Policies:
-        - PolicyName: DMEMRAccessPolicy
+        - PolicyName: dm-emr-access-policy
           PolicyDocument:
             Version: '2012-10-17'
             Statement:
@@ -280,6 +280,62 @@ Resources:
         - Key: Component
           Value: Roles
 
+  FirehoseProcessorFunctionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: dm-firehose-processor-role
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: dm-firehose-processor-logs
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: "*"
+
+  ProcessingControllerFunctionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: dm-processing-controller-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: dm-processing-controller-policy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:PutItem
+                  - dynamodb:UpdateItem
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:ListBucket
+                Resource: "*"
+
   ValidateContractRole:
     Type: AWS::IAM::Role
     Properties:
@@ -294,7 +350,7 @@ Resources:
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
       Policies:
-        - PolicyName: ContractAccess
+        - PolicyName: dm-validate-contract-access-policy
           PolicyDocument:
             Version: "2012-10-17"
             Statement:
@@ -303,11 +359,27 @@ Resources:
                   - glue:GetTable
                   - s3:GetObject
                 Resource: '*'
-      Tags:
-        - Key: Project
-          Value: DataMaster
-        - Key: Component
-          Value: Roles
+
+  ProcessingEventRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: dm-processing-event-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: events.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: dm-processing-event-policy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - lambda:InvokeFunction
+                Resource: !GetAtt ProcessingControllerFunctionRole.Arn
 
   BatchETLStepFunctionRole:
     Type: AWS::IAM::Role
@@ -321,7 +393,7 @@ Resources:
               Service: states.amazonaws.com
             Action: sts:AssumeRole
       Policies:
-        - PolicyName: BatchStepFnPolicy
+        - PolicyName: dm-batch-step-function-policy
           PolicyDocument:
             Version: "2012-10-17"
             Statement:
@@ -354,7 +426,7 @@ Resources:
               Service: emr-serverless.amazonaws.com
             Action: sts:AssumeRole
       Policies:
-        - PolicyName: ProcessingAccess
+        - PolicyName: dm-emr-processing-execution-policy
           PolicyDocument:
             Version: "2012-10-17"
             Statement:
@@ -382,7 +454,7 @@ Resources:
               Service: states.amazonaws.com
             Action: sts:AssumeRole
       Policies:
-        - PolicyName: ProcessingStepFnPolicy
+        - PolicyName: dm-processing-step-function-policy
           PolicyDocument:
             Version: "2012-10-17"
             Statement:
@@ -474,7 +546,25 @@ Outputs:
     Export:
       Name: dm-emr-batch-role-arn
 
-  ValidateContractRoleArn:
+  FirehoseProcessorFunctionRoleArn:
+    Description: ARN of the IAM role used by the Firehose processor Lambda function
+    Value: !GetAtt FirehoseProcessorFunctionRole.Arn
+    Export:
+      Name: dm-firehose-processor-role-arn
+
+  ProcessingControllerRoleArn:
+    Description: IAM role assumed by Lambda functions to write processing control records into DynamoDB
+    Value: !GetAtt ProcessingControllerFunctionRole.Arn
+    Export:
+      Name: dm-processing-controller-role-arn
+
+  ProcessingEventRoleArn:
+    Description: IAM role used by EventBridge to trigger the dm-processing-controller Lambda function
+    Value: !GetAtt ProcessingEventRole.Arn
+    Export:
+      Name: dm-processing-event-role-arn
+
+  ValidateContractFunctionRoleArn:
     Description: Lambda role for contract validation
     Value: !GetAtt ValidateContractRole.Arn
     Export:

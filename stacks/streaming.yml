@@ -6,12 +6,12 @@ Resources:
   KinesisStream:
     Type: AWS::Kinesis::Stream
     Properties:
-      Name: dm-cdc-stream
+      Name: dm-kinesis-stream
       StreamModeDetails:
         StreamMode: ON_DEMAND
       Tags:
         - Key: Name
-          Value: dm-cdc-stream
+          Value: dm-kinesis-stream
         - Key: Project
           Value: DataMaster
         - Key: Component
@@ -21,18 +21,21 @@ Resources:
     Type: AWS::KinesisFirehose::DeliveryStream
     Properties:
       DeliveryStreamName: dm-firehose-stream
-      DeliveryStreamType: DirectPut  # ← EventBridge Pipe
+      DeliveryStreamType: KinesisStreamAsSource
+      KinesisStreamSourceConfiguration:
+        KinesisStreamARN: !GetAtt KinesisStream.Arn
+        RoleARN: !ImportValue dm-firehose-role-arn
       ExtendedS3DestinationConfiguration:
         BucketARN:
           Fn::Sub:
             - "arn:aws:s3:::${Bucket}"
             - Bucket: !ImportValue dm-stage-bucket
         RoleARN: !ImportValue dm-firehose-role-arn
-        Prefix: raw/!{partitionKeyFromLambda:table_name}/  # <- Lambda
+        Prefix: raw/!{partitionKeyFromLambda:table_name}/
         ErrorOutputPrefix: errors/
         BufferingHints:
           SizeInMBs: 64
-          IntervalInSeconds: 300 # 5 minutes
+          IntervalInSeconds: 300
         CompressionFormat: GZIP
         DynamicPartitioningConfiguration:
           Enabled: true

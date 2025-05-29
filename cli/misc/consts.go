@@ -18,6 +18,7 @@ const (
 	StackNameStorage       = "storage"
 	StackNameCatalog       = "catalog"
 	StackNameGovernance    = "governance"
+	StackNameFunctions     = "functions"
 	StackNameStreaming     = "streaming"
 	StackNameBatch         = "batch"
 	StackNameProcessing    = "processing"

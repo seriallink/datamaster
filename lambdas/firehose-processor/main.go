@@ -9,6 +9,17 @@ import (
 	"github.com/aws/aws-lambda-go/lambda"
 )
 
+type RawDmsPayload struct {
+	Data     json.RawMessage `json:"data"`
+	Metadata struct {
+		TableName  string `json:"table-name"`
+		Operation  string `json:"operation"`
+		RecordType string `json:"record-type"`
+		SchemaName string `json:"schema-name"`
+		Timestamp  string `json:"timestamp"`
+	} `json:"metadata"`
+}
+
 func handler(ctx context.Context, event events.KinesisFirehoseEvent) (events.KinesisFirehoseResponse, error) {
 
 	var response events.KinesisFirehoseResponse
@@ -17,9 +28,9 @@ func handler(ctx context.Context, event events.KinesisFirehoseEvent) (events.Kin
 
 	for _, record := range event.Records {
 
-		var recordMap map[string]interface{}
-		if err := json.Unmarshal(record.Data, &recordMap); err != nil {
-			log.Printf("Failed to parse JSON: %v", err)
+		var raw RawDmsPayload
+		if err := json.Unmarshal(record.Data, &raw); err != nil {
+			log.Printf("Failed to parse raw DMS event: %v", err)
 			response.Records = append(response.Records, events.KinesisFirehoseResponseRecord{
 				RecordID: record.RecordID,
 				Result:   events.KinesisFirehoseTransformedStateDropped,
@@ -27,25 +38,33 @@ func handler(ctx context.Context, event events.KinesisFirehoseEvent) (events.Kin
 			continue
 		}
 
-		var tableName string
-		if payloadField, ok := recordMap["payload"].(map[string]interface{}); ok {
-			if metadata, ok := payloadField["metadata"].(map[string]interface{}); ok {
-				if name, ok := metadata["table-name"].(string); ok && name != "" {
-					tableName = name
-				}
-			}
+		if raw.Metadata.TableName == "" {
+			raw.Metadata.TableName = "unknown"
 		}
-		if tableName == "" {
-			tableName = "unknown"
+
+		outputMap := map[string]interface{}{
+			"table":   raw.Metadata.TableName,
+			"op":      raw.Metadata.Operation,
+			"payload": raw.Data,
+		}
+
+		outputJSON, err := json.Marshal(outputMap)
+		if err != nil {
+			log.Printf("Failed to marshal output JSON: %v", err)
+			response.Records = append(response.Records, events.KinesisFirehoseResponseRecord{
+				RecordID: record.RecordID,
+				Result:   events.KinesisFirehoseTransformedStateDropped,
+			})
+			continue
 		}
 
 		response.Records = append(response.Records, events.KinesisFirehoseResponseRecord{
 			RecordID: record.RecordID,
 			Result:   events.KinesisFirehoseTransformedStateOk,
-			Data:     record.Data,
+			Data:     outputJSON,
 			Metadata: events.KinesisFirehoseResponseRecordMetadata{
 				PartitionKeys: map[string]string{
-					"table_name": tableName,
+					"table_name": raw.Metadata.TableName,
 				},
 			},
 		})
