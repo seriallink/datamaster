@@ -38,7 +38,7 @@ func PipeCmd() *ishell.Cmd {
 			if *table != "" {
 				err = core.RegisterPipeForTable(*table)
 			} else {
-				//err = core.RegisterPipeForAllTables()
+				err = core.RegisterPipeForAllTables()
 			}
 
 			if err != nil {
