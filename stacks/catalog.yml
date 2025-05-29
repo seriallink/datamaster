@@ -31,32 +31,6 @@ Resources:
       DatabaseInput:
         Name: dm_gold
 
-  FirehoseTable:
-    Type: AWS::Glue::Table
-    Properties:
-      CatalogId: !Ref AWS::AccountId
-      DatabaseName: !Ref StageCatalog
-      TableInput:
-        Name: firehose_stream
-        TableType: EXTERNAL_TABLE
-        Parameters:
-          classification: parquet
-          EXTERNAL: "TRUE"
-        StorageDescriptor:
-          Columns:
-            - Name: payload
-              Type: string
-          Location: !Join ["", ["s3://", !ImportValue dm-stage-bucket, "/streaming/"]]
-          InputFormat: org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat
-          OutputFormat: org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat
-          Compressed: true
-          NumberOfBuckets: -1
-          SerdeInfo:
-            SerializationLibrary: org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe
-            Parameters:
-              serialization.format: "1"
-          StoredAsSubDirectories: false
-
 Outputs:
 
   StageDatabaseName:
