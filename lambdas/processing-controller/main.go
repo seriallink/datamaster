@@ -9,9 +9,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/seriallink/datamaster/cli/core"
-	"github.com/seriallink/datamaster/cli/enum"
-	"github.com/seriallink/datamaster/cli/misc"
+	"github.com/seriallink/datamaster/app/core"
+	"github.com/seriallink/datamaster/app/enum"
+	"github.com/seriallink/datamaster/app/misc"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"

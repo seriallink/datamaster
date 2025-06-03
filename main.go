@@ -4,14 +4,14 @@ import (
 	"embed"
 	"fmt"
 
-	"github.com/seriallink/datamaster/cli/cmd"
-	"github.com/seriallink/datamaster/cli/core"
-	"github.com/seriallink/datamaster/cli/misc"
+	"github.com/seriallink/datamaster/app/cmd"
+	"github.com/seriallink/datamaster/app/core"
+	"github.com/seriallink/datamaster/app/misc"
 
 	"github.com/abiosoft/ishell"
 )
 
-//go:embed cli/help/*.tmpl
+//go:embed app/help/*.tmpl
 var helps embed.FS
 
 //go:embed stacks/*.yml
