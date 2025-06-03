@@ -1,4 +1,4 @@
-package model
+package enum
 
 type DeliveryStatusEnum string
 

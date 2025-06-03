@@ -1,4 +1,4 @@
-package model
+package enum
 
 import "github.com/jaswdr/faker"
 
