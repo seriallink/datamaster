@@ -336,6 +336,43 @@ Resources:
                   - s3:ListBucket
                 Resource: "*"
 
+  RawIngestorRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: dm-raw-ingestor-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: RawIngestorAccessPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: arn:aws:logs:*:*:*
+              - Effect: Allow
+                Action:
+                  - dynamodb:GetItem
+                  - dynamodb:PutItem
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - cloudformation:DescribeStacks
+                Resource: "*"
+
   ValidateContractRole:
     Type: AWS::IAM::Role
     Properties:
@@ -563,6 +600,12 @@ Outputs:
     Value: !GetAtt ProcessingEventRole.Arn
     Export:
       Name: dm-processing-event-role-arn
+
+  RawIngestorRoleArn:
+    Description: ARN of the IAM role assumed by the dm-raw-ingestor Lambda
+    Value: !GetAtt RawIngestorRole.Arn
+    Export:
+      Name: dm-raw-ingestor-role-arn
 
   ValidateContractFunctionRoleArn:
     Description: Lambda role for contract validation

@@ -7,7 +7,7 @@ Resources:
     Type: AWS::Lambda::Function
     Properties:
       FunctionName: dm-firehose-processor
-      Description: Sets the Firehose prefix dynamically based on the table-name field.
+      Description: Used by Firehose to route records into raw S3 prefixes based on table metadata.
       Role: !ImportValue dm-firehose-processor-role-arn
       Runtime: provided.al2023
       Handler: bootstrap
@@ -28,7 +28,7 @@ Resources:
     Type: AWS::Lambda::Function
     Properties:
       FunctionName: dm-processing-controller
-      Description: Lambda function responsible for registering incoming raw S3 objects in the processing control table.
+      Description: Responsible for registering incoming raw S3 objects in the processing control table.
       Role: !ImportValue dm-processing-controller-role-arn
       Runtime: provided.al2023
       Handler: bootstrap
@@ -41,7 +41,29 @@ Resources:
       Timeout: 120
       Environment:
         Variables:
-          CONTROL_TABLE_NAME: dm-processing-control
+          CONTROL_TABLE_NAME: !ImportValue dm-processing-control-table-name
+      Tags:
+        - Key: Project
+          Value: DataMaster
+        - Key: Component
+          Value:
+            Functions
+
+  RawIngestorFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: dm-raw-ingestor
+      Description: Responsible for processing raw payloads and converting them to Parquet files in the bronze layer.
+      Role: !ImportValue dm-raw-ingestor-role-arn
+      Runtime: provided.al2023
+      Handler: bootstrap
+      Code:
+        S3Bucket: !ImportValue dm-artifacts-bucket
+        S3Key: raw-ingestor.zip
+      Architectures:
+        - x86_64
+      MemorySize: 128
+      Timeout: 900
       Tags:
         - Key: Project
           Value: DataMaster
@@ -61,3 +83,9 @@ Outputs:
     Value: !GetAtt ProcessingControllerFunction.Arn
     Export:
       Name: dm-processing-controller-arn
+
+  RawIngestorFunctionArn:
+    Description: ARN of the Lambda used to process raw payloads and convert them to Parquet in the bronze layer
+    Value: !GetAtt RawIngestorFunction.Arn
+    Export:
+      Name: dm-raw-ingestor-arn

@@ -9,9 +9,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/seriallink/datamaster/cli/core"
+	"github.com/seriallink/datamaster/cli/enum"
+	"github.com/seriallink/datamaster/cli/misc"
+
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
-
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
@@ -19,23 +22,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 )
-
-type ProcessingRecord struct {
-	ObjectKey     string  `dynamodbav:"object_key"`
-	Layer         string  `dynamodbav:"layer"`
-	Table         string  `dynamodbav:"table"`
-	RecordCount   int     `dynamodbav:"record_count"`
-	FileSize      int64   `dynamodbav:"file_size"`
-	Status        string  `dynamodbav:"status"`
-	AttemptCount  int     `dynamodbav:"attempt_count"`
-	ComputeTarget string  `dynamodbav:"compute_target"`
-	CreatedAt     string  `dynamodbav:"created_at"`
-	UpdatedAt     string  `dynamodbav:"updated_at"`
-	StartedAt     *string `dynamodbav:"started_at,omitempty"`
-	FinishedAt    *string `dynamodbav:"finished_at,omitempty"`
-	Duration      *int64  `dynamodbav:"duration,omitempty"`
-	ErrorMessage  *string `dynamodbav:"error_message,omitempty"`
-}
 
 var (
 	s3Client     *s3.Client
@@ -60,8 +46,6 @@ func handler(ctx context.Context, event events.S3Event) error {
 		if len(parts) < 3 {
 			return fmt.Errorf("invalid key format: %s", key)
 		}
-		layer := parts[0] // layer
-		table := parts[1] // table
 
 		count, err := countRecords(bucket, key)
 		if err != nil {
@@ -70,13 +54,13 @@ func handler(ctx context.Context, event events.S3Event) error {
 
 		now := time.Now().UTC().Format(time.RFC3339)
 
-		item := ProcessingRecord{
+		item := core.ProcessingControl{
 			ObjectKey:     key,
-			Layer:         layer,
-			Table:         table,
+			Schema:        misc.NameWithDefaultPrefix(misc.LayerBronze, '_'),
+			Table:         parts[1],
 			RecordCount:   count,
 			FileSize:      record.S3.Object.Size,
-			Status:        "pending",
+			Status:        enum.ProcessPending.String(),
 			AttemptCount:  0,
 			ComputeTarget: recommendCompute(count),
 			CreatedAt:     now,

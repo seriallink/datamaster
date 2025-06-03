@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"log"
@@ -9,7 +10,7 @@ import (
 	"github.com/aws/aws-lambda-go/lambda"
 )
 
-type RawDmsPayload struct {
+type Payload struct {
 	Data     json.RawMessage `json:"data"`
 	Metadata struct {
 		TableName  string `json:"table-name"`
@@ -28,8 +29,8 @@ func handler(ctx context.Context, event events.KinesisFirehoseEvent) (events.Kin
 
 	for _, record := range event.Records {
 
-		var raw RawDmsPayload
-		if err := json.Unmarshal(record.Data, &raw); err != nil {
+		var payload Payload
+		if err := json.Unmarshal(record.Data, &payload); err != nil {
 			log.Printf("Failed to parse raw DMS event: %v", err)
 			response.Records = append(response.Records, events.KinesisFirehoseResponseRecord{
 				RecordID: record.RecordID,
@@ -38,18 +39,55 @@ func handler(ctx context.Context, event events.KinesisFirehoseEvent) (events.Kin
 			continue
 		}
 
-		if raw.Metadata.TableName == "" {
-			raw.Metadata.TableName = "unknown"
+		if payload.Metadata.TableName == "" {
+
+			payload.Metadata.TableName = "unknown"
+
+			outputMap := map[string]interface{}{
+				"table":   payload.Metadata.TableName,
+				"op":      payload.Metadata.Operation,
+				"payload": payload.Data,
+			}
+
+			var buf bytes.Buffer
+			if err := json.NewEncoder(&buf).Encode(outputMap); err != nil {
+				log.Printf("Failed to marshal fallback output JSON: %v", err)
+				response.Records = append(response.Records, events.KinesisFirehoseResponseRecord{
+					RecordID: record.RecordID,
+					Result:   events.KinesisFirehoseTransformedStateDropped,
+				})
+				continue
+			}
+
+			response.Records = append(response.Records, events.KinesisFirehoseResponseRecord{
+				RecordID: record.RecordID,
+				Result:   events.KinesisFirehoseTransformedStateOk,
+				Data:     buf.Bytes(),
+				Metadata: events.KinesisFirehoseResponseRecordMetadata{
+					PartitionKeys: map[string]string{
+						"table_name": "unknown",
+					},
+				},
+			})
+
+			continue // skip flattening
+
 		}
 
-		outputMap := map[string]interface{}{
-			"table":   raw.Metadata.TableName,
-			"op":      raw.Metadata.Operation,
-			"payload": raw.Data,
+		// Flatten payload and attach operation field
+		var flat map[string]interface{}
+		if err := json.Unmarshal(payload.Data, &flat); err != nil {
+			log.Printf("Failed to parse payload.Data into flat map: %v", err)
+			response.Records = append(response.Records, events.KinesisFirehoseResponseRecord{
+				RecordID: record.RecordID,
+				Result:   events.KinesisFirehoseTransformedStateDropped,
+			})
+			continue
 		}
+		flat["operation"] = payload.Metadata.Operation
 
-		outputJSON, err := json.Marshal(outputMap)
-		if err != nil {
+		var buf bytes.Buffer
+		if err := json.NewEncoder(&buf).Encode(flat); err != nil {
 			log.Printf("Failed to marshal output JSON: %v", err)
 			response.Records = append(response.Records, events.KinesisFirehoseResponseRecord{
 				RecordID: record.RecordID,
@@ -61,13 +99,14 @@ func handler(ctx context.Context, event events.KinesisFirehoseEvent) (events.Kin
 		response.Records = append(response.Records, events.KinesisFirehoseResponseRecord{
 			RecordID: record.RecordID,
 			Result:   events.KinesisFirehoseTransformedStateOk,
-			Data:     outputJSON,
+			Data:     buf.Bytes(),
 			Metadata: events.KinesisFirehoseResponseRecordMetadata{
 				PartitionKeys: map[string]string{
-					"table_name": raw.Metadata.TableName,
+					"table_name": payload.Metadata.TableName,
 				},
 			},
 		})
+
 	}
 
 	return response, nil

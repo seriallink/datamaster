@@ -1,7 +1,10 @@
 package core
 
 import (
+	"bytes"
+	"compress/gzip"
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -21,12 +24,14 @@ func ConfigureS3Notification(ctx context.Context, s3Client *s3.Client, lambdaCli
 		lambdaArn   string
 	)
 
-	stageBucket, err = (&Stack{Name: misc.StackNameStorage}).GetStackOutput("StageBucketName")
+	cfg := GetAWSConfig()
+
+	stageBucket, err = (&Stack{Name: misc.StackNameStorage}).GetStackOutput(cfg, "StageBucketName")
 	if err != nil {
 		return fmt.Errorf("failed to get StageBucketName: %w", err)
 	}
 
-	lambdaArn, err = (&Stack{Name: misc.StackNameFunctions}).GetStackOutput("ProcessingControllerFunctionArn")
+	lambdaArn, err = (&Stack{Name: misc.StackNameFunctions}).GetStackOutput(cfg, "ProcessingControllerFunctionArn")
 	if err != nil {
 		return fmt.Errorf("failed to get ProcessingControllerFunctionArn: %w", err)
 	}
@@ -80,6 +85,66 @@ func ConfigureS3Notification(ctx context.Context, s3Client *s3.Client, lambdaCli
 	}
 
 	fmt.Println("S3 notification successfully configured.")
+	return nil
+
+}
+
+func LoadRawS3Data(cfg aws.Config, ctx context.Context, objectKey string) ([]map[string]any, error) {
+
+	var (
+		err    error
+		bucket string
+		object *s3.GetObjectOutput
+		reader *gzip.Reader
+		data   []map[string]any
+	)
+
+	client := s3.NewFromConfig(cfg)
+
+	bucket, err = (&Stack{Name: misc.StackNameStorage}).GetStackOutput(cfg, "StageBucketName")
+	if err != nil {
+		return nil, fmt.Errorf("failed to get StageBucketName: %w", err)
+	}
+
+	object, err = client.GetObject(ctx, &s3.GetObjectInput{
+		Bucket: &bucket,
+		Key:    &objectKey,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get object from s3: %w", err)
+	}
+	defer object.Body.Close()
+
+	reader, err = gzip.NewReader(object.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create gzip reader: %w", err)
+	}
+	defer reader.Close()
+
+	dec := json.NewDecoder(reader)
+	for dec.More() {
+		var record map[string]any
+		if err = dec.Decode(&record); err != nil {
+			return nil, fmt.Errorf("failed to decode payload: %w", err)
+		}
+		data = append(data, record)
+	}
+
+	return data, nil
+
+}
+
+func UploadDataToS3(cfg aws.Config, ctx context.Context, bucket, key string, data []byte) error {
+
+	_, err := s3.NewFromConfig(cfg).PutObject(ctx, &s3.PutObjectInput{
+		Bucket: aws.String(bucket),
+		Key:    aws.String(key),
+		Body:   bytes.NewReader(data),
+	})
+	if err != nil {
+		return fmt.Errorf("failed to upload Parquet to S3: %w", err)
+	}
+
 	return nil
 
 }
