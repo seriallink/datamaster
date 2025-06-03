@@ -62,11 +62,11 @@ func (s *Stack) GetTemplateBody(templates embed.FS) ([]byte, error) {
 // Returns:
 //   - map[string]string: output values from the stack.
 //   - error: if the stack cannot be found or described.
-func (s *Stack) GetStackOutputs() (map[string]string, error) {
+func (s *Stack) GetStackOutputs(cfg aws.Config) (map[string]string, error) {
 
-	cfClient := cloudformation.NewFromConfig(GetAWSConfig())
+	client := cloudformation.NewFromConfig(cfg)
 
-	resp, err := cfClient.DescribeStacks(context.TODO(), &cloudformation.DescribeStacksInput{
+	resp, err := client.DescribeStacks(context.TODO(), &cloudformation.DescribeStacksInput{
 		StackName: aws.String(s.FullStackName()),
 	})
 	if err != nil {
@@ -97,9 +97,9 @@ func (s *Stack) GetStackOutputs() (map[string]string, error) {
 // Returns:
 //   - string: the value associated with the given output key.
 //   - error: if the stack cannot be described or the output key is not found.
-func (s *Stack) GetStackOutput(key string) (string, error) {
+func (s *Stack) GetStackOutput(cfg aws.Config, key string) (string, error) {
 
-	outputs, err := s.GetStackOutputs()
+	outputs, err := s.GetStackOutputs(cfg)
 	if err != nil {
 		return "", fmt.Errorf("failed to get outputs for stack %s: %w", s.Name, err)
 	}

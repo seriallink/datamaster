@@ -57,12 +57,13 @@ func openConnection() error {
 		databaseOutputs map[string]string
 	)
 
-	svc := secretsmanager.NewFromConfig(GetAWSConfig())
+	cfg := GetAWSConfig()
+	svc := secretsmanager.NewFromConfig(cfg)
 
 	stackSecurity := &Stack{Name: misc.StackNameSecurity}
 	stackDatabase := &Stack{Name: misc.StackNameDatabase}
 
-	secretArn, err = stackSecurity.GetStackOutput("SecretArn")
+	secretArn, err = stackSecurity.GetStackOutput(cfg, "SecretArn")
 	if err != nil {
 		return fmt.Errorf("failed to get SecretArn from stack %s: %w", stackSecurity.Name, err)
 	}
@@ -83,7 +84,7 @@ func openConnection() error {
 		return err
 	}
 
-	if databaseOutputs, err = stackDatabase.GetStackOutputs(); err != nil {
+	if databaseOutputs, err = stackDatabase.GetStackOutputs(cfg); err != nil {
 		return err
 	}
 

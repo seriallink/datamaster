@@ -20,7 +20,7 @@ func StartReplication() error {
 
 	client := databasemigrationservice.NewFromConfig(GetAWSConfig())
 
-	taskArn, err := (&Stack{Name: misc.StackNameStreaming}).GetStackOutput("DMSReplicationTaskArn")
+	taskArn, err := (&Stack{Name: misc.StackNameStreaming}).GetStackOutput(GetAWSConfig(), "DMSReplicationTaskArn")
 	if err != nil {
 		return fmt.Errorf("DMSReplicationTaskArn not found in stack outputs")
 	}

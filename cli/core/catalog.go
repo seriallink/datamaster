@@ -17,7 +17,7 @@ import (
 
 // NameWithPrefix applies the default project prefix (e.g., "dm") to a schema, database, or layer name.
 func NameWithPrefix(name string) string {
-	return fmt.Sprintf("%s_%s", misc.DefaultProjectPrefix, strings.ToLower(name))
+	return misc.NameWithDefaultPrefix(strings.ToLower(name), '_')
 }
 
 // LayerToSchema maps a lakehouse layer name (bronze, silver, or gold)
@@ -62,7 +62,7 @@ func GetStorageLocation(layerType, tableName string) (string, error) {
 
 	stack := &Stack{Name: misc.StackNameStorage}
 
-	bucketName, err := stack.GetStackOutput("DataLakeBucketName")
+	bucketName, err := stack.GetStackOutput(GetAWSConfig(), "DataLakeBucketName")
 	if err != nil {
 		return "", fmt.Errorf("DataLakeBucketName not found in stack outputs")
 	}

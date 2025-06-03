@@ -37,14 +37,15 @@ func RegisterPipeForTable(tableName string) error {
 		outputsStreaming map[string]string
 	)
 
+	cfg := GetAWSConfig()
 	client := pipes.NewFromConfig(GetAWSConfig())
 
-	outputsRoles, err = (&Stack{Name: misc.StackNameRoles}).GetStackOutputs()
+	outputsRoles, err = (&Stack{Name: misc.StackNameRoles}).GetStackOutputs(cfg)
 	if err != nil {
 		return fmt.Errorf("failed to get outputs from roles stack: %w", err)
 	}
 
-	outputsStreaming, err = (&Stack{Name: misc.StackNameStreaming}).GetStackOutputs()
+	outputsStreaming, err = (&Stack{Name: misc.StackNameStreaming}).GetStackOutputs(cfg)
 	if err != nil {
 		return fmt.Errorf("failed to get outputs from stack %s: %w", misc.StackNameStreaming, err)
 	}

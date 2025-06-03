@@ -37,6 +37,7 @@ func DeployLambdaFromArtifact(artifacts embed.FS, name string, memory, timeout i
 		bucket string
 	)
 
+	cfg := GetAWSConfig()
 	ctx := context.TODO()
 	client := lambda.NewFromConfig(GetAWSConfig())
 
@@ -45,18 +46,18 @@ func DeployLambdaFromArtifact(artifacts embed.FS, name string, memory, timeout i
 		return fmt.Errorf("failed to upload artifact: %w", err)
 	}
 
-	role, err = (&Stack{Name: misc.StackNameRoles}).GetStackOutput("LambdaExecutionRoleArn")
+	role, err = (&Stack{Name: misc.StackNameRoles}).GetStackOutput(cfg, "LambdaExecutionRoleArn")
 	if err != nil {
 		return fmt.Errorf("failed to get LambdaExecutionRoleArn: %w", err)
 	}
 
-	bucket, err = (&Stack{Name: misc.StackNameStorage}).GetStackOutput("ArtifactsBucketName")
+	bucket, err = (&Stack{Name: misc.StackNameStorage}).GetStackOutput(cfg, "ArtifactsBucketName")
 	if err != nil {
 		return fmt.Errorf("failed to get ArtifactsBucketName: %w", err)
 	}
 
 	// Ensures the function name follows the project naming convention using the default prefix
-	funcName := fmt.Sprintf("%s-%s", misc.DefaultProjectPrefix, name)
+	funcName := misc.NameWithDefaultPrefix(name, '-')
 
 	// Check if function exists
 	_, err = client.GetFunction(ctx, &lambda.GetFunctionInput{
@@ -136,7 +137,7 @@ func UploadArtifacts(artifacts embed.FS, functions ...string) error {
 
 	client := s3.NewFromConfig(GetAWSConfig())
 
-	bucket, err = (&Stack{Name: misc.StackNameStorage}).GetStackOutput("ArtifactsBucketName")
+	bucket, err = (&Stack{Name: misc.StackNameStorage}).GetStackOutput(GetAWSConfig(), "ArtifactsBucketName")
 	if err != nil {
 		return fmt.Errorf("ArtifactsBucketName not found in stack outputs")
 	}
