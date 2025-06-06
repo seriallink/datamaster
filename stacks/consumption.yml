@@ -1,17 +1,17 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: Athena workgroup configuration for the Data Master consumption layer
+Description: Resources used for querying and analyzing data in the Data Master Project
 
 Resources:
 
-  AthenaWorkgroup:
+  AthenaWorkGroup:
     Type: AWS::Athena::WorkGroup
     Properties:
       Name: dm-workgroup
+      Description: Athena Workgroup for querying and managing Iceberg tables in the Data Master project
       State: ENABLED
-      Description: Workgroup for Data Master Athena queries
-      RecursiveDeleteOption: true
       WorkGroupConfiguration:
-        BytesScannedCutoffPerQuery: 1000000000  # 1GB
+        EngineVersion:
+          SelectedEngineVersion: "Athena engine version 3"
         ResultConfiguration:
           OutputLocation:
             Fn::Sub:
@@ -26,8 +26,8 @@ Resources:
 
 Outputs:
 
-  AthenaWorkgroup:
-    Description: Workgroup used for Athena queries
-    Value: !Ref AthenaWorkgroup
+  AthenaWorkGroupName:
+    Description: Athena workgroup name for Iceberg queries
+    Value: !Ref AthenaWorkGroup
     Export:
-      Name: dm-athena-workgroup
+      Name: dm-athena-workgroup-name

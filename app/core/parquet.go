@@ -8,13 +8,6 @@ import (
 	"github.com/parquet-go/parquet-go"
 )
 
-// WriteParquet writes a slice of struct records to the given writer using parquet-go.
-//func WriteParquet(records any, writer io.Writer) error {
-//	pw := parquet.NewWriter(writer)
-//	defer pw.Close()
-//	return pw.Write(records)
-//}
-
 func WriteParquet(records any, writer io.Writer) error {
 
 	v := reflect.ValueOf(records)
@@ -31,15 +24,11 @@ func WriteParquet(records any, writer io.Writer) error {
 		return fmt.Errorf("cannot write empty slice")
 	}
 
-	first := v.Index(0).Interface()
-	schema := parquet.SchemaOf(first)
-
-	pw := parquet.NewWriter(writer, schema)
+	pw := parquet.NewWriter(writer, parquet.SchemaOf(v.Index(0).Interface()))
 	defer pw.Close()
 
 	for i := 0; i < v.Len(); i++ {
-		rec := v.Index(i).Interface()
-		if err := pw.Write(rec); err != nil {
+		if err := pw.Write(v.Index(i).Interface()); err != nil {
 			return fmt.Errorf("failed to write record %d: %w", i, err)
 		}
 	}

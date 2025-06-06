@@ -292,63 +292,100 @@ func SyncCatalogFromDatabaseSchema(layerType string, tableList ...string) error 
 
 }
 
-// SyncGlueTable creates or updates a Glue table in Iceberg format using the provided column definitions.
+// SyncGlueTable creates or updates a Glue table in the AWS Glue Catalog,
+// using the appropriate format based on the lakehouse layer.
+//
+// For the "bronze" layer, it creates a standard Hive table using Parquet,
+// compatible with Athena and Glue without Iceberg dependencies.
+//
+// For the "silver" and "gold" layers, it creates a native Iceberg table,
+// enabling support for ACID operations, versioning, and time travel.
 //
 // Parameters:
-//   - schemaName: logical layer name (bronze, silver, gold).
-//   - tableName: name of the table.
-//   - columns: list of Glue-compatible column definitions.
+//   - layerType: the lakehouse layer ("bronze", "silver", or "gold").
+//   - tableName: the name of the table to create or update.
+//   - columns: a slice of Glue-compatible column definitions.
 //
 // Returns:
 //   - error: if creation or update fails.
-func SyncGlueTable(layerType, tableName string, columns []types.Column) (err error) {
+func SyncGlueTable(layerType, tableName string, columns []types.Column) error {
 
 	client := glue.NewFromConfig(GetAWSConfig())
 	dbName := NameWithPrefix(layerType)
 	location, _ := GetStorageLocation(layerType, tableName)
 
-	_, err = client.GetTable(context.TODO(), &glue.GetTableInput{
+	_, err := client.GetTable(context.TODO(), &glue.GetTableInput{
 		DatabaseName: aws.String(dbName),
 		Name:         aws.String(tableName),
 	})
-
-	tableInput := &types.TableInput{
-		Name: aws.String(tableName),
-		StorageDescriptor: &types.StorageDescriptor{
-			Columns: columns,
-			// physical path in S3 that contains Iceberg metadata and data files
-			Location: aws.String(location),
-			// required to make the table readable via Athena/Glue
-			// point to Iceberg-compatible Hive input/output formats
-			InputFormat:  aws.String("org.apache.iceberg.mr.hive.HiveIcebergInputFormat"),
-			OutputFormat: aws.String("org.apache.iceberg.mr.hive.HiveIcebergOutputFormat"),
-			// technically unused by Iceberg, but required by Glue API,
-			// a generic SerDe is passed as placeholder
-			SerdeInfo: &types.SerDeInfo{
-				SerializationLibrary: aws.String("org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe"),
-				Parameters:           map[string]string{"serialization.format": "1"},
-			},
-		},
-		// declares the table as a native Iceberg dataset
-		TableType: aws.String("ICEBERG"),
-		Parameters: map[string]string{
-			// used by AWS Glue for metadata discovery and consistency
-			"classification": "iceberg",
-			// must match TableType for compatibility with Athena and Glue jobs
-			"table_type": "ICEBERG",
-			// enables compaction-awareness for future rewrites
-			"optimize_small_files": "true",
-			// indicates the table data lives outside the Glue-managed warehouse (in S3)
-			"EXTERNAL": "TRUE",
-		},
-	}
+	tableExists := err == nil
 
 	if err != nil && !strings.Contains(err.Error(), "EntityNotFoundException") {
 		return err
 	}
 
-	// table exists, update it
-	if err == nil {
+	// Set format-specific configs
+	var (
+		inputFormat  string
+		outputFormat string
+		serdeLib     string
+		tableType    string
+		parameters   map[string]string
+	)
+
+	if layerType == misc.LayerBronze {
+
+		// For bronze layer, create a standard Hive table with Parquet format
+		tableType = "EXTERNAL_TABLE"
+		inputFormat = "org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat"
+		outputFormat = "org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat"
+		serdeLib = "org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe"
+		parameters = map[string]string{
+			"classification": "parquet",
+			"EXTERNAL":       "TRUE",
+		}
+
+	} else {
+
+		// For silver and gold layers, create an Iceberg table
+		tableType = "ICEBERG"
+		inputFormat = "org.apache.iceberg.mr.hive.HiveIcebergInputFormat"
+		outputFormat = "org.apache.iceberg.mr.hive.HiveIcebergOutputFormat"
+		serdeLib = "org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe"
+		parameters = map[string]string{
+			"classification":       "iceberg",
+			"table_type":           "ICEBERG",
+			"optimize_small_files": "true",
+			"EXTERNAL":             "TRUE",
+		}
+
+		var columnDefs []string
+		for _, col := range columns {
+			columnDefs = append(columnDefs, fmt.Sprintf("%s %s", *col.Name, *col.Type))
+		}
+		if err = SetIcebergMetadata(context.TODO(), layerType, tableName, columnDefs); err != nil {
+			return err
+		}
+
+	}
+
+	tableInput := &types.TableInput{
+		Name:       aws.String(tableName),
+		TableType:  aws.String(tableType),
+		Parameters: parameters,
+		StorageDescriptor: &types.StorageDescriptor{
+			Columns:      columns,
+			Location:     aws.String(location),
+			InputFormat:  aws.String(inputFormat),
+			OutputFormat: aws.String(outputFormat),
+			SerdeInfo: &types.SerDeInfo{
+				SerializationLibrary: aws.String(serdeLib),
+				Parameters:           map[string]string{"serialization.format": "1"},
+			},
+		},
+	}
+
+	if tableExists {
 		_, err = client.UpdateTable(context.TODO(), &glue.UpdateTableInput{
 			DatabaseName: aws.String(dbName),
 			TableInput:   tableInput,
@@ -356,22 +393,18 @@ func SyncGlueTable(layerType, tableName string, columns []types.Column) (err err
 		if err != nil {
 			return fmt.Errorf("failed to update table %s: %w", tableName, err)
 		}
-
 		fmt.Println(misc.Green("Table %s updated successfully in database %s", tableName, dbName))
-		return nil
+	} else {
+		_, err = client.CreateTable(context.TODO(), &glue.CreateTableInput{
+			DatabaseName: aws.String(dbName),
+			TableInput:   tableInput,
+		})
+		if err != nil {
+			return fmt.Errorf("failed to create table %s: %w", tableName, err)
+		}
+		fmt.Println(misc.Green("Table %s created successfully in database %s", tableName, dbName))
 	}
 
-	// table does not exist, create it
-	input := &glue.CreateTableInput{
-		DatabaseName: aws.String(dbName),
-		TableInput:   tableInput,
-	}
-
-	if _, err = client.CreateTable(context.TODO(), input); err != nil {
-		return fmt.Errorf("failed to create table %s: %w", tableName, err)
-	}
-
-	fmt.Println(misc.Green("Table %s created successfully in database %s", tableName, dbName))
 	return nil
 
 }

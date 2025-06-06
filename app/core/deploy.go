@@ -132,10 +132,10 @@ func DeployAllStacks(templates, artifacts embed.FS) error {
 		{Name: misc.StackNameDatabase},
 		{Name: misc.StackNameCatalog},
 		{Name: misc.StackNameGovernance},
+		{Name: misc.StackNameConsumption},
 		{Name: misc.StackNameStreaming},
 		{Name: misc.StackNameBatch},
 		{Name: misc.StackNameProcessing},
-		{Name: misc.StackNameConsumption},
 		{Name: misc.StackNameObservability},
 		{Name: misc.StackNameCosts},
 	}

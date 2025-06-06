@@ -96,7 +96,7 @@ func handler(ctx context.Context, event Event) error {
 
 	log.Printf("Successfully processed object %s and uploaded to %s/%s\n", event.ObjectKey, bucket, item.DestinationKey())
 
-	return nil
+	return item.Finish(ctx, cfg, nil)
 
 }
 
