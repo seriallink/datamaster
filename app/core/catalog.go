@@ -138,23 +138,42 @@ func LoadAuroraTablesWithColumns(schema string, tables ...string) (classes []dia
 }
 
 // ConvertPgAttributesToGlueColumns converts a loaded PgClass (PostgreSQL table definition)
-// into a slice of AWS Glue Column definitions compatible with Glue Catalog and Iceberg.
+// into a slice of AWS Glue Column definitions compatible with Glue Catalog.
+//
+// Behavior:
+//   - For the "bronze" layer, all columns are forced to type "string",
+//     and an additional column named "operation" is injected at the end.
+//   - For "silver" and "gold", types are inferred from PostgreSQL definitions.
 //
 // Parameters:
+//   - layerType: lakehouse layer ("bronze", "silver", or "gold").
 //   - class: pointer to PgClass containing attributes.
+//   - db: GORM database connection for resolving PostgreSQL types.
 //
 // Returns:
-//   - []types.Column: Glue column definitions.
-func ConvertPgAttributesToGlueColumns(class *dialect.PgClass, db *gorm.DB) (columns []types.Column) {
+//   - []types.Column: list of Glue-compatible column definitions.
+func ConvertPgAttributesToGlueColumns(layerType string, class *dialect.PgClass, db *gorm.DB) (columns []types.Column) {
+
 	for _, attr := range class.PgAttributes {
-		columnName := attr.AttName.String
-		glueType := CastPgType(attr, *attr.PgType, db)
+
+		// Force all fields to string type for the bronze layer
 		columns = append(columns, types.Column{
-			Name: aws.String(columnName),
-			Type: aws.String(glueType),
+			Name: aws.String(attr.AttName.String),
+			Type: aws.String(misc.TernaryStr(layerType == misc.LayerBronze, "string", CastPgType(attr, *attr.PgType, db))),
+		})
+
+	}
+
+	// Inject 'operation' column explicitly for bronze
+	if layerType == misc.LayerBronze {
+		columns = append(columns, types.Column{
+			Name: aws.String("operation"),
+			Type: aws.String("string"),
 		})
 	}
+
 	return
+
 }
 
 // CastPgType converts a PostgreSQL type (from pg_type and pg_attribute)
@@ -283,7 +302,7 @@ func SyncCatalogFromDatabaseSchema(layerType string, tableList ...string) error 
 	}
 
 	for _, table := range tables {
-		if err = SyncGlueTable(layerType, table.RelName.String, ConvertPgAttributesToGlueColumns(&table, db)); err != nil {
+		if err = SyncGlueTable(layerType, table.RelName.String, ConvertPgAttributesToGlueColumns(layerType, &table, db)); err != nil {
 			return fmt.Errorf("failed to create or update table %s: %w", table.RelName.String, err)
 		}
 	}
