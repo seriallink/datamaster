@@ -378,13 +378,13 @@ func SyncGlueTable(layerType, tableName string, columns []types.Column) error {
 			"EXTERNAL":             "TRUE",
 		}
 
-		var columnDefs []string
-		for _, col := range columns {
-			columnDefs = append(columnDefs, fmt.Sprintf("%s %s", *col.Name, *col.Type))
-		}
-		if err = SetIcebergMetadata(context.TODO(), layerType, tableName, columnDefs); err != nil {
-			return err
-		}
+		//var columnDefs []string
+		//for _, col := range columns {
+		//	columnDefs = append(columnDefs, fmt.Sprintf("%s %s", *col.Name, *col.Type))
+		//}
+		//if err = SetIcebergMetadata(context.TODO(), layerType, tableName, columnDefs); err != nil {
+		//	return err
+		//}
 
 	}
 

@@ -6,7 +6,6 @@ const (
 	TemplatesPath        = "stacks"
 	ArtifactsPath        = "artifacts"
 	TemplateExtension    = ".yml"
-	DefaultScript        = "database/migrations/data-master.sql"
 )
 
 // Logical names of all stacks managed by the CLI.
@@ -25,6 +24,12 @@ const (
 	StackNameConsumption   = "consumption"
 	StackNameObservability = "observability"
 	StackNameCosts         = "costs"
+)
+
+const (
+	MigrationCoreScript = "database/migrations/001_create_dm_core.sql"
+	MigrationViewScript = "database/migrations/002_create_dm_view.sql"
+	MigrationMartScript = "database/migrations/003_create_dm_mart.sql"
 )
 
 const (

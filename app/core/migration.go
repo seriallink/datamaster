@@ -11,6 +11,25 @@ import (
 	_ "github.com/lib/pq"
 )
 
+func RunAllMigrations(fs embed.FS) error {
+
+	scripts := []string{
+		misc.MigrationCoreScript,
+		misc.MigrationViewScript,
+		misc.MigrationMartScript,
+	}
+
+	for _, script := range scripts {
+		fmt.Println(misc.Blue("Running %s script...", script))
+		if err := RunMigration(fs, script); err != nil {
+			return err
+		}
+	}
+
+	return nil
+
+}
+
 // RunMigration executes an SQL script embedded via embed.FS against the Aurora PostgreSQL database.
 //
 // Parameters:
@@ -31,10 +50,6 @@ func RunMigration(fs embed.FS, script string) error {
 		sqlContent []byte
 		sqlDbConn  *sql.DB
 	)
-
-	if script == "" {
-		script = misc.DefaultScript
-	}
 
 	if sqlContent, err = fs.ReadFile(script); err != nil {
 		return fmt.Errorf("failed to read script %s: %w", script, err)

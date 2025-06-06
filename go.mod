@@ -22,12 +22,10 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/sts v1.33.19
 	github.com/fatih/color v1.18.0
 	github.com/google/uuid v1.6.0
-	github.com/icrowley/fake v0.0.0-20240710202011-f797eb4a99c0
 	github.com/jackc/pgtype v1.14.4
 	github.com/jaswdr/faker v1.19.1
 	github.com/lib/pq v1.10.9
 	github.com/parquet-go/parquet-go v0.25.0
-	github.com/seriallink/null v4.0.0+incompatible
 	github.com/stretchr/testify v1.10.0
 	gorm.io/driver/postgres v1.5.11
 	gorm.io/gorm v1.26.1
@@ -52,7 +50,6 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.30.1 // indirect
 	github.com/aws/smithy-go v1.22.2 // indirect
 	github.com/chzyer/test v1.0.0 // indirect
-	github.com/corpix/uarand v0.0.0-20170723150923-031be390f409 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/flynn-archive/go-shlex v0.0.0-20150515145356-3f9db97f8568 // indirect
 	github.com/goccy/go-json v0.10.3 // indirect

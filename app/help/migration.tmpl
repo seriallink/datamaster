@@ -2,14 +2,14 @@ Run Aurora database migrations.
 
 Usage:
   migration
-      Executes the default migration script (data-master.sql) against Aurora.
+      Executes the default migration script (001_create_dm_core.sql) against Aurora.
 
   migration --script <filename>
       Executes a specific migration script embedded in the binary.
 
 Examples:
   migration
-  migration --script database/data-master.sql
+  migration --script database/001_create_dm_core.sql
 
 Note:
   To see a list of available scripts, run: scripts

@@ -10,22 +10,19 @@ import (
 )
 
 type SimOptions struct {
-	RPS       int
-	Duration  time.Duration
-	Quality   string
-	EventType string
-	Parallel  int
+	RPS      int
+	Duration time.Duration
+	Quality  string
+	Parallel int
 }
 
-var SupportedScenarios = map[string]func(SimOptions){
-	"customer": SimulateCustomerFlow,
-	"product":  SimulateProductFlow,
-	"purchase": SimulatePurchaseFlow,
-	"delivery": SimulateDeliveryFlow,
+var SupportedStreams = map[string]func(SimOptions){
+	"profile": SimulateProfileStream,
+	"review":  SimulateReviewStream,
 }
 
-// SimulateCustomerFlow simulates the customer scenario only
-func SimulateCustomerFlow(opts SimOptions) {
+// SimulateProfileStream simulates the customer scenario only
+func SimulateProfileStream(opts SimOptions) {
 
 	err := ensureCDCStarted()
 	if err != nil {
@@ -45,14 +42,14 @@ func SimulateCustomerFlow(opts SimOptions) {
 
 	for time.Now().Before(end) {
 
-		customer := model.FakeCustomer(f)
+		profile := model.FakeProfile(f)
 
 		if shouldCorrupt(f, opts.Quality) {
-			customer.CustomerEmail = f.Lorem().Word()
+			profile.Email = f.Lorem().Word()
 		}
 
-		if err = db.Create(&customer).Error; err != nil {
-			fmt.Println("[customer] insert failed:", err)
+		if err = db.Create(&profile).Error; err != nil {
+			fmt.Println("[profile] insert failed:", err)
 		}
 
 		time.Sleep(interval)
@@ -62,22 +59,10 @@ func SimulateCustomerFlow(opts SimOptions) {
 	fmt.Println("[customer] simulation finished")
 }
 
-// SimulatePurchaseFlow simulates the purchase scenario (customer + purchase + delivery)
-func SimulatePurchaseFlow(opts SimOptions) {
-	fmt.Println("[purchase] Starting simulation...")
+// SimulateReviewStream simulates the purchase scenario (customer + purchase + delivery)
+func SimulateReviewStream(opts SimOptions) {
+	fmt.Println("[review] Starting simulation...")
 	// TODO: implement logic for simulating customers, purchases, and related entities
-}
-
-// SimulateProductFlow simulates the product scenario (category + product + review)
-func SimulateProductFlow(opts SimOptions) {
-	fmt.Println("[product] Starting simulation...")
-	// TODO: implement logic for simulating categories and products
-}
-
-// SimulateDeliveryFlow simulates the delivery scenario (delivery + tracking)
-func SimulateDeliveryFlow(opts SimOptions) {
-	fmt.Println("[delivery] Starting simulation...")
-	// TODO: implement logic for simulating deliveries and tracking events
 }
 
 func shouldCorrupt(f faker.Faker, quality string) bool {
