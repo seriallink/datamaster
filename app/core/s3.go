@@ -100,7 +100,7 @@ func UploadDataToS3(cfg aws.Config, ctx context.Context, bucket, key string, dat
 		Body:   bytes.NewReader(data),
 	})
 	if err != nil {
-		return fmt.Errorf("failed to upload Parquet to S3: %w", err)
+		return fmt.Errorf("failed to upload object to S3: %w", err)
 	}
 
 	return nil

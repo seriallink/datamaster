@@ -54,7 +54,17 @@ Resources:
           StartingPosition: LATEST
         FilterCriteria:
           Filters:
-            - Pattern: '{ "eventName": ["INSERT"] }'
+            - Pattern: |
+                {
+                  "eventName": ["INSERT"],
+                  "dynamodb": {
+                    "NewImage": {
+                      "schema_name": {
+                        "S": ["dm_bronze"]
+                      }
+                    }
+                  }
+                }
 
   ProcessingStepLogGroup:
     Type: AWS::Logs::LogGroup

@@ -86,12 +86,17 @@ func Process(ctx context.Context, cfg aws.Config, objectKey string) error {
 		return fmt.Errorf("failed to get bucket name from stack output: %w", item.Finish(ctx, cfg, err))
 	}
 
-	err = core.UploadDataToS3(cfg, ctx, bucket, item.DestinationKey(), buf.Bytes())
+	err = core.UploadDataToS3(cfg, ctx, bucket, item.DestinationKey(misc.LayerBronze), buf.Bytes())
 	if err != nil {
 		return fmt.Errorf("failed to upload data to S3: %w", item.Finish(ctx, cfg, err))
 	}
 
-	log.Printf("Successfully processed object %s and uploaded to %s/%s\n", objectKey, bucket, item.DestinationKey())
+	_, err = item.RegisterNextLayerControl(ctx, cfg, buf.Bytes())
+	if err != nil {
+		return fmt.Errorf("failed to register next layer control: %w", item.Finish(ctx, cfg, err))
+	}
+
+	log.Printf("Successfully processed object %s and uploaded to %s/%s\n", objectKey, bucket, item.DestinationKey(misc.LayerBronze))
 
 	return item.Finish(ctx, cfg, nil)
 

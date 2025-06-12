@@ -8,11 +8,9 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"strings"
-	"time"
 
 	"github.com/seriallink/datamaster/app/core"
 	"github.com/seriallink/datamaster/app/enum"
@@ -22,22 +20,12 @@ import (
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
-	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
-	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
-	"github.com/aws/aws-sdk-go-v2/service/s3"
 )
 
-var (
-	s3Client     *s3.Client
-	dynamoClient *dynamodb.Client
-	tableName    = "dm-processing-control"
-)
+var cfg aws.Config
 
 func init() {
-	cfg, _ := config.LoadDefaultConfig(context.TODO())
-	s3Client = s3.NewFromConfig(cfg)
-	dynamoClient = dynamodb.NewFromConfig(cfg)
+	cfg, _ = config.LoadDefaultConfig(context.TODO())
 }
 
 func handler(ctx context.Context, event events.S3Event) error {
@@ -47,23 +35,13 @@ func handler(ctx context.Context, event events.S3Event) error {
 		bucket := record.S3.Bucket.Name
 		key := record.S3.Object.Key
 
-		parts := strings.Split(key, "/")
-		if len(parts) < 3 {
-			return fmt.Errorf("invalid key format: %s", key)
-		}
-
-		// Download the .gz file from S3
-		resp, err := s3Client.GetObject(ctx, &s3.GetObjectInput{
-			Bucket: aws.String(bucket),
-			Key:    aws.String(key),
-		})
+		object, err := core.DownloadS3Object(ctx, cfg, bucket, key)
 		if err != nil {
 			return fmt.Errorf("failed to get S3 object: %v", err)
 		}
-		defer resp.Body.Close()
+		defer object.Body.Close()
 
-		// Decompress the gzip content
-		gz, err := gzip.NewReader(resp.Body)
+		gz, err := gzip.NewReader(object.Body)
 		if err != nil {
 			return fmt.Errorf("failed to create gzip reader: %v", err)
 		}
@@ -73,20 +51,11 @@ func handler(ctx context.Context, event events.S3Event) error {
 		var buf bytes.Buffer
 		tee := io.TeeReader(gz, &buf)
 
-		now := time.Now().UTC().Format(time.RFC3339)
-
-		item := core.ProcessingControl{
-			ObjectKey:    key,
-			SchemaName:   misc.NameWithDefaultPrefix(misc.LayerBronze, '_'),
-			TableName:    parts[1],
-			FileSize:     record.S3.Object.Size,
-			Status:       enum.ProcessPending.String(),
-			AttemptCount: 0,
-			CreatedAt:    now,
-			UpdatedAt:    now,
+		item, err := core.NewProcessingControl(misc.LayerBronze, key)
+		if err != nil {
+			return fmt.Errorf("failed to init processing control item: %v", err)
 		}
 
-		// Count the number of records based on file format
 		if strings.Contains(key, "dm-batch-process") {
 			item.RecordCount, err = countCsvLines(tee)
 			item.FileFormat = enum.FileFormatCsv.String()
@@ -98,34 +67,19 @@ func handler(ctx context.Context, event events.S3Event) error {
 			return fmt.Errorf("failed to count records: %v", err)
 		}
 
-		// Compute SHA256 checksum from buffered data
 		item.Checksum, err = computeChecksum(bytes.NewReader(buf.Bytes()))
 		if err != nil {
 			return fmt.Errorf("failed to compute checksum: %v", err)
 		}
 
-		// Recommend compute target based on record count
+		item.FileSize = record.S3.Object.Size
 		item.ComputeTarget = recommendCompute(item.RecordCount)
 
-		itemMap, err := attributevalue.MarshalMap(item)
+		err = item.Put(ctx, cfg)
 		if err != nil {
-			return fmt.Errorf("failed to marshal item: %v", err)
+			return fmt.Errorf("failed to put item in DynamoDB: %v", err)
 		}
 
-		// Only insert if the object_key does not already exist
-		_, err = dynamoClient.PutItem(ctx, &dynamodb.PutItemInput{
-			TableName:           aws.String(tableName),
-			Item:                itemMap,
-			ConditionExpression: aws.String("attribute_not_exists(object_key)"),
-		})
-		if err != nil {
-			var cfe *types.ConditionalCheckFailedException
-			if errors.As(err, &cfe) {
-				fmt.Printf("Item already exists, skipping: %s\n", key)
-				return nil
-			}
-			return fmt.Errorf("failed to put item: %v", err)
-		}
 	}
 
 	return nil
