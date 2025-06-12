@@ -1,10 +1,10 @@
 ﻿/*
 Created: 5/6/2025
-Modified: 6/6/2025
+Modified: 6/10/2025
 Project: Data Master
 Model: DataMaster
 Author: Marcelo Monaco
-Database: Aurora PostgreSQL
+Database: Aurora PostgreSQL 9.5
 */
 
 -- Create schemas section -------------------------------------------------
@@ -54,7 +54,8 @@ ALTER TABLE dm_core.beer ADD CONSTRAINT pk_beer PRIMARY KEY (beer_id)
 
 CREATE TABLE dm_core.profile
 (
-  profile_id Text NOT NULL,
+  profile_id Bigint NOT NULL,
+  profile_name Text NOT NULL,
   email Text NOT NULL,
   state Text NOT NULL
 )
@@ -71,13 +72,13 @@ CREATE TABLE dm_core.review
 (
   review_id Bigint NOT NULL,
   beer_id Bigint NOT NULL,
-  profile_id Text NOT NULL,
+  profile_id Bigint NOT NULL,
   review_overall Numeric,
   review_aroma Numeric,
   review_appearance Numeric,
   review_palate Numeric,
   review_taste Numeric,
-  review_time Timestamptz
+  review_time Bigint
 )
 WITH (
   autovacuum_enabled=true)
