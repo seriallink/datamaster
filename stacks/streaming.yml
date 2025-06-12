@@ -104,7 +104,7 @@ Resources:
   DMSTargetEndpoint:
     Type: AWS::DMS::Endpoint
     Properties:
-      EndpointIdentifier: dm-kinesis-endpoint
+      EndpointIdentifier: dm-target-endpoint
       EndpointType: target
       EngineName: kinesis
       KinesisSettings:

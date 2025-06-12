@@ -20,7 +20,7 @@ var stacks embed.FS
 //go:embed database/migrations/*.sql
 var scripts embed.FS
 
-//go:embed artifacts/*.zip
+//go:embed artifacts/*
 var artifacts embed.FS
 
 func main() {
@@ -50,6 +50,7 @@ func main() {
 	shell.AddCmd(cmd.PipeCmd())
 	shell.AddCmd(cmd.ArtifactsCmd(artifacts))
 	shell.AddCmd(cmd.LambdaCmd(artifacts))
+	shell.AddCmd(cmd.SeedCmd())
 	shell.AddCmd(cmd.StreamCmd())
 	shell.AddCmd(cmd.ExitCmd(shell))
 	shell.AddCmd(cmd.ClearCmd(shell))

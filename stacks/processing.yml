@@ -1,6 +1,12 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: Orchestrates the data pipeline process for the Data Master Project
 
+Parameters:
+
+  RawIngestorMassImageUri:
+    Type: String
+    Description: Docker image URI for the raw ingestor container
+
 Resources:
 
   ProcessingControlTable:
@@ -11,9 +17,22 @@ Resources:
       AttributeDefinitions:
         - AttributeName: object_key
           AttributeType: S
+        - AttributeName: table_name
+          AttributeType: S
+        - AttributeName: checksum
+          AttributeType: S
       KeySchema:
         - AttributeName: object_key
           KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: TableChecksumIndex
+          KeySchema:
+            - AttributeName: table_name
+              KeyType: HASH
+            - AttributeName: checksum
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
       StreamSpecification:
         StreamViewType: NEW_IMAGE
       Tags:
@@ -22,29 +41,212 @@ Resources:
         - Key: Component
           Value: Processing
 
-#  ProcessPipelineRule:
-#    Type: AWS::Events::Rule
-#    Properties:
-#      Name: dm-process-pipeline-rule
-#      EventPattern:
-#        source:
-#          - "dm.pipeline"
-#        detail-type:
-#          - "ProcessObject"
-#      Targets:
-#        - Arn: !GetAtt ProcessPipelineFunction.Arn
-#          Id: ProcessPipelineFunctionTarget
-#          InputPath: "$.detail"
-#
-#  ProcessPipelinePermission:
-#    Type: AWS::Lambda::Permission
-#    Properties:
-#      FunctionName: !Ref BronzeProcessorFunction
-#      Action: lambda:InvokeFunction
-#      Principal: events.amazonaws.com
-#      SourceArn: !GetAtt ProcessPipelineRule.Arn
+  ProcessingPipe:
+    Type: AWS::Pipes::Pipe
+    DependsOn: ProcessingControlTable
+    Properties:
+      Name: dm-processing-pipe
+      RoleArn: !ImportValue dm-pipe-execution-role-arn
+      Source: !GetAtt ProcessingControlTable.StreamArn
+      Target: !Ref RawDispatcher
+      SourceParameters:
+        DynamoDBStreamParameters:
+          StartingPosition: LATEST
+        FilterCriteria:
+          Filters:
+            - Pattern: '{ "eventName": ["INSERT"] }'
+
+  ProcessingStepLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/stepfunctions/dm-raw-dispatcher
+      RetentionInDays: 7
+
+  RawDispatcher:
+    Type: AWS::StepFunctions::StateMachine
+    DependsOn: ProcessingStepLogGroup
+    Properties:
+      StateMachineName: dm-raw-dispatcher
+      StateMachineType: EXPRESS
+      RoleArn: !ImportValue dm-router-role-arn
+      LoggingConfiguration:
+        Level: ALL
+        IncludeExecutionData: true
+        Destinations:
+          - CloudWatchLogsLogGroup:
+              LogGroupArn: !GetAtt ProcessingStepLogGroup.Arn
+      TracingConfiguration:
+        Enabled: false
+      DefinitionString:
+        Fn::Sub:
+          - |
+            {
+              "StartAt": "ForEachRecord",
+              "States": {
+                "ForEachRecord": {
+                  "Type": "Map",
+                  "ItemsPath": "$",
+                  "Iterator": {
+                    "StartAt": "ChooseTarget",
+                    "States": {
+                      "ChooseTarget": {
+                        "Type": "Choice",
+                        "Choices": [
+                          {
+                            "Variable": "$.dynamodb.NewImage.compute_target.S",
+                            "StringEquals": "lambda",
+                            "Next": "InvokeRawIngestorLambda"
+                          },
+                          {
+                            "Variable": "$.dynamodb.NewImage.compute_target.S",
+                            "StringEquals": "ecs",
+                            "Next": "RunRawIngestorEcsTask"
+                          }
+                        ],
+                        "Default": "UnsupportedComputeTarget"
+                      },
+                      "InvokeRawIngestorLambda": {
+                        "Type": "Task",
+                        "Resource": "arn:aws:states:::lambda:invoke",
+                        "Parameters": {
+                          "FunctionName": "${RawIngestorFunctionArn}",
+                          "Payload": {
+                            "object_key.$": "$.dynamodb.NewImage.object_key.S"
+                          }
+                        },
+                        "End": true
+                      },
+                      "RunRawIngestorEcsTask": {
+                        "Type": "Task",
+                        "Resource": "arn:aws:states:::ecs:runTask",
+                        "Parameters": {
+                          "LaunchType": "FARGATE",
+                          "Cluster": "arn:aws:ecs:${AWS::Region}:${AWS::AccountId}:cluster/dm-processing-cluster",
+                          "TaskDefinition": "arn:aws:ecs:${AWS::Region}:${AWS::AccountId}:task-definition/dm-processing-task",
+                          "NetworkConfiguration": {
+                            "AwsvpcConfiguration": {
+                              "Subnets": ["${Subnet1}", "${Subnet2}"],
+                              "SecurityGroups": ["${ProcessingSG}"],
+                              "AssignPublicIp": "ENABLED"
+                            }
+                          },
+                          "Overrides": {
+                            "ContainerOverrides": [
+                              {
+                                "Name": "dm-processing-image",
+                                "Environment": [
+                                  {
+                                    "Name": "OBJECT_KEY",
+                                    "Value.$": "$.dynamodb.NewImage.object_key.S"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        },
+                        "End": true
+                      },
+                      "UnsupportedComputeTarget": {
+                        "Type": "Fail",
+                        "Error": "InvalidTarget",
+                        "Cause": "Target must be 'lambda' or 'ecs'"
+                      }
+                    }
+                  },
+                  "End": true
+                }
+              }
+            }
+          - Subnet1: !ImportValue dm-public-subnet-az1-id
+            Subnet2: !ImportValue dm-public-subnet-az2-id
+            ProcessingSG: !ImportValue dm-processing-sg
+            RawIngestorFunctionArn: !ImportValue dm-raw-ingestor-function-arn
+      Tags:
+        - Key: Project
+          Value: DataMaster
+        - Key: Component
+          Value: Processing
+
+  ProcessingTaskLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /ecs/dm-processing-task
+      RetentionInDays: 7
+
+  ProcessingTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    DependsOn: ProcessingTaskLogGroup
+    Properties:
+      Family: dm-processing-task
+      Cpu: "2048"
+      Memory: "4096"
+      RequiresCompatibilities: [ FARGATE ]
+      NetworkMode: awsvpc
+      ExecutionRoleArn: !ImportValue dm-processing-task-execution-role-arn
+      TaskRoleArn: !ImportValue dm-raw-ingestor-role-arn
+      ContainerDefinitions:
+        - Name: dm-processing-image
+          Image: !Ref RawIngestorMassImageUri
+          Essential: true
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: /ecs/dm-processing-task
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: ecs
+          Environment:
+            - Name: STAGE_BUCKET
+              Value: !ImportValue dm-stage-bucket
+      Tags:
+        - Key: Project
+          Value: DataMaster
+        - Key: Component
+          Value: Processing
+
+  ProcessingCluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: dm-processing-cluster
+      Tags:
+        - Key: Project
+          Value: DataMaster
+        - Key: Component
+          Value: Processing
+
+  ProcessingService:
+    Type: AWS::ECS::Service
+    DependsOn:
+      - ProcessingTaskDefinition
+    Properties:
+      ServiceName: dm-processing-service
+      Cluster: !Ref ProcessingCluster
+      LaunchType: FARGATE
+      DesiredCount: 0  # Step Function invokes tasks on demand
+      TaskDefinition: !Ref ProcessingTaskDefinition
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: DISABLED
+          SecurityGroups:
+            - !ImportValue dm-processing-sg
+          Subnets:
+            - !ImportValue dm-public-subnet-az1-id
+            - !ImportValue dm-public-subnet-az2-id
+      DeploymentConfiguration:
+        MaximumPercent: 100
+        MinimumHealthyPercent: 0
+      Tags:
+        - Key: Project
+          Value: DataMaster
+        - Key: Component
+          Value: Processing
 
 Outputs:
+
+  ProcessingControlStreamArn:
+    Description: ARN of the DynamoDB stream for processing control table
+    Value: !GetAtt ProcessingControlTable.StreamArn
+    Export:
+      Name: dm-processing-control-stream-arn
 
   ProcessingControlTableName:
     Description: Name of the DynamoDB table used for tracking processed S3 objects
@@ -52,8 +254,26 @@ Outputs:
     Export:
       Name: dm-processing-control-table-name
 
-  ProcessingControlStreamArn:
-    Description: ARN of the DynamoDB stream for processing control table
-    Value: !GetAtt ProcessingControlTable.StreamArn
+  TableChecksumIndexName:
+    Description: Name of the GSI used to prevent duplicated seed uploads based on table and checksum
+    Value: TableChecksumIndex
     Export:
-      Name: dm-processing-control-stream-arn
+      Name: dm-processing-checksum-index
+
+  RawDispatcherArn:
+    Description: ARN of the RawDispatcher Step Function responsible for routing processing tasks
+    Value: !Ref RawDispatcher
+    Export:
+      Name: dm-raw-dispatcher-arn
+
+  ProcessingClusterName:
+    Description: Name of the ECS cluster used for processing tasks
+    Value: !Ref ProcessingCluster
+    Export:
+      Name: dm-processing-cluster-name
+
+  ProcessingServiceName:
+    Description: Name of the ECS service responsible for processing
+    Value: !Ref ProcessingService
+    Export:
+      Name: dm-processing-service-name

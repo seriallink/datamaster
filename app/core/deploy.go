@@ -128,14 +128,14 @@ func DeployAllStacks(templates, artifacts embed.FS) error {
 		{Name: misc.StackNameRoles},
 		{Name: misc.StackNameSecurity},
 		{Name: misc.StackNameStorage},
-		{Name: misc.StackNameFunctions},
 		{Name: misc.StackNameDatabase},
 		{Name: misc.StackNameCatalog},
 		{Name: misc.StackNameGovernance},
 		{Name: misc.StackNameConsumption},
+		{Name: misc.StackNameFunctions},
 		{Name: misc.StackNameStreaming},
-		{Name: misc.StackNameBatch},
 		{Name: misc.StackNameProcessing},
+		{Name: misc.StackNameBatch},
 		{Name: misc.StackNameObservability},
 		{Name: misc.StackNameCosts},
 	}
@@ -172,11 +172,7 @@ func DeployStack(stack *Stack, templates, artifacts embed.FS) error {
 		return fmt.Errorf("failed to read template for stack %s: %w", fullStackName, err)
 	}
 
-	if err = injectParameters(stack, cfg); err != nil {
-		return err
-	}
-
-	if err = prepareArtifacts(stack, artifacts); err != nil {
+	if err = preDeploymentHooks(cfg, stack, artifacts); err != nil {
 		return err
 	}
 
@@ -188,7 +184,7 @@ func DeployStack(stack *Stack, templates, artifacts embed.FS) error {
 		return err
 	}
 
-	if err = postDeploymentHooks(stack, cfg); err != nil {
+	if err = postDeploymentHooks(cfg, stack); err != nil {
 		return err
 	}
 
@@ -197,52 +193,71 @@ func DeployStack(stack *Stack, templates, artifacts embed.FS) error {
 
 }
 
-// injectParameters injects additional parameters into a CloudFormation stack definition, based on stack-specific rules.
+// preDeploymentHooks performs pre-deployment actions based on the stack name.
 //
-// Currently, it appends the caller's ARN as the "DeployerArn" parameter if the stack name is "security".
-// For all other stacks, no parameters are added.
+// This function is invoked before deploying a specific CloudFormation stack.
+// It handles tasks like injecting stack parameters, uploading artifacts, and
+// ensuring required AWS resources (e.g., service-linked roles) are provisioned.
 //
 // Parameters:
-//   - stack: pointer to the stack being prepared for deployment.
-//   - cfg: initialized AWS configuration used to retrieve the caller's identity.
+//   - cfg: AWS configuration used for all SDK interactions.
+//   - stack: Pointer to the stack being deployed.
+//   - artifacts: Embedded file system containing all deployment artifacts.
 //
 // Returns:
-//   - error: if the deployer's identity cannot be retrieved.
-func injectParameters(stack *Stack, cfg aws.Config) error {
-	if stack.Name != misc.StackNameSecurity {
-		return nil
-	}
-	identity, err := GetCallerIdentity(context.TODO(), cfg)
-	if err != nil {
-		return fmt.Errorf("failed to get deployer ARN for security stack: %w", err)
-	}
-	stack.Params = append(stack.Params, types.Parameter{
-		ParameterKey:   aws.String("DeployerArn"),
-		ParameterValue: identity.Arn,
-	})
-	return nil
-}
+//   - error: if any of the pre-deployment steps fail.
+func preDeploymentHooks(cfg aws.Config, stack *Stack, artifacts embed.FS) error {
 
-// prepareArtifacts uploads embedded artifacts required by a specific CloudFormation stack.
-//
-// Currently, it uploads Lambda deployment packages if the stack name is "functions".
-// For all other stacks, this function is a no-op.
-//
-// Parameters:
-//   - stack: pointer to the stack being deployed.
-//   - artifacts: embedded file system containing all artifacts (e.g., Lambda zips).
-//
-// Returns:
-//   - error: if uploading the artifacts fails.
-func prepareArtifacts(stack *Stack, artifacts embed.FS) error {
-	if stack.Name != misc.StackNameFunctions {
-		return nil
+	switch stack.Name {
+
+	case misc.StackNameSecurity:
+
+		// Inject the deployer identity into the security stack parameters.
+		fmt.Println(misc.Blue("Injecting deployer identity..."))
+		identity, err := GetCallerIdentity(context.TODO(), cfg)
+		if err != nil {
+			return fmt.Errorf("failed to get deployer ARN: %w", err)
+		}
+		stack.Params = append(stack.Params, types.Parameter{
+			ParameterKey:   aws.String("DeployerArn"),
+			ParameterValue: identity.Arn,
+		})
+
+	case misc.StackNameFunctions:
+
+		// Upload Lambda artifacts to S3 before deploying the functions stack.
+		fmt.Println(misc.Blue("Uploading Lambda artifacts..."))
+		if err := UploadArtifacts(artifacts); err != nil {
+			return fmt.Errorf("failed to upload lambda artifacts: %w", err)
+		}
+
+	case misc.StackNameProcessing:
+
+		// Publish Docker images to ECR if the stack is "processing".
+		fmt.Println(misc.Blue("Publishing Docker image to ECR..."))
+		imageURIs, err := PublishDockerImages(cfg, artifacts)
+		if err != nil {
+			return fmt.Errorf("failed to publish Docker images: %w", err)
+		}
+
+		// Inject the image URIs as parameters into the stack.
+		for name, uri := range imageURIs {
+			paramName := fmt.Sprintf("%sImageUri", misc.ToPascalCase(name))
+			stack.Params = append(stack.Params, types.Parameter{
+				ParameterKey:   aws.String(paramName),
+				ParameterValue: aws.String(uri),
+			})
+		}
+
+		// Ensure the ECS service-linked role exists before deploying the stack.
+		if err = EnsureECSServiceLinkedRole(cfg); err != nil {
+			return err
+		}
+
 	}
-	fmt.Println(misc.Blue("Uploading Lambda artifacts..."))
-	if err := UploadArtifacts(artifacts); err != nil {
-		return fmt.Errorf("failed to upload lambda artifacts: %w", err)
-	}
+
 	return nil
+
 }
 
 // createOrUpdateStack attempts to create a CloudFormation stack,
@@ -326,23 +341,27 @@ func waitForCompletion(stackName string, cfClient *cloudformation.Client) error 
 
 // postDeploymentHooks executes custom logic after a stack has been successfully deployed.
 //
-// Currently, it configures the S3-to-Lambda notification if the deployed stack is "functions".
-// For all other stacks, it performs no actions.
-//
 // Parameters:
-//   - stack: pointer to the deployed stack.
 //   - cfg: AWS configuration used to initialize required service clients.
+//   - stack: pointer to the deployed stack.
 //
 // Returns:
 //   - error: if any post-deployment action fails.
-func postDeploymentHooks(stack *Stack, cfg aws.Config) error {
-	if stack.Name == misc.StackNameFunctions {
-		fmt.Println(misc.Blue("Configuring S3 → Lambda notification..."))
+func postDeploymentHooks(cfg aws.Config, stack *Stack) error {
+	switch stack.Name {
+	case misc.StackNameFunctions:
+		fmt.Println(misc.Blue("Configuring S3 for Lambda notification..."))
 		err := ConfigureS3Notification(context.TODO(), s3.NewFromConfig(cfg), lambda.NewFromConfig(cfg))
 		if err != nil {
 			return fmt.Errorf("failed to configure S3 notification: %w", err)
 		}
+	case misc.StackNameStreaming:
+		err := ensureCDCStarted()
+		if err != nil {
+			return fmt.Errorf("failed to start CDC: %w", err)
+		}
 	}
+
 	return nil
 }
 

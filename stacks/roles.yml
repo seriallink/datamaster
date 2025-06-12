@@ -52,7 +52,7 @@ Resources:
               Service: pipes.amazonaws.com
             Action: sts:AssumeRole
       Policies:
-        - PolicyName: dm-pipe-kinesis-to-firehose-policy
+        - PolicyName: dm-pipe-execution-policy
           PolicyDocument:
             Version: "2012-10-17"
             Statement:
@@ -68,6 +68,18 @@ Resources:
                   - firehose:PutRecord
                   - firehose:PutRecordBatch
                 Resource: "*"
+              - Effect: Allow
+                Action:
+                  - states:StartExecution
+                  - states:StartSyncExecution
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - dynamodb:DescribeStream
+                  - dynamodb:GetRecords
+                  - dynamodb:GetShardIterator
+                  - dynamodb:ListStreams
+                Resource: "*"
       Tags:
         - Key: Name
           Value: dm-pipe-execution-role
@@ -75,6 +87,7 @@ Resources:
           Value: DataMaster
         - Key: Component
           Value: Roles
+
 
   KinesisAccessRole:
     Type: AWS::IAM::Role
@@ -177,7 +190,6 @@ Resources:
                   - s3:GetObject
                 Resource: arn:aws:s3:::dm-*/*
 
-
   GlueServiceRole:
     Type: AWS::IAM::Role
     Properties:
@@ -250,36 +262,6 @@ Resources:
         - Key: Component
           Value: Roles
 
-  EMRServerlessExecutionRole:
-    Type: AWS::IAM::Role
-    Properties:
-      RoleName: dm-emr-batch-role
-      AssumeRolePolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service: emr-serverless.amazonaws.com
-            Action: sts:AssumeRole
-      Policies:
-        - PolicyName: dm-emr-access-policy
-          PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              - Effect: Allow
-                Action:
-                  - s3:GetObject
-                  - s3:PutObject
-                  - s3:ListBucket
-                  - glue:*
-                  - logs:*
-                Resource: '*'
-      Tags:
-        - Key: Project
-          Value: DataMaster
-        - Key: Component
-          Value: Roles
-
   FirehoseProcessorFunctionRole:
     Type: AWS::IAM::Role
     Properties:
@@ -345,7 +327,9 @@ Resources:
         Statement:
           - Effect: Allow
             Principal:
-              Service: lambda.amazonaws.com
+              Service:
+                - lambda.amazonaws.com
+                - ecs-tasks.amazonaws.com
             Action: sts:AssumeRole
       Policies:
         - PolicyName: RawIngestorAccessPolicy
@@ -418,10 +402,10 @@ Resources:
                   - lambda:InvokeFunction
                 Resource: !GetAtt ProcessingControllerFunctionRole.Arn
 
-  BatchETLStepFunctionRole:
+  RouterRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: dm-batch-sfn-role
+      RoleName: dm-router-role
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
@@ -430,108 +414,79 @@ Resources:
               Service: states.amazonaws.com
             Action: sts:AssumeRole
       Policies:
-        - PolicyName: dm-batch-step-function-policy
+        - PolicyName: dm-step-function-dispatcher
           PolicyDocument:
             Version: "2012-10-17"
             Statement:
               - Effect: Allow
                 Action:
-                  - emr-serverless:StartJobRun
-                  - emr-serverless:GetJobRun
+                  - ecs:RunTask
+                  - iam:PassRole
                   - lambda:InvokeFunction
-                  - iam:PassRole
-                Resource: '*'
-              - Effect: Allow
-                Action:
+                  - events:DescribeRule
+                  - events:PutRule
+                  - events:PutTargets
                   - logs:*
-                Resource: '*'
+                Resource: "*"
       Tags:
+        - Key: Name
+          Value: dm-router-role
         - Key: Project
           Value: DataMaster
         - Key: Component
           Value: Roles
 
-  EMRProcessingExecutionRole:
+  ProcessingTaskExecutionRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: dm-processing-emr-role
+      RoleName: dm-processing-task-execution-role
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
           - Effect: Allow
             Principal:
-              Service: emr-serverless.amazonaws.com
-            Action: sts:AssumeRole
-      Policies:
-        - PolicyName: dm-emr-processing-execution-policy
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              - Effect: Allow
-                Action:
-                  - s3:*
-                  - glue:*
-                  - logs:*
-                Resource: "*"
-      Tags:
-        - Key: Project
-          Value: DataMaster
-        - Key: Component
-          Value: Roles
-
-  ProcessingStateMachineRole:
-    Type: AWS::IAM::Role
-    Properties:
-      RoleName: dm-processing-sfn-role
-      AssumeRolePolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service: states.amazonaws.com
-            Action: sts:AssumeRole
-      Policies:
-        - PolicyName: dm-processing-step-function-policy
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              - Effect: Allow
-                Action:
-                  - emr-serverless:StartJobRun
-                  - emr-serverless:GetJobRun
-                  - iam:PassRole
-                Resource: "*"
-              - Effect: Allow
-                Action:
-                  - logs:*
-                Resource: "*"
-      Tags:
-        - Key: Project
-          Value: DataMaster
-        - Key: Component
-          Value: Roles
-
-  GrafanaServiceRole:
-    Type: AWS::IAM::Role
-    Properties:
-      RoleName: dm-grafana-role
-      AssumeRolePolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service: grafana.amazonaws.com
+              Service: ecs-tasks.amazonaws.com
             Action: sts:AssumeRole
       ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/AmazonAthenaFullAccess
-        - arn:aws:iam::aws:policy/CloudWatchReadOnlyAccess
-        - arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
-        - arn:aws:iam::aws:policy/AWSGlueConsoleFullAccess
+        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
       Tags:
         - Key: Project
           Value: DataMaster
         - Key: Component
           Value: Roles
+
+#  ProcessingTaskRole:
+#    Type: AWS::IAM::Role
+#    Properties:
+#      RoleName: dm-processing-task-role
+#      AssumeRolePolicyDocument:
+#        Version: "2012-10-17"
+#        Statement:
+#          - Effect: Allow
+#            Principal:
+#              Service: ecs-tasks.amazonaws.com
+#            Action: sts:AssumeRole
+#      Policies:
+#        - PolicyName: dm-processing-task-policy
+#          PolicyDocument:
+#            Version: "2012-10-17"
+#            Statement:
+#              - Effect: Allow
+#                Action:
+#                  - s3:GetObject
+#                  - s3:PutObject
+#                Resource: "*"
+#              - Effect: Allow
+#                Action:
+#                  - dynamodb:GetItem
+#                  - dynamodb:UpdateItem
+#                  - dynamodb:PutItem
+#                Resource: "*"
+#      Tags:
+#        - Key: Project
+#          Value: DataMaster
+#        - Key: Component
+#          Value: Roles
 
 Outputs:
 
@@ -577,12 +532,6 @@ Outputs:
     Export:
       Name: dm-lakeformation-role-arn
 
-  EMRBatchRoleArn:
-    Description: Role used by EMR Serverless for batch workloads
-    Value: !GetAtt EMRServerlessExecutionRole.Arn
-    Export:
-      Name: dm-emr-batch-role-arn
-
   FirehoseProcessorFunctionRoleArn:
     Description: ARN of the IAM role used by the Firehose processor Lambda function
     Value: !GetAtt FirehoseProcessorFunctionRole.Arn
@@ -595,14 +544,8 @@ Outputs:
     Export:
       Name: dm-processing-controller-role-arn
 
-  ProcessingEventRoleArn:
-    Description: IAM role used by EventBridge to trigger the dm-processing-controller Lambda function
-    Value: !GetAtt ProcessingEventRole.Arn
-    Export:
-      Name: dm-processing-event-role-arn
-
   RawIngestorRoleArn:
-    Description: ARN of the IAM role assumed by the dm-raw-ingestor Lambda
+    Description: ARN of the IAM role assumed by the raw ingestor workers (Lambda or ECS)
     Value: !GetAtt RawIngestorRole.Arn
     Export:
       Name: dm-raw-ingestor-role-arn
@@ -613,26 +556,26 @@ Outputs:
     Export:
       Name: dm-validate-contract-role-arn
 
-  BatchStepFunctionRoleArn:
-    Description: IAM role for Step Function in batch pipeline
-    Value: !GetAtt BatchETLStepFunctionRole.Arn
+  ProcessingEventRoleArn:
+    Description: IAM role used by EventBridge to trigger the dm-processing-controller Lambda function
+    Value: !GetAtt ProcessingEventRole.Arn
     Export:
-      Name: dm-batch-sfn-role-arn
+      Name: dm-processing-event-role-arn
 
-  EMRProcessingRoleArn:
-    Description: Role for EMR Serverless in processing pipeline
-    Value: !GetAtt EMRProcessingExecutionRole.Arn
+  RouterRoleArn:
+    Description: IAM Role used by the RawDispatcher Step Function to invoke Lambda or ECS
+    Value: !GetAtt RouterRole.Arn
     Export:
-      Name: dm-processing-emr-role-arn
+      Name: dm-router-role-arn
 
-  ProcessingStepFunctionRoleArn:
-    Description: Step Function role for data processing pipeline
-    Value: !GetAtt ProcessingStateMachineRole.Arn
+  ProcessingTaskExecutionRoleArn:
+    Description: ECS Fargate execution role for pulling images and writing logs
+    Value: !GetAtt ProcessingTaskExecutionRole.Arn
     Export:
-      Name: dm-processing-sfn-role-arn
+      Name: dm-processing-task-execution-role-arn
 
-  GrafanaServiceRoleArn:
-    Description: IAM role used by Amazon Managed Grafana
-    Value: !GetAtt GrafanaServiceRole.Arn
-    Export:
-      Name: dm-grafana-role-arn
+#  ProcessingTaskRoleArn:
+#    Description: ECS Fargate task role used by dm-processing container
+#    Value: !GetAtt ProcessingTaskRole.Arn
+#    Export:
+#      Name: dm-processing-task-role-arn

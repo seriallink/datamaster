@@ -88,7 +88,7 @@ func waitUntilTaskRunning(client *databasemigrationservice.Client, taskArn strin
 			return fmt.Errorf("replication task not found")
 		}
 		status := out.ReplicationTasks[0].Status
-		fmt.Printf("⌛ Task status: %s\n", *status)
+		fmt.Printf("Task status: %s\n", *status)
 		if *status == "running" {
 			fmt.Println("Replication task is running.")
 			return nil
@@ -98,18 +98,15 @@ func waitUntilTaskRunning(client *databasemigrationservice.Client, taskArn strin
 	return fmt.Errorf("replication task did not start within expected time")
 }
 
-func ensureCDCStarted() error {
-	var startErr error
-
+func ensureCDCStarted() (err error) {
 	cdcOnce.Do(func() {
-		startErr = StartReplication()
-		if isAlreadyStartedError(startErr) {
+		err = StartReplication()
+		if isAlreadyStartedError(err) {
 			fmt.Println("CDC replication already running.")
-			startErr = nil // limpa o erro para não bloquear
+			err = nil
 		}
 	})
-
-	return startErr
+	return
 }
 
 func isAlreadyStartedError(err error) bool {

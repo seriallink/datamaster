@@ -37,11 +37,8 @@ Resources:
         S3Key: processing-controller.zip
       Architectures:
         - x86_64
-      MemorySize: 128
-      Timeout: 120
-      Environment:
-        Variables:
-          CONTROL_TABLE_NAME: !ImportValue dm-processing-control-table-name
+      MemorySize: 512
+      Timeout: 900
       Tags:
         - Key: Project
           Value: DataMaster
@@ -52,17 +49,17 @@ Resources:
   RawIngestorFunction:
     Type: AWS::Lambda::Function
     Properties:
-      FunctionName: dm-raw-ingestor
+      FunctionName: dm-raw-ingestor-lite
       Description: Responsible for processing raw payloads and converting them to Parquet files in the bronze layer.
       Role: !ImportValue dm-raw-ingestor-role-arn
       Runtime: provided.al2023
       Handler: bootstrap
       Code:
         S3Bucket: !ImportValue dm-artifacts-bucket
-        S3Key: raw-ingestor.zip
+        S3Key: raw-ingestor-lite.zip
       Architectures:
         - x86_64
-      MemorySize: 128
+      MemorySize: 512
       Timeout: 900
       Tags:
         - Key: Project
@@ -88,4 +85,4 @@ Outputs:
     Description: ARN of the Lambda used to process raw payloads and convert them to Parquet in the bronze layer
     Value: !GetAtt RawIngestorFunction.Arn
     Export:
-      Name: dm-raw-ingestor-arn
+      Name: dm-raw-ingestor-function-arn

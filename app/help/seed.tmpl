@@ -1,0 +1,12 @@
+Seed datasets into Aurora (for entity data) or S3 (for review data).
+
+Usage:
+  seed                  # seeds all datasets from GitHub
+  seed --file beer      # seeds a specific dataset from GitHub
+  seed --file review    # uploads the review dataset to S3
+
+Accepted values for --file:
+  - beer       → inserts into Aurora (streaming)
+  - brewery    → inserts into Aurora (streaming)
+  - profile    → inserts into Aurora (streaming)
+  - review     → uploads to S3 (batch)

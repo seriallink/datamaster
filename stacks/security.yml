@@ -100,6 +100,50 @@ Resources:
       ToPort: 5432
       SourceSecurityGroupId: !Ref DMSVpcSecurityGroup
 
+  ProcessingSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow outbound traffic for ECS Fargate processing
+      VpcId: !ImportValue dm-vpc-id
+      SecurityGroupEgress:
+        - IpProtocol: "-1"
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: dm-processing-sg
+        - Key: Project
+          Value: DataMaster
+        - Key: Component
+          Value: Network
+
+  ECRRepositoryPolicy:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: dm-raw-ingestor-mass
+      RepositoryPolicyText:
+        !Sub
+        - |
+          {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Sid": "AllowPull",
+                "Effect": "Allow",
+                "Principal": {
+                  "AWS": "${DeployerArn}"
+                },
+                "Action": [
+                  "ecr:BatchCheckLayerAvailability",
+                  "ecr:CompleteLayerUpload",
+                  "ecr:InitiateLayerUpload",
+                  "ecr:PutImage",
+                  "ecr:UploadLayerPart"
+                ]
+              }
+            ]
+          }
+        - DeployerArn: !Ref DeployerArn
+
 Outputs:
 
   SecurityGroupId:
@@ -125,3 +169,9 @@ Outputs:
     Value: !Ref DMSVpcSecurityGroup
     Export:
       Name: dm-dms-vpc-sg-id
+
+  ProcessingSecurityGroup:
+    Description: Security Group used by ECS Fargate tasks for processing pipeline
+    Value: !Ref ProcessingSecurityGroup
+    Export:
+      Name: dm-processing-sg

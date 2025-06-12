@@ -4,10 +4,13 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
+	"encoding/csv"
 	"encoding/json"
 	"fmt"
+	"io"
 	"strings"
 
+	"github.com/seriallink/datamaster/app/enum"
 	"github.com/seriallink/datamaster/app/misc"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -89,51 +92,6 @@ func ConfigureS3Notification(ctx context.Context, s3Client *s3.Client, lambdaCli
 
 }
 
-func LoadRawS3Data(cfg aws.Config, ctx context.Context, objectKey string) ([]map[string]any, error) {
-
-	var (
-		err    error
-		bucket string
-		object *s3.GetObjectOutput
-		reader *gzip.Reader
-		data   []map[string]any
-	)
-
-	client := s3.NewFromConfig(cfg)
-
-	bucket, err = (&Stack{Name: misc.StackNameStorage}).GetStackOutput(cfg, "StageBucketName")
-	if err != nil {
-		return nil, fmt.Errorf("failed to get StageBucketName: %w", err)
-	}
-
-	object, err = client.GetObject(ctx, &s3.GetObjectInput{
-		Bucket: &bucket,
-		Key:    &objectKey,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to get object from s3: %w", err)
-	}
-	defer object.Body.Close()
-
-	reader, err = gzip.NewReader(object.Body)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create gzip reader: %w", err)
-	}
-	defer reader.Close()
-
-	dec := json.NewDecoder(reader)
-	for dec.More() {
-		var record map[string]any
-		if err = dec.Decode(&record); err != nil {
-			return nil, fmt.Errorf("failed to decode payload: %w", err)
-		}
-		data = append(data, record)
-	}
-
-	return data, nil
-
-}
-
 func UploadDataToS3(cfg aws.Config, ctx context.Context, bucket, key string, data []byte) error {
 
 	_, err := s3.NewFromConfig(cfg).PutObject(ctx, &s3.PutObjectInput{
@@ -146,5 +104,101 @@ func UploadDataToS3(cfg aws.Config, ctx context.Context, bucket, key string, dat
 	}
 
 	return nil
+
+}
+
+func DownloadS3Object(ctx context.Context, cfg aws.Config, bucket, key string) (*s3.GetObjectOutput, error) {
+	client := s3.NewFromConfig(cfg)
+	object, err := client.GetObject(ctx, &s3.GetObjectInput{
+		Bucket: aws.String(bucket),
+		Key:    aws.String(key),
+	})
+	if err != nil {
+		return nil, err
+	}
+	return object, nil
+}
+
+func LoadRawS3Data(cfg aws.Config, ctx context.Context, item *ProcessingControl) ([]map[string]any, error) {
+
+	bucket, err := (&Stack{Name: misc.StackNameStorage}).GetStackOutput(cfg, "StageBucketName")
+	if err != nil {
+		return nil, fmt.Errorf("failed to get StageBucketName: %w", err)
+	}
+
+	object, err := DownloadS3Object(ctx, cfg, bucket, item.ObjectKey)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get object from s3: %w", err)
+	}
+	defer object.Body.Close()
+
+	reader, err := gzip.NewReader(object.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create gzip reader: %w", err)
+	}
+	defer reader.Close()
+
+	switch item.FileFormat {
+	case enum.FileFormatCsv.String():
+		return parseCSV(reader)
+	case enum.FileFormatJson.String():
+		return parseJSON(reader)
+	default:
+		return nil, fmt.Errorf("unsupported file format: %s", item.FileFormat)
+	}
+
+}
+
+func parseCSV(r io.Reader) ([]map[string]any, error) {
+
+	var data []map[string]any
+
+	csvReader := csv.NewReader(r)
+	headers, err := csvReader.Read()
+	if err != nil {
+		return nil, fmt.Errorf("failed to read CSV headers: %w", err)
+	}
+
+	for {
+		line, err := csvReader.Read()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return nil, fmt.Errorf("failed to read CSV row: %w", err)
+		}
+		record := make(map[string]any)
+		for i, col := range line {
+			record[headers[i]] = col
+		}
+		data = append(data, record)
+	}
+
+	return data, nil
+
+}
+
+func parseJSON(r io.Reader) ([]map[string]any, error) {
+
+	var data []map[string]any
+
+	dec := json.NewDecoder(r)
+	for dec.More() {
+
+		var record map[string]any
+		if err := dec.Decode(&record); err != nil {
+			return nil, fmt.Errorf("failed to decode JSON: %w", err)
+		}
+
+		row := make(map[string]any, len(record))
+		for k, v := range record {
+			row[k] = v
+		}
+
+		data = append(data, row)
+
+	}
+
+	return data, nil
 
 }

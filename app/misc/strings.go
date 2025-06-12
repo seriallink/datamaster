@@ -56,3 +56,13 @@ func Dedent(s string) string {
 	}
 	return strings.Join(lines, "\n")
 }
+
+func ToPascalCase(input string) string {
+	parts := strings.Split(input, "-")
+	for i, part := range parts {
+		if len(part) > 0 {
+			parts[i] = strings.ToUpper(part[:1]) + part[1:]
+		}
+	}
+	return strings.Join(parts, "")
+}
