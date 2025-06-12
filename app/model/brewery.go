@@ -1,8 +1,16 @@
 package model
 
+import (
+	"encoding/json"
+)
+
+func init() {
+	Register(&Brewery{})
+}
+
 type Brewery struct {
-	BreweryID   int64  `gorm:"column:brewery_id;primaryKey"`
-	BreweryName string `gorm:"column:brewery_name"`
+	BreweryID   json.Number `json:"brewery_id"   gorm:"column:brewery_id;primaryKey"`
+	BreweryName string      `json:"brewery_name" gorm:"column:brewery_name"`
 }
 
 func (Brewery) TableName() string {

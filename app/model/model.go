@@ -1,4 +1,4 @@
-package bronze
+package model
 
 import (
 	"fmt"
@@ -10,7 +10,6 @@ var models sync.Map
 
 type Model interface {
 	TableName() string
-	FromCSV([]string, map[string]int) (any, error)
 }
 
 func Register(m Model) {

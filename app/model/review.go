@@ -6,16 +6,20 @@ import (
 	"github.com/jaswdr/faker"
 )
 
+func init() {
+	Register(&Review{})
+}
+
 type Review struct {
-	ReviewID         int64     `gorm:"column:review_id;primaryKey"`
-	BeerID           int64     `gorm:"column:beer_id"`
-	ProfileID        string    `gorm:"column:profile_id"`
-	ReviewOverall    float64   `gorm:"column:review_overall"`
-	ReviewAroma      float64   `gorm:"column:review_aroma"`
-	ReviewAppearance float64   `gorm:"column:review_appearance"`
-	ReviewPalate     float64   `gorm:"column:review_palate"`
-	ReviewTaste      float64   `gorm:"column:review_taste"`
-	ReviewTime       time.Time `gorm:"column:review_time"`
+	ReviewID         int64     `json:"review_id"         gorm:"column:review_id;primaryKey"`
+	BeerID           int64     `json:"beer_id"           gorm:"column:beer_id"`
+	ProfileID        string    `json:"profile_id"        gorm:"column:profile_id"`
+	ReviewOverall    float64   `json:"review_overall"    gorm:"column:review_overall"`
+	ReviewAroma      float64   `json:"review_aroma"      gorm:"column:review_aroma"`
+	ReviewAppearance float64   `json:"review_appearance" gorm:"column:review_appearance"`
+	ReviewPalate     float64   `json:"review_palate"     gorm:"column:review_palate"`
+	ReviewTaste      float64   `json:"review_taste"      gorm:"column:review_taste"`
+	ReviewTime       time.Time `json:"review_time"       gorm:"column:review_time"`
 }
 
 func (Review) TableName() string {

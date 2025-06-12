@@ -15,10 +15,12 @@ import (
 
 type ProcessingControl struct {
 	ObjectKey     string  `dynamodbav:"object_key"`
-	Schema        string  `dynamodbav:"schema"`
-	Table         string  `dynamodbav:"table"`
+	SchemaName    string  `dynamodbav:"schema_name"`
+	TableName     string  `dynamodbav:"table_name"`
 	RecordCount   int     `dynamodbav:"record_count"`
+	FileFormat    string  `dynamodbav:"file_format"`
 	FileSize      int64   `dynamodbav:"file_size"`
+	Checksum      string  `dynamodbav:"checksum"`
 	Status        string  `dynamodbav:"status"`
 	AttemptCount  int     `dynamodbav:"attempt_count"`
 	ComputeTarget string  `dynamodbav:"compute_target"`
@@ -28,10 +30,6 @@ type ProcessingControl struct {
 	FinishedAt    *string `dynamodbav:"finished_at,omitempty"`
 	Duration      *int64  `dynamodbav:"duration,omitempty"`
 	ErrorMessage  *string `dynamodbav:"error_message,omitempty"`
-}
-
-func (m *ProcessingControl) TableName() string {
-	return "dm-processing-control"
 }
 
 func (m *ProcessingControl) DestinationKey() string {

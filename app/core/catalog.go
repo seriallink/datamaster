@@ -44,6 +44,30 @@ func LayerToSchema(layerType string) string {
 	}
 }
 
+// SchemaToLayer maps a PostgreSQL schema name to its corresponding
+// logical lakehouse layer name ("bronze", "silver", or "gold").
+//
+// Parameters:
+//   - schema: the physical PostgreSQL schema name (e.g., "dm_core", "dm_view", "dm_mart").
+//
+// Returns:
+//   - string: the associated logical lakehouse layer name.
+//
+// Panics:
+//   - if the provided schema name is not recognized.
+func SchemaToLayer(schema string) string {
+	switch schema {
+	case misc.SchemaCore:
+		return misc.LayerBronze
+	case misc.SchemaView:
+		return misc.LayerSilver
+	case misc.SchemaMart:
+		return misc.LayerGold
+	default:
+		panic(fmt.Sprintf("Invalid schema: %s", schema))
+	}
+}
+
 // GetStorageLocation returns the S3 path for storing a table's data,
 // based on its schema and corresponding lakehouse layer.
 //
@@ -159,7 +183,8 @@ func ConvertPgAttributesToGlueColumns(layerType string, class *dialect.PgClass, 
 		// Force all fields to string type for the bronze layer
 		columns = append(columns, types.Column{
 			Name: aws.String(attr.AttName.String),
-			Type: aws.String(misc.TernaryStr(layerType == misc.LayerBronze, "string", CastPgType(attr, *attr.PgType, db))),
+			//Type: aws.String(misc.TernaryStr(layerType == misc.LayerBronze, "string", CastPgType(attr, *attr.PgType, db))),
+			Type: aws.String(CastPgType(attr, *attr.PgType, db)),
 		})
 
 	}
@@ -216,7 +241,7 @@ func CastPgType(pgattribute dialect.PgAttribute, pgtype dialect.PgType, db *gorm
 		def = fmt.Sprintf(def, "int")
 
 	case "float4", "float8", "numeric":
-		def = fmt.Sprintf(def, "decimal")
+		def = fmt.Sprintf(def, "double")
 
 	case "date", "time", "timestamp", "timestamptz":
 		def = fmt.Sprintf(def, "timestamp")
@@ -412,7 +437,7 @@ func SyncGlueTable(layerType, tableName string, columns []types.Column) error {
 		if err != nil {
 			return fmt.Errorf("failed to update table %s: %w", tableName, err)
 		}
-		fmt.Println(misc.Green("Table %s updated successfully in database %s", tableName, dbName))
+		fmt.Println(misc.Green("TableName %s updated successfully in database %s", tableName, dbName))
 	} else {
 		_, err = client.CreateTable(context.TODO(), &glue.CreateTableInput{
 			DatabaseName: aws.String(dbName),
@@ -421,7 +446,7 @@ func SyncGlueTable(layerType, tableName string, columns []types.Column) error {
 		if err != nil {
 			return fmt.Errorf("failed to create table %s: %w", tableName, err)
 		}
-		fmt.Println(misc.Green("Table %s created successfully in database %s", tableName, dbName))
+		fmt.Println(misc.Green("TableName %s created successfully in database %s", tableName, dbName))
 	}
 
 	return nil
