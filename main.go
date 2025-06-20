@@ -47,7 +47,6 @@ func main() {
 	shell.AddCmd(cmd.DeployCmd(stacks, artifacts))
 	shell.AddCmd(cmd.MigrationCmd(scripts))
 	shell.AddCmd(cmd.CatalogCmd())
-	shell.AddCmd(cmd.PipeCmd())
 	shell.AddCmd(cmd.ArtifactsCmd(artifacts))
 	shell.AddCmd(cmd.LambdaCmd(artifacts))
 	shell.AddCmd(cmd.SeedCmd())

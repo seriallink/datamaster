@@ -47,6 +47,7 @@ func SeedCmd() *ishell.Cmd {
 			}
 
 			c.Println(misc.Green("Seeding completed successfully.\n"))
+
 		}),
 	}
 

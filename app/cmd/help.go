@@ -16,6 +16,7 @@ func Help(helps embed.FS) *ishell.Cmd {
 		Name: "help",
 		Help: "Show help for commands. Use 'help <command>' for details.",
 		Func: func(c *ishell.Context) {
+
 			cmds := c.Cmds()
 
 			// Sort commands by name
@@ -51,6 +52,7 @@ func Help(helps embed.FS) *ishell.Cmd {
 			}
 
 			c.Println(misc.Red("Unknown command: "), cmdName)
+
 		},
 	}
 }

@@ -71,7 +71,6 @@ func DeployLambdaFromArtifact(artifacts embed.FS, name string, memory, timeout i
 			Role:         aws.String(role),
 			Runtime:      types.RuntimeProvidedal2023,
 			Handler:      aws.String("bootstrap"),
-			Description:  aws.String(lambdaDescription(name)),
 			Code: &types.FunctionCode{
 				S3Bucket: aws.String(bucket),
 				S3Key:    aws.String(name + ".zip"),
@@ -104,7 +103,6 @@ func DeployLambdaFromArtifact(artifacts embed.FS, name string, memory, timeout i
 
 		_, err = client.UpdateFunctionConfiguration(ctx, &lambda.UpdateFunctionConfigurationInput{
 			FunctionName: aws.String(funcName),
-			Description:  aws.String(lambdaDescription(name)),
 			MemorySize:   aws.Int32(int32(memory)),
 			Timeout:      aws.Int32(int32(timeout)),
 		})
@@ -191,25 +189,6 @@ func UploadArtifacts(artifacts embed.FS, functions ...string) error {
 
 	return nil
 
-}
-
-// lambdaDescription returns a human-readable description for a given Lambda function name.
-// Used to populate the Description field when deploying functions.
-//
-// Parameters:
-//   - name: the logical name of the Lambda function (without prefix).
-//
-// Returns:
-//   - string: a description to be used in AWS Lambda metadata.
-func lambdaDescription(name string) string {
-	switch name {
-	case "firehose-processor":
-		return "Sets the Firehose prefix dynamically based on the table-name field"
-	case "validate-contract":
-		return "Validates business contract rules before ingestion"
-	default:
-		return fmt.Sprintf("Lambda function: %s", name)
-	}
 }
 
 // waitForLambdaReady polls the AWS Lambda function configuration until it reaches a stable state.

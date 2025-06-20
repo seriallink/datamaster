@@ -67,7 +67,7 @@ func SeedFromReader(data []byte, name string) error {
 	dynamo := dynamodb.NewFromConfig(cfg)
 	checksum := computeChecksum(data)
 
-	outputs, err := (&Stack{Name: misc.StackNameProcessing}).GetStackOutputs(cfg)
+	outputs, err := (&Stack{Name: misc.StackNameControl}).GetStackOutputs(cfg)
 	if err != nil {
 		return fmt.Errorf("failed to get Processing stack outputs: %w", err)
 	}
