@@ -1,0 +1,238 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Ingestion stack for the Bronze layer of the Data Master Project
+
+Parameters:
+
+  BronzeIngestorMassImageUri:
+    Type: String
+    Description: Docker image URI for the bronzer ingestor container
+
+Resources:
+
+  IngestionPipe:
+    Type: AWS::Pipes::Pipe
+    Properties:
+      Name: dm-ingestion-pipe
+      RoleArn: !ImportValue dm-pipe-execution-role-arn
+      Source: !ImportValue dm-processing-control-stream-arn
+      Target: !Ref IngestionDispatcher
+      SourceParameters:
+        DynamoDBStreamParameters:
+          StartingPosition: LATEST
+        FilterCriteria:
+          Filters:
+            - Pattern: |
+                {
+                  "eventName": ["INSERT"],
+                  "dynamodb": {
+                    "NewImage": {
+                      "schema_name": {
+                        "S": ["dm_bronze"]
+                      }
+                    }
+                  }
+                }
+
+  IngestionStepLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/stepfunctions/dm-ingestion-dispatcher
+      RetentionInDays: 7
+
+  IngestionDispatcher:
+    Type: AWS::StepFunctions::StateMachine
+    DependsOn: IngestionStepLogGroup
+    Properties:
+      StateMachineName: dm-ingestion-dispatcher
+      StateMachineType: EXPRESS
+      RoleArn: !ImportValue dm-dispatcher-role-arn
+      LoggingConfiguration:
+        Level: ALL
+        IncludeExecutionData: true
+        Destinations:
+          - CloudWatchLogsLogGroup:
+              LogGroupArn: !GetAtt IngestionStepLogGroup.Arn
+      TracingConfiguration:
+        Enabled: false
+      DefinitionString:
+        Fn::Sub:
+          - |
+            {
+              "StartAt": "ForEachRecord",
+              "States": {
+                "ForEachRecord": {
+                  "Type": "Map",
+                  "ItemsPath": "$",
+                  "Iterator": {
+                    "StartAt": "ChooseTarget",
+                    "States": {
+                      "ChooseTarget": {
+                        "Type": "Choice",
+                        "Choices": [
+                          {
+                            "Variable": "$.dynamodb.NewImage.compute_target.S",
+                            "StringEquals": "lambda",
+                            "Next": "InvokeBronzeIngestorLambda"
+                          },
+                          {
+                            "Variable": "$.dynamodb.NewImage.compute_target.S",
+                            "StringEquals": "ecs",
+                            "Next": "RunBronzeIngestorEcsTask"
+                          }
+                        ],
+                        "Default": "UnsupportedComputeTarget"
+                      },
+                      "InvokeBronzeIngestorLambda": {
+                        "Type": "Task",
+                        "Resource": "arn:aws:states:::lambda:invoke",
+                        "Parameters": {
+                          "FunctionName": "${BronzeIngestorFunctionArn}",
+                          "Payload": {
+                            "object_key.$": "$.dynamodb.NewImage.object_key.S"
+                          }
+                        },
+                        "End": true
+                      },
+                      "RunBronzeIngestorEcsTask": {
+                        "Type": "Task",
+                        "Resource": "arn:aws:states:::ecs:runTask",
+                        "Parameters": {
+                          "LaunchType": "FARGATE",
+                          "Cluster": "arn:aws:ecs:${AWS::Region}:${AWS::AccountId}:cluster/dm-ingestion-cluster",
+                          "TaskDefinition": "arn:aws:ecs:${AWS::Region}:${AWS::AccountId}:task-definition/dm-ingestion-task",
+                          "NetworkConfiguration": {
+                            "AwsvpcConfiguration": {
+                              "Subnets": ["${Subnet1}", "${Subnet2}"],
+                              "SecurityGroups": ["${ProcessingSG}"],
+                              "AssignPublicIp": "ENABLED"
+                            }
+                          },
+                          "Overrides": {
+                            "ContainerOverrides": [
+                              {
+                                "Name": "dm-ingestion-image",
+                                "Environment": [
+                                  {
+                                    "Name": "OBJECT_KEY",
+                                    "Value.$": "$.dynamodb.NewImage.object_key.S"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        },
+                        "End": true
+                      },
+                      "UnsupportedComputeTarget": {
+                        "Type": "Fail",
+                        "Error": "InvalidTarget",
+                        "Cause": "Target must be 'lambda' or 'ecs'"
+                      }
+                    }
+                  },
+                  "End": true
+                }
+              }
+            }
+          - Subnet1: !ImportValue dm-public-subnet-az1-id
+            Subnet2: !ImportValue dm-public-subnet-az2-id
+            ProcessingSG: !ImportValue dm-processing-sg
+            BronzeIngestorFunctionArn: !ImportValue dm-bronze-ingestor-function-arn
+      Tags:
+        - Key: Project
+          Value: DataMaster
+        - Key: Component
+          Value: Ingestion
+
+  IngestionTaskLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /ecs/dm-ingestion-task
+      RetentionInDays: 7
+
+  IngestionTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    DependsOn: IngestionTaskLogGroup
+    Properties:
+      Family: dm-ingestion-task
+      Cpu: "2048"
+      Memory: "4096"
+      RequiresCompatibilities: [ FARGATE ]
+      NetworkMode: awsvpc
+      ExecutionRoleArn: !ImportValue dm-task-execution-role-arn
+      TaskRoleArn: !ImportValue dm-worker-role-arn
+      ContainerDefinitions:
+        - Name: dm-ingestion-image
+          Image: !Ref BronzeIngestorMassImageUri
+          Essential: true
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: /ecs/dm-ingestion-task
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: ecs
+          Environment:
+            - Name: STAGE_BUCKET
+              Value: !ImportValue dm-stage-bucket
+      Tags:
+        - Key: Project
+          Value: DataMaster
+        - Key: Component
+          Value: Ingestion
+
+  IngestionCluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: dm-ingestion-cluster
+      Tags:
+        - Key: Project
+          Value: DataMaster
+        - Key: Component
+          Value: Ingestion
+
+  IngestionService:
+    Type: AWS::ECS::Service
+    DependsOn:
+      - IngestionTaskDefinition
+    Properties:
+      ServiceName: dm-ingestion-service
+      Cluster: !Ref IngestionCluster
+      LaunchType: FARGATE
+      DesiredCount: 0  # Step Function invokes tasks on demand
+      TaskDefinition: !Ref IngestionTaskDefinition
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: DISABLED
+          SecurityGroups:
+            - !ImportValue dm-processing-sg
+          Subnets:
+            - !ImportValue dm-public-subnet-az1-id
+            - !ImportValue dm-public-subnet-az2-id
+      DeploymentConfiguration:
+        MaximumPercent: 100
+        MinimumHealthyPercent: 0
+      Tags:
+        - Key: Project
+          Value: DataMaster
+        - Key: Component
+          Value: Ingestion
+
+Outputs:
+
+  IngestionDispatcherArn:
+    Description: ARN of the IngestionDispatcher Step Function responsible for routing ingestion tasks
+    Value: !Ref IngestionDispatcher
+    Export:
+      Name: dm-ingestion-dispatcher-arn
+
+  IngestionClusterName:
+    Description: Name of the ECS cluster used for ingestion tasks
+    Value: !Ref IngestionCluster
+    Export:
+      Name: dm-ingestion-cluster-name
+
+  IngestionServiceName:
+    Description: Name of the ECS service responsible for ingestion
+    Value: !Ref IngestionService
+    Export:
+      Name: dm-ingestion-service-name
