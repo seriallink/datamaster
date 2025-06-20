@@ -35,7 +35,7 @@ Resources:
         ErrorOutputPrefix: errors/
         BufferingHints:
           SizeInMBs: 64
-          IntervalInSeconds: 300
+          IntervalInSeconds: 60
         CompressionFormat: GZIP
         DynamicPartitioningConfiguration:
           Enabled: true
@@ -49,7 +49,7 @@ Resources:
             - Type: Lambda
               Parameters:
                 - ParameterName: LambdaArn
-                  ParameterValue: !ImportValue dm-firehose-processor-arn
+                  ParameterValue: !ImportValue dm-firehose-router-arn
       Tags:
         - Key: Project
           Value: DataMaster
@@ -195,35 +195,10 @@ Resources:
         - Key: Component
           Value: Streaming
 
-  #  DMSReplicationConfig:
-#    Type: AWS::DMS::ReplicationConfig
-#    Properties:
-#      ReplicationConfigIdentifier: dm-cdc-config
-#      ReplicationType: cdc
-#      SourceEndpointArn: !Ref DMSSourceEndpoint
-#      TargetEndpointArn: !Ref DMSTargetEndpoint
-#      ComputeConfig:
-#        MinCapacityUnits: 2
-#        MaxCapacityUnits: 4
-#      TableMappings:
-#        rules:
-#          - rule-type: selection
-#            rule-id: "1"
-#            rule-name: "dm-include-all-core-rule"
-#            object-locator:
-#              schema-name: dm_core
-#              table-name: "%"
-#            rule-action: include
-#      Tags:
-#        - Key: Project
-#          Value: DataMaster
-#        - Key: Component
-#          Value: Streaming
-
-  FirehoseProcessorPermission:
+  FirehoseRouterPermission:
     Type: AWS::Lambda::Permission
     Properties:
-      FunctionName: !ImportValue dm-firehose-processor-arn
+      FunctionName: !ImportValue dm-firehose-router-arn
       Action: lambda:InvokeFunction
       Principal: firehose.amazonaws.com
       SourceAccount: !Ref AWS::AccountId
@@ -271,9 +246,3 @@ Outputs:
     Value: !Ref DMSReplicationTask
     Export:
       Name: dm-dms-task-arn
-
-#  DMSReplicationConfig:
-#    Description: DMS replication config identifier
-#    Value: !Ref DMSReplicationConfig
-#    Export:
-#      Name: dm-dms-replication-config
