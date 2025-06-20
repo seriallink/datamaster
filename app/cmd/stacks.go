@@ -16,6 +16,7 @@ func StacksCmd(templates embed.FS) *ishell.Cmd {
 		Name: "stacks",
 		Help: "List available stacks.",
 		Func: func(c *ishell.Context) {
+
 			entries, err := templates.ReadDir(misc.TemplatesPath)
 			if err != nil {
 				c.Println(misc.Red(fmt.Sprintf("Failed to read stack templates: %v", err)))
@@ -36,6 +37,7 @@ func StacksCmd(templates embed.FS) *ishell.Cmd {
 			for _, name := range stacks {
 				c.Printf("  %s\n", name)
 			}
+
 		},
 	}
 }

@@ -16,6 +16,7 @@ func ArtifactsCmd(artifacts embed.FS) *ishell.Cmd {
 		Name: "artifacts",
 		Help: "List embedded Lambda artifacts.",
 		Func: func(c *ishell.Context) {
+
 			entries, err := artifacts.ReadDir(misc.ArtifactsPath)
 			if err != nil {
 				c.Println(misc.Red(fmt.Sprintf("Failed to read embedded artifacts: %v", err)))
@@ -41,6 +42,7 @@ func ArtifactsCmd(artifacts embed.FS) *ishell.Cmd {
 			for _, name := range names {
 				c.Printf("  %s\n", name)
 			}
+
 		},
 	}
 }

@@ -6,9 +6,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/abiosoft/ishell"
 	"github.com/seriallink/datamaster/app/core"
 	"github.com/seriallink/datamaster/app/misc"
+
+	"github.com/abiosoft/ishell"
 )
 
 func MigrationCmd(migrations embed.FS) *ishell.Cmd {
@@ -56,6 +57,7 @@ func MigrationCmd(migrations embed.FS) *ishell.Cmd {
 			}
 
 			c.Println(misc.Green("All migration scripts executed successfully!\n"))
+
 		}),
 	}
 }

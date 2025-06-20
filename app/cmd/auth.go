@@ -14,7 +14,14 @@ func AuthCmd() *ishell.Cmd {
 		Name: "auth",
 		Help: "Authenticate with AWS",
 		Func: func(c *ishell.Context) {
-			var profileName, accessKey, secretKey, region string
+
+			var (
+				profileName string
+				accessKey   string
+				secretKey   string
+				region      string
+			)
+
 		loop:
 			for {
 				c.Println(misc.Blue("Select authentication method:"))

@@ -16,6 +16,7 @@ func StreamCmd() *ishell.Cmd {
 		Name: "stream",
 		Help: "Simulate streaming data into Aurora tables",
 		Func: WithAuth(func(c *ishell.Context) {
+
 			fs := flag.NewFlagSet("stream", flag.ContinueOnError)
 			scenario := fs.String("mode", "profile", "Simulation scenario to run (e.g., profile, review)")
 			rps := fs.Int("rps", 10, "Records per second per stream")
@@ -46,6 +47,7 @@ func StreamCmd() *ishell.Cmd {
 
 			time.Sleep(opts.Duration + 2*time.Second)
 			c.Println(misc.Green("Streaming finished.\n"))
+
 		}),
 	}
 }

@@ -17,6 +17,7 @@ func LambdaCmd(artifacts embed.FS) *ishell.Cmd {
 		Name: "lambda",
 		Help: "Deploy one or all Lambda functions from embedded artifacts",
 		Func: WithAuth(func(c *ishell.Context) {
+
 			fs := flag.NewFlagSet("lambda", flag.ContinueOnError)
 			name := fs.String("name", "", "Lambda function name (optional)")
 			memory := fs.Int("memory", 128, "Memory size (MB)")
@@ -75,6 +76,7 @@ func LambdaCmd(artifacts embed.FS) *ishell.Cmd {
 			}
 
 			c.Println(misc.Green("Lambda deployment completed successfully.\n"))
+
 		}),
 	}
 }

@@ -74,6 +74,7 @@ func CatalogCmd() *ishell.Cmd {
 			}
 
 			c.Println(misc.Green("Catalog creation completed successfully.\n"))
+
 		}),
 	}
 }
