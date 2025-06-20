@@ -3,16 +3,6 @@ Description: Storage Buckets for the Data Master Project
 
 Resources:
 
-  SourceBucket:
-    Type: AWS::S3::Bucket
-    Properties:
-      BucketName: !Sub "dm-source-${AWS::AccountId}"
-      Tags:
-        - Key: Project
-          Value: DataMaster
-        - Key: Component
-          Value: Storage
-
   StageBucket:
     Type: AWS::S3::Bucket
     Properties:
@@ -77,12 +67,6 @@ Resources:
           Value: Network
 
 Outputs:
-
-  SourceBucketName:
-    Description: Name of the Source (Batch Ingest) bucket
-    Value: !Ref SourceBucket
-    Export:
-      Name: dm-source-bucket
 
   StageBucketName:
     Description: Name of the Stage (Parquet Landing) bucket
