@@ -12,7 +12,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 )
 
-func GetUnmarshalledDynamoDBItem(cfg aws.Config, ctx context.Context, key string, md any) error {
+func GetDynamoDBItem(cfg aws.Config, ctx context.Context, key string, md any) error {
 
 	var (
 		err       error
@@ -22,7 +22,7 @@ func GetUnmarshalledDynamoDBItem(cfg aws.Config, ctx context.Context, key string
 
 	client := dynamodb.NewFromConfig(cfg)
 
-	tableName, err = (&Stack{Name: misc.StackNameProcessing}).GetStackOutput(cfg, "ProcessingControlTableName")
+	tableName, err = (&Stack{Name: misc.StackNameControl}).GetStackOutput(cfg, "ProcessingControlTableName")
 	if err != nil {
 		return fmt.Errorf("failed to get ProcessingControlTableName: %w", err)
 	}

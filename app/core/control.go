@@ -6,7 +6,9 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -18,6 +20,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 )
+
+const defaultMaxAttempts = 3
 
 type ProcessingControl struct {
 	ObjectKey     string  `dynamodbav:"object_key"`
@@ -84,7 +88,7 @@ func (m *ProcessingControl) Put(ctx context.Context, cfg aws.Config) error {
 
 	client := dynamodb.NewFromConfig(cfg)
 
-	tableName, err := (&Stack{Name: misc.StackNameProcessing}).GetStackOutput(cfg, "ProcessingControlTableName")
+	tableName, err := (&Stack{Name: misc.StackNameControl}).GetStackOutput(cfg, "ProcessingControlTableName")
 	if err != nil {
 		return fmt.Errorf("failed to resolve table name from stack output: %w", err)
 	}
@@ -182,4 +186,15 @@ func (m *ProcessingControl) RegisterNextLayerControl(ctx context.Context, cfg aw
 
 	return item, nil
 
+}
+
+func GetMaxAttempts() int {
+	val := os.Getenv("MAX_ATTEMPTS")
+	if val == "" {
+		return defaultMaxAttempts
+	}
+	if num, err := strconv.Atoi(val); err == nil && num > 0 {
+		return num
+	}
+	return defaultMaxAttempts
 }

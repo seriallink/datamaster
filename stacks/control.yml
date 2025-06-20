@@ -1,0 +1,74 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Control stack for the raw layer of the Data Master Project
+
+Resources:
+
+  ProcessingControlTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: "dm-processing-control"
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: object_key
+          AttributeType: S
+        - AttributeName: schema_name
+          AttributeType: S
+        - AttributeName: table_name
+          AttributeType: S
+        - AttributeName: status
+          AttributeType: S
+        - AttributeName: checksum
+          AttributeType: S
+      KeySchema:
+        - AttributeName: object_key
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: dm-gsi-schema-status
+          KeySchema:
+            - AttributeName: schema_name
+              KeyType: HASH
+            - AttributeName: status
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+        - IndexName: dm-gsi-table-checksum
+          KeySchema:
+            - AttributeName: table_name
+              KeyType: HASH
+            - AttributeName: checksum
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+      StreamSpecification:
+        StreamViewType: NEW_IMAGE
+      Tags:
+        - Key: Project
+          Value: DataMaster
+        - Key: Component
+          Value: Control
+
+Outputs:
+
+  ProcessingControlStreamArn:
+    Description: ARN of the DynamoDB stream for processing control table
+    Value: !GetAtt ProcessingControlTable.StreamArn
+    Export:
+      Name: dm-processing-control-stream-arn
+
+  ProcessingControlTableName:
+    Description: Name of the DynamoDB table used for tracking processed S3 objects
+    Value: !Ref ProcessingControlTable
+    Export:
+      Name: dm-processing-control-table-name
+
+  SchemaStatusIndexName:
+    Description: Name of the GSI used to query processing status by schema
+    Value: dm-gsi-schema-status
+    Export:
+      Name: dm-schema-status-index-name
+
+  TableChecksumIndexName:
+    Description: Name of the GSI used to prevent duplicated seed uploads based on table and checksum
+    Value: dm-gsi-table-checksum
+    Export:
+      Name: dm-table-checksum-index-name

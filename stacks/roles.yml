@@ -262,10 +262,10 @@ Resources:
         - Key: Component
           Value: Roles
 
-  FirehoseProcessorFunctionRole:
+  FirehoseRouterFunctionRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: dm-firehose-processor-role
+      RoleName: dm-firehose-router-role
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
@@ -274,7 +274,7 @@ Resources:
               Service: lambda.amazonaws.com
             Action: sts:AssumeRole
       Policies:
-        - PolicyName: dm-firehose-processor-logs
+        - PolicyName: dm-firehose-router-logs
           PolicyDocument:
             Version: "2012-10-17"
             Statement:
@@ -318,10 +318,32 @@ Resources:
                   - s3:ListBucket
                 Resource: "*"
 
-  RawIngestorRole:
+  ProcessingControllerEventRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: dm-raw-ingestor-role
+      RoleName: dm-processing-controller-event-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: events.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: dm-processing-controller-event-policy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - lambda:InvokeFunction
+                Resource:
+                  !GetAtt ProcessingControllerFunctionRole.Arn
+
+  WorkerRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: dm-worker-role
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -332,7 +354,7 @@ Resources:
                 - ecs-tasks.amazonaws.com
             Action: sts:AssumeRole
       Policies:
-        - PolicyName: RawIngestorAccessPolicy
+        - PolicyName: dm-worker-policy
           PolicyDocument:
             Version: '2012-10-17'
             Statement:
@@ -357,55 +379,10 @@ Resources:
                   - cloudformation:DescribeStacks
                 Resource: "*"
 
-  ValidateContractRole:
+  DispatcherRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: dm-validate-contract-role
-      AssumeRolePolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service: lambda.amazonaws.com
-            Action: sts:AssumeRole
-      ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
-      Policies:
-        - PolicyName: dm-validate-contract-access-policy
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              - Effect: Allow
-                Action:
-                  - glue:GetTable
-                  - s3:GetObject
-                Resource: '*'
-
-  ProcessingEventRole:
-    Type: AWS::IAM::Role
-    Properties:
-      RoleName: dm-processing-event-role
-      AssumeRolePolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service: events.amazonaws.com
-            Action: sts:AssumeRole
-      Policies:
-        - PolicyName: dm-processing-event-policy
-          PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              - Effect: Allow
-                Action:
-                  - lambda:InvokeFunction
-                Resource: !GetAtt ProcessingControllerFunctionRole.Arn
-
-  RouterRole:
-    Type: AWS::IAM::Role
-    Properties:
-      RoleName: dm-router-role
+      RoleName: dm-dispatcher-role
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
@@ -414,7 +391,7 @@ Resources:
               Service: states.amazonaws.com
             Action: sts:AssumeRole
       Policies:
-        - PolicyName: dm-step-function-dispatcher
+        - PolicyName: dm-dispatcher-policy
           PolicyDocument:
             Version: "2012-10-17"
             Statement:
@@ -430,16 +407,16 @@ Resources:
                 Resource: "*"
       Tags:
         - Key: Name
-          Value: dm-router-role
+          Value: dm-dispatcher-role
         - Key: Project
           Value: DataMaster
         - Key: Component
           Value: Roles
 
-  ProcessingTaskExecutionRole:
+  TaskExecutionRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: dm-processing-task-execution-role
+      RoleName: dm-task-execution-role
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
@@ -454,39 +431,6 @@ Resources:
           Value: DataMaster
         - Key: Component
           Value: Roles
-
-#  ProcessingTaskRole:
-#    Type: AWS::IAM::Role
-#    Properties:
-#      RoleName: dm-processing-task-role
-#      AssumeRolePolicyDocument:
-#        Version: "2012-10-17"
-#        Statement:
-#          - Effect: Allow
-#            Principal:
-#              Service: ecs-tasks.amazonaws.com
-#            Action: sts:AssumeRole
-#      Policies:
-#        - PolicyName: dm-processing-task-policy
-#          PolicyDocument:
-#            Version: "2012-10-17"
-#            Statement:
-#              - Effect: Allow
-#                Action:
-#                  - s3:GetObject
-#                  - s3:PutObject
-#                Resource: "*"
-#              - Effect: Allow
-#                Action:
-#                  - dynamodb:GetItem
-#                  - dynamodb:UpdateItem
-#                  - dynamodb:PutItem
-#                Resource: "*"
-#      Tags:
-#        - Key: Project
-#          Value: DataMaster
-#        - Key: Component
-#          Value: Roles
 
 Outputs:
 
@@ -532,50 +476,38 @@ Outputs:
     Export:
       Name: dm-lakeformation-role-arn
 
-  FirehoseProcessorFunctionRoleArn:
+  FirehoseRouterFunctionRoleArn:
     Description: ARN of the IAM role used by the Firehose processor Lambda function
-    Value: !GetAtt FirehoseProcessorFunctionRole.Arn
+    Value: !GetAtt FirehoseRouterFunctionRole.Arn
     Export:
-      Name: dm-firehose-processor-role-arn
+      Name: dm-firehose-router-role-arn
 
-  ProcessingControllerRoleArn:
+  ProcessingControllerFunctionRoleArn:
     Description: IAM role assumed by Lambda functions to write processing control records into DynamoDB
     Value: !GetAtt ProcessingControllerFunctionRole.Arn
     Export:
-      Name: dm-processing-controller-role-arn
+      Name: dm-processing-controller-function-role-arn
 
-  RawIngestorRoleArn:
-    Description: ARN of the IAM role assumed by the raw ingestor workers (Lambda or ECS)
-    Value: !GetAtt RawIngestorRole.Arn
-    Export:
-      Name: dm-raw-ingestor-role-arn
-
-  ValidateContractFunctionRoleArn:
-    Description: Lambda role for contract validation
-    Value: !GetAtt ValidateContractRole.Arn
-    Export:
-      Name: dm-validate-contract-role-arn
-
-  ProcessingEventRoleArn:
+  ProcessingControllerEventRoleArn:
     Description: IAM role used by EventBridge to trigger the dm-processing-controller Lambda function
-    Value: !GetAtt ProcessingEventRole.Arn
+    Value: !GetAtt ProcessingControllerEventRole.Arn
     Export:
-      Name: dm-processing-event-role-arn
+      Name: dm-processing-controller-event-role-arn
 
-  RouterRoleArn:
-    Description: IAM Role used by the RawDispatcher Step Function to invoke Lambda or ECS
-    Value: !GetAtt RouterRole.Arn
+  WorkerRoleArn:
+    Description: ARN of the IAM role assumed by the raw ingestor workers (Lambda or ECS)
+    Value: !GetAtt WorkerRole.Arn
     Export:
-      Name: dm-router-role-arn
+      Name: dm-worker-role-arn
 
-  ProcessingTaskExecutionRoleArn:
+  DispatcherRoleArn:
+    Description: IAM Role used by the Step Function to invoke Lambda or ECS
+    Value: !GetAtt DispatcherRole.Arn
+    Export:
+      Name: dm-dispatcher-role-arn
+
+  TaskExecutionRoleArn:
     Description: ECS Fargate execution role for pulling images and writing logs
-    Value: !GetAtt ProcessingTaskExecutionRole.Arn
+    Value: !GetAtt TaskExecutionRole.Arn
     Export:
-      Name: dm-processing-task-execution-role-arn
-
-#  ProcessingTaskRoleArn:
-#    Description: ECS Fargate task role used by dm-processing container
-#    Value: !GetAtt ProcessingTaskRole.Arn
-#    Export:
-#      Name: dm-processing-task-role-arn
+      Name: dm-task-execution-role-arn

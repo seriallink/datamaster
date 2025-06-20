@@ -132,10 +132,11 @@ func DeployAllStacks(templates, artifacts embed.FS) error {
 		{Name: misc.StackNameCatalog},
 		{Name: misc.StackNameGovernance},
 		{Name: misc.StackNameConsumption},
+		{Name: misc.StackNameControl},
 		{Name: misc.StackNameFunctions},
 		{Name: misc.StackNameStreaming},
+		{Name: misc.StackNameIngestion},
 		{Name: misc.StackNameProcessing},
-		{Name: misc.StackNameBatch},
 		{Name: misc.StackNameObservability},
 		{Name: misc.StackNameCosts},
 	}
@@ -231,7 +232,7 @@ func preDeploymentHooks(cfg aws.Config, stack *Stack, artifacts embed.FS) error 
 			return fmt.Errorf("failed to upload lambda artifacts: %w", err)
 		}
 
-	case misc.StackNameProcessing:
+	case misc.StackNameIngestion, misc.StackNameProcessing, misc.StackNameAnalytics:
 
 		// Publish Docker images to ECR if the stack is "processing".
 		fmt.Println(misc.Blue("Publishing Docker image to ECR..."))
