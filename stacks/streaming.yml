@@ -35,7 +35,7 @@ Resources:
         ErrorOutputPrefix: errors/
         BufferingHints:
           SizeInMBs: 64
-          IntervalInSeconds: 60
+          IntervalInSeconds: 90
         CompressionFormat: GZIP
         DynamicPartitioningConfiguration:
           Enabled: true

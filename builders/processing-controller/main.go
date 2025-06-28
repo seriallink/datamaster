@@ -122,9 +122,9 @@ func countJsonObjects(r io.Reader) (int, error) {
 func recommendCompute(count int) string {
 	switch {
 	case count <= 100_000:
-		return "lambda"
+		return enum.ComputeTargetLambda.String()
 	default:
-		return "ecs"
+		return enum.ComputeTargetECS.String()
 	}
 }
 

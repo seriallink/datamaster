@@ -45,7 +45,7 @@ Resources:
     Properties:
       StateMachineName: dm-ingestion-dispatcher
       StateMachineType: EXPRESS
-      RoleArn: !ImportValue dm-dispatcher-role-arn
+      RoleArn: !ImportValue dm-step-function-role-arn
       LoggingConfiguration:
         Level: ALL
         IncludeExecutionData: true

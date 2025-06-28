@@ -31,7 +31,12 @@ func WriteParquet(records any, writer io.Writer) error {
 	}
 
 	schema := parquet.SchemaOf(v.Index(0).Interface())
-	pw := parquet.NewWriter(writer, schema)
+	pw := parquet.NewWriter(
+		writer,
+		schema,
+		parquet.Compression(&parquet.Snappy),
+		parquet.DefaultEncoding(&parquet.Plain),
+	)
 	defer pw.Close()
 
 	type job struct {

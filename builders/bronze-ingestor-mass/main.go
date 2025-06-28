@@ -21,7 +21,7 @@ import (
 func Process(ctx context.Context, cfg aws.Config, objectKey string) error {
 
 	item := core.ProcessingControl{}
-	err := core.GetDynamoDBItem(cfg, ctx, objectKey, &item)
+	err := core.QueryByObjectKey(cfg, ctx, objectKey, &item)
 	if err != nil {
 		return fmt.Errorf("failed to get item from DynamoDB: %w", err)
 	}

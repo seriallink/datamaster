@@ -303,6 +303,10 @@ Resources:
             Statement:
               - Effect: Allow
                 Action:
+                  - cloudformation:DescribeStacks
+                Resource: "*"
+              - Effect: Allow
+                Action:
                   - dynamodb:PutItem
                   - dynamodb:UpdateItem
                 Resource: "*"
@@ -368,6 +372,8 @@ Resources:
                 Action:
                   - dynamodb:GetItem
                   - dynamodb:PutItem
+                  - dynamodb:Query
+                  - dynamodb:Scan
                 Resource: "*"
               - Effect: Allow
                 Action:
@@ -379,10 +385,10 @@ Resources:
                   - cloudformation:DescribeStacks
                 Resource: "*"
 
-  DispatcherRole:
+  StepFunctionRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: dm-dispatcher-role
+      RoleName: dm-step-function-role
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
@@ -391,23 +397,27 @@ Resources:
               Service: states.amazonaws.com
             Action: sts:AssumeRole
       Policies:
-        - PolicyName: dm-dispatcher-policy
+        - PolicyName: dm-step-function-policy
           PolicyDocument:
             Version: "2012-10-17"
             Statement:
               - Effect: Allow
                 Action:
                   - ecs:RunTask
-                  - iam:PassRole
-                  - lambda:InvokeFunction
+                  - emr-serverless:StartJobRun
+                  - emr-serverless:GetJobRun
+                  - emr-serverless:CancelJobRun
                   - events:DescribeRule
                   - events:PutRule
                   - events:PutTargets
+                  - iam:PassRole
+                  - glue:StartJobRun
+                  - lambda:InvokeFunction
                   - logs:*
                 Resource: "*"
       Tags:
         - Key: Name
-          Value: dm-dispatcher-role
+          Value: dm-step-function-role
         - Key: Project
           Value: DataMaster
         - Key: Component
@@ -426,6 +436,65 @@ Resources:
             Action: sts:AssumeRole
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+      Tags:
+        - Key: Project
+          Value: DataMaster
+        - Key: Component
+          Value: Roles
+
+  EmrServerlessExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: dm-emr-execution-role
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: emr-serverless.amazonaws.com
+            Action: sts:AssumeRole
+      Path: "/"
+      Policies:
+        - PolicyName: dm-emr-serverless-policy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - cloudformation:DescribeStacks
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                  - s3:ListBucket
+                  - s3:DeleteObject
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - dynamodb:GetItem
+                  - dynamodb:BatchGetItem
+                  - dynamodb:PutItem
+                  - dynamodb:Query
+                  - dynamodb:Scan
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - glue:GetDatabase
+                  - glue:GetTable
+                  - glue:GetTables
+                  - glue:CreateTable
+                  - glue:BatchCreatePartition
+                  - glue:UpdateTable
+                  - glue:GetPartition
+                  - glue:GetPartitions
+                Resource: "*"
       Tags:
         - Key: Project
           Value: DataMaster
@@ -500,14 +569,20 @@ Outputs:
     Export:
       Name: dm-worker-role-arn
 
-  DispatcherRoleArn:
-    Description: IAM Role used by the Step Function to invoke Lambda or ECS
-    Value: !GetAtt DispatcherRole.Arn
+  StepFunctionRoleArn:
+    Description: IAM Role used by Step Functions to invoke Lambda functions, ECS tasks or Glue jobs
+    Value: !GetAtt StepFunctionRole.Arn
     Export:
-      Name: dm-dispatcher-role-arn
+      Name: dm-step-function-role-arn
 
   TaskExecutionRoleArn:
     Description: ECS Fargate execution role for pulling images and writing logs
     Value: !GetAtt TaskExecutionRole.Arn
     Export:
       Name: dm-task-execution-role-arn
+
+  EmrServerlessExecutionRoleArn:
+    Description: ARN of the EMR Serverless Execution Role
+    Value: !GetAtt EmrServerlessExecutionRole.Arn
+    Export:
+      Name: dm-emr-execution-role-arn

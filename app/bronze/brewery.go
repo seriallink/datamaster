@@ -7,9 +7,9 @@ func init() {
 }
 
 type Brewery struct {
-	BreweryId   int64  `json:"brewery_id"   parquet:"brewery_id,optional,snappy"`
-	BreweryName string `json:"brewery_name" parquet:"brewery_name,optional,snappy"`
-	Operation   string `json:"operation"    parquet:"operation,optional,snappy,dict"`
+	BreweryId   int64  `json:"brewery_id"   parquet:"brewery_id"`
+	BreweryName string `json:"brewery_name" parquet:"brewery_name"`
+	Operation   string `json:"operation"    parquet:"operation,dict"`
 }
 
 func (m *Brewery) TableName() string {

@@ -1,6 +1,6 @@
 ﻿/*
 Created: 5/6/2025
-Modified: 6/13/2025
+Modified: 6/27/2025
 Project: Data Master
 Model: DataMaster
 Author: Marcelo Monaco
@@ -76,6 +76,9 @@ ALTER TABLE dm_view.profile ADD CONSTRAINT pk_profile PRIMARY KEY (profile_id)
 CREATE TABLE dm_view.review
 (
   review_id Bigint NOT NULL,
+  brewery_id Bigint NOT NULL,
+  beer_id Bigint NOT NULL,
+  profile_id Bigint NOT NULL,
   review_overall Numeric,
   review_aroma Numeric,
   review_appearance Numeric,
@@ -113,7 +116,10 @@ CREATE TABLE dm_view.review_flat
   review_appearance Numeric,
   review_palate Numeric,
   review_taste Numeric,
-  review_time Timestamptz
+  review_time Timestamptz,
+  created_at Timestamptz NOT NULL,
+  updated_at Timestamptz NOT NULL,
+  deleted_at Timestamptz NOT NULL
 )
 WITH (
   autovacuum_enabled=true)

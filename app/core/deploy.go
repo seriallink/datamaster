@@ -91,7 +91,7 @@ func (s *Stack) GetStackOutputs(cfg aws.Config) (map[string]string, error) {
 // GetStackOutput retrieves a specific output value from a given CloudFormation stack.
 //
 // Parameters:
-//   - stack: the stack to query.
+//   - cfg: AWS configuration used to initialize the CloudFormation client.
 //   - key: the name of the output key to retrieve.
 //
 // Returns:
@@ -118,10 +118,12 @@ func (s *Stack) GetStackOutput(cfg aws.Config, key string) (string, error) {
 //
 // Parameters:
 //   - templates: the embedded file system with all template definitions.
+//   - artifacts: the embedded file system with deployment artifacts.
+//   - assets: the embedded file system with ETL assets.
 //
 // Returns:
 //   - error: if any stack deployment fails.
-func DeployAllStacks(templates, artifacts embed.FS) error {
+func DeployAllStacks(templates, artifacts, assets embed.FS) error {
 
 	stacks := []Stack{
 		{Name: misc.StackNameNetwork},
@@ -143,7 +145,7 @@ func DeployAllStacks(templates, artifacts embed.FS) error {
 
 	for _, stack := range stacks {
 		fmt.Println(misc.Blue("Deploying %s stack...", stack.Name))
-		if err := DeployStack(&stack, templates, artifacts); err != nil {
+		if err := DeployStack(&stack, templates, artifacts, assets); err != nil {
 			return fmt.Errorf("failed to deploy stack %s: %w", stack.Name, err)
 		}
 	}
@@ -159,10 +161,12 @@ func DeployAllStacks(templates, artifacts embed.FS) error {
 // Parameters:
 //   - stack: the stack definition (name, params, etc.).
 //   - templates: embedded file system containing template files.
+//   - artifacts: embedded file system containing deployment artifacts.
+//   - assets: embedded file system containing ETL assets.
 //
 // Returns:
 //   - error: if the stack creation or update fails.
-func DeployStack(stack *Stack, templates, artifacts embed.FS) error {
+func DeployStack(stack *Stack, templates, artifacts, assets embed.FS) error {
 
 	cfg := GetAWSConfig()
 	cfClient := cloudformation.NewFromConfig(cfg)
@@ -173,7 +177,7 @@ func DeployStack(stack *Stack, templates, artifacts embed.FS) error {
 		return fmt.Errorf("failed to read template for stack %s: %w", fullStackName, err)
 	}
 
-	if err = preDeploymentHooks(cfg, stack, artifacts); err != nil {
+	if err = preDeploymentHooks(cfg, stack, artifacts, assets); err != nil {
 		return err
 	}
 
@@ -204,10 +208,11 @@ func DeployStack(stack *Stack, templates, artifacts embed.FS) error {
 //   - cfg: AWS configuration used for all SDK interactions.
 //   - stack: Pointer to the stack being deployed.
 //   - artifacts: Embedded file system containing all deployment artifacts.
+//   - assets: Embedded file system containing ETL assets.
 //
 // Returns:
 //   - error: if any of the pre-deployment steps fail.
-func preDeploymentHooks(cfg aws.Config, stack *Stack, artifacts embed.FS) error {
+func preDeploymentHooks(cfg aws.Config, stack *Stack, artifacts, assets embed.FS) error {
 
 	switch stack.Name {
 
@@ -226,13 +231,13 @@ func preDeploymentHooks(cfg aws.Config, stack *Stack, artifacts embed.FS) error 
 
 	case misc.StackNameFunctions:
 
-		// Upload Lambda artifacts to S3 before deploying the functions stack.
+		// Upload Lambda artifacts to S3 before deploying the stack.
 		fmt.Println(misc.Blue("Uploading Lambda artifacts..."))
 		if err := UploadArtifacts(artifacts); err != nil {
-			return fmt.Errorf("failed to upload lambda artifacts: %w", err)
+			return fmt.Errorf("failed to upload artifacts: %w", err)
 		}
 
-	case misc.StackNameIngestion, misc.StackNameProcessing, misc.StackNameAnalytics:
+	case misc.StackNameIngestion:
 
 		// Publish Docker images to ECR if the stack is "processing".
 		fmt.Println(misc.Blue("Publishing Docker image to ECR..."))
@@ -253,6 +258,14 @@ func preDeploymentHooks(cfg aws.Config, stack *Stack, artifacts embed.FS) error 
 		// Ensure the ECS service-linked role exists before deploying the stack.
 		if err = EnsureECSServiceLinkedRole(cfg); err != nil {
 			return err
+		}
+
+	case misc.StackNameProcessing:
+
+		// Upload ETL assets to S3 before deploying the stack.
+		err := UploadEtlAssets(cfg, assets)
+		if err != nil {
+			return fmt.Errorf("failed to upload ETL assets: %w", err)
 		}
 
 	}
@@ -355,6 +368,12 @@ func postDeploymentHooks(cfg aws.Config, stack *Stack) error {
 		err := ConfigureS3Notification(context.TODO(), s3.NewFromConfig(cfg), lambda.NewFromConfig(cfg))
 		if err != nil {
 			return fmt.Errorf("failed to configure S3 notification: %w", err)
+		}
+	case misc.StackNameGovernance:
+		fmt.Println(misc.Blue("Granting Data Location access..."))
+		err := GrantDataLocationAccess(cfg)
+		if err != nil {
+			return fmt.Errorf("failed to grant data location access: %w", err)
 		}
 	case misc.StackNameStreaming:
 		err := ensureCDCStarted()

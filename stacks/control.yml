@@ -9,6 +9,8 @@ Resources:
       TableName: "dm-processing-control"
       BillingMode: PAY_PER_REQUEST
       AttributeDefinitions:
+        - AttributeName: control_id
+          AttributeType: S
         - AttributeName: object_key
           AttributeType: S
         - AttributeName: schema_name
@@ -20,9 +22,15 @@ Resources:
         - AttributeName: checksum
           AttributeType: S
       KeySchema:
-        - AttributeName: object_key
+        - AttributeName: control_id
           KeyType: HASH
       GlobalSecondaryIndexes:
+        - IndexName: dm-gsi-object-key
+          KeySchema:
+            - AttributeName: object_key
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
         - IndexName: dm-gsi-schema-status
           KeySchema:
             - AttributeName: schema_name
@@ -60,6 +68,12 @@ Outputs:
     Value: !Ref ProcessingControlTable
     Export:
       Name: dm-processing-control-table-name
+
+  ObjectKeyIndexName:
+    Description: Name of the GSI used to query processing control by object key
+    Value: dm-gsi-object-key
+    Export:
+      Name: dm-object-key-index-name
 
   SchemaStatusIndexName:
     Description: Name of the GSI used to query processing status by schema

@@ -103,7 +103,7 @@ Resources:
   ProcessingSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: Allow outbound traffic for ECS Fargate processing
+      GroupDescription: Allow outbound traffic for processing
       VpcId: !ImportValue dm-vpc-id
       SecurityGroupEgress:
         - IpProtocol: "-1"

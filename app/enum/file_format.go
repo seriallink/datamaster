@@ -3,14 +3,16 @@ package enum
 type FileFormatEnum string
 
 const (
-	FileFormatCsv  FileFormatEnum = "csv"
-	FileFormatJson FileFormatEnum = "json"
+	FileFormatCsv     FileFormatEnum = "csv"
+	FileFormatJson    FileFormatEnum = "json"
+	FileFormatParquet FileFormatEnum = "parquet"
 )
 
 func (enum FileFormatEnum) Values() []Enum {
 	return []Enum{
 		FileFormatCsv,
 		FileFormatJson,
+		FileFormatParquet,
 	}
 }
 

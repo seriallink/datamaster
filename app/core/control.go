@@ -19,13 +19,14 @@ import (
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
+	"github.com/google/uuid"
 )
 
 const defaultMaxAttempts = 3
 
 type ProcessingControl struct {
+	ControlID     string  `dynamodbav:"control_id"`
 	ObjectKey     string  `dynamodbav:"object_key"`
-	ParentKey     *string `dynamodbav:"parent_key,omitempty"`
 	SchemaName    string  `dynamodbav:"schema_name"`
 	TableName     string  `dynamodbav:"table_name"`
 	RecordCount   int     `dynamodbav:"record_count"`
@@ -53,6 +54,7 @@ func NewProcessingControl(layer, key string) (*ProcessingControl, error) {
 	now := time.Now().UTC().Format(time.RFC3339)
 
 	item := &ProcessingControl{
+		ControlID:    uuid.NewString(),
 		ObjectKey:    key,
 		SchemaName:   misc.NameWithDefaultPrefix(layer, '_'),
 		TableName:    parts[1],
@@ -173,10 +175,9 @@ func (m *ProcessingControl) RegisterNextLayerControl(ctx context.Context, cfg aw
 
 	hash := sha256.Sum256(data)
 
-	item.ParentKey = aws.String(m.ObjectKey)
 	item.RecordCount = m.RecordCount
-	item.FileFormat = "parquet"
-	item.ComputeTarget = "glue"
+	item.FileFormat = enum.FileFormatParquet.String()
+	item.ComputeTarget = enum.ComputeTargetEMR.String()
 	item.FileSize = int64(len(data))
 	item.Checksum = hex.EncodeToString(hash[:])
 

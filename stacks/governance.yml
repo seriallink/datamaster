@@ -13,7 +13,7 @@ Resources:
       RoleArn: !ImportValue dm-lakeformation-role-arn
       UseServiceLinkedRole: false
 
-  GrantLakePermissionStage:
+  GrantLakeFormationOnStage:
     Type: AWS::LakeFormation::Permissions
     Properties:
       DataLakePrincipal:
@@ -24,7 +24,22 @@ Resources:
       Permissions:
         - ALL
 
-  GrantLakePermissionBronze:
+#  GrantGlueOnStage:
+#    Type: AWS::LakeFormation::Permissions
+#    Properties:
+#      DataLakePrincipal:
+#        DataLakePrincipalIdentifier: !ImportValue dm-glue-role-arn
+#      Permissions:
+#        - SELECT
+#        - INSERT
+#        - ALTER
+#        - DESCRIBE
+#      Resource:
+#        TableResource:
+#          DatabaseName: !ImportValue dm-stage-db
+#          TableWildcard: { }
+
+  GrantLakeFormationOnBronze:
     Type: AWS::LakeFormation::Permissions
     Properties:
       DataLakePrincipal:
@@ -35,7 +50,22 @@ Resources:
       Permissions:
         - ALL
 
-  GrantLakePermissionSilver:
+#  GrantGlueOnBronze:
+#    Type: AWS::LakeFormation::Permissions
+#    Properties:
+#      DataLakePrincipal:
+#        DataLakePrincipalIdentifier: !ImportValue dm-glue-role-arn
+#      Permissions:
+#        - SELECT
+#        - INSERT
+#        - ALTER
+#        - DESCRIBE
+#      Resource:
+#        TableResource:
+#          DatabaseName: !ImportValue dm-bronze-db
+#          TableWildcard: { }
+
+  GrantLakeFormationOnSilver:
     Type: AWS::LakeFormation::Permissions
     Properties:
       DataLakePrincipal:
@@ -46,7 +76,22 @@ Resources:
       Permissions:
         - ALL
 
-  GrantLakePermissionGold:
+#  GrantGlueOnSilver:
+#    Type: AWS::LakeFormation::Permissions
+#    Properties:
+#      DataLakePrincipal:
+#        DataLakePrincipalIdentifier: !ImportValue dm-glue-role-arn
+#      Permissions:
+#        - SELECT
+#        - INSERT
+#        - ALTER
+#        - DESCRIBE
+#      Resource:
+#        TableResource:
+#          DatabaseName: !ImportValue dm-silver-db
+#          TableWildcard: { }
+
+  GrantLakeFormationOnGold:
     Type: AWS::LakeFormation::Permissions
     Properties:
       DataLakePrincipal:
@@ -57,13 +102,17 @@ Resources:
       Permissions:
         - ALL
 
-Outputs:
-
-  LakeResourceArn:
-    Description: Registered S3 location in Lake Formation
-    Value:
-      Fn::Sub:
-        - "arn:aws:s3:::${Bucket}"
-        - Bucket: !ImportValue dm-datalake-bucket
-    Export:
-      Name: dm-lakeformation-s3-arn
+#  GrantGlueOnGold:
+#    Type: AWS::LakeFormation::Permissions
+#    Properties:
+#      DataLakePrincipal:
+#        DataLakePrincipalIdentifier: !ImportValue dm-glue-role-arn
+#      Permissions:
+#        - SELECT
+#        - INSERT
+#        - ALTER
+#        - DESCRIBE
+#      Resource:
+#        TableResource:
+#          DatabaseName: !ImportValue dm-gold-db
+#          TableWildcard: { }

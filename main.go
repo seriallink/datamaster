@@ -23,6 +23,9 @@ var scripts embed.FS
 //go:embed artifacts/*
 var artifacts embed.FS
 
+//go:embed etl/main.py etl/bundle.zip
+var assets embed.FS
+
 func main() {
 
 	defer func() {
@@ -44,7 +47,7 @@ func main() {
 	shell.AddCmd(cmd.AuthCmd())
 	shell.AddCmd(cmd.WhoAmICmd())
 	shell.AddCmd(cmd.StacksCmd(stacks))
-	shell.AddCmd(cmd.DeployCmd(stacks, artifacts))
+	shell.AddCmd(cmd.DeployCmd(stacks, artifacts, assets))
 	shell.AddCmd(cmd.MigrationCmd(scripts))
 	shell.AddCmd(cmd.CatalogCmd())
 	shell.AddCmd(cmd.ArtifactsCmd(artifacts))

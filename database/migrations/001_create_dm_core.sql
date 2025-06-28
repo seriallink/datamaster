@@ -1,6 +1,6 @@
 ﻿/*
 Created: 5/6/2025
-Modified: 6/10/2025
+Modified: 6/27/2025
 Project: Data Master
 Model: DataMaster
 Author: Marcelo Monaco
@@ -71,6 +71,7 @@ ALTER TABLE dm_core.profile ADD CONSTRAINT pk_profile PRIMARY KEY (profile_id)
 CREATE TABLE dm_core.review
 (
   review_id Bigint NOT NULL,
+  brewery_id Bigint NOT NULL,
   beer_id Bigint NOT NULL,
   profile_id Bigint NOT NULL,
   review_overall Numeric,
@@ -78,10 +79,13 @@ CREATE TABLE dm_core.review
   review_appearance Numeric,
   review_palate Numeric,
   review_taste Numeric,
-  review_time Bigint
+  review_time Bigint NOT NULL
 )
 WITH (
   autovacuum_enabled=true)
+;
+
+CREATE INDEX ix_review_brewery ON dm_core.review (brewery_id)
 ;
 
 CREATE INDEX ix_review_beer ON dm_core.review (beer_id)
@@ -90,7 +94,7 @@ CREATE INDEX ix_review_beer ON dm_core.review (beer_id)
 CREATE INDEX ix_review_profile ON dm_core.review (profile_id)
 ;
 
-ALTER TABLE dm_core.review ADD CONSTRAINT PK_review PRIMARY KEY (review_id)
+ALTER TABLE dm_core.review ADD CONSTRAINT pk_review PRIMARY KEY (review_id)
 ;
 
 -- Create foreign keys (relationships) section -------------------------------------------------
@@ -115,6 +119,14 @@ ALTER TABLE dm_core.review
   ADD CONSTRAINT fk_review_profile
     FOREIGN KEY (profile_id)
     REFERENCES dm_core.profile (profile_id)
+      ON DELETE NO ACTION
+      ON UPDATE NO ACTION
+;
+
+ALTER TABLE dm_core.review
+  ADD CONSTRAINT fk_review_brewery
+    FOREIGN KEY (brewery_id)
+    REFERENCES dm_core.brewery (brewery_id)
       ON DELETE NO ACTION
       ON UPDATE NO ACTION
 ;

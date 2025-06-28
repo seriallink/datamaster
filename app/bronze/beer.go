@@ -7,12 +7,12 @@ func init() {
 }
 
 type Beer struct {
-	BeerID    int64   `json:"beer_id"    parquet:"beer_id,optional,snappy"`
-	BreweryID int64   `json:"brewery_id" parquet:"brewery_id,optional,snappy"`
-	BeerName  string  `json:"beer_name"  parquet:"beer_name,optional,snappy"`
-	BeerStyle string  `json:"beer_style" parquet:"beer_style,optional,snappy"`
-	BeerAbv   float64 `json:"beer_abv"   parquet:"beer_abv,optional,snappy,dict"`
-	Operation string  `json:"operation"  parquet:"operation,optional,snappy,dict"`
+	BeerID    int64   `json:"beer_id"    parquet:"beer_id"`
+	BreweryID int64   `json:"brewery_id" parquet:"brewery_id"`
+	BeerName  string  `json:"beer_name"  parquet:"beer_name"`
+	BeerStyle string  `json:"beer_style" parquet:"beer_style,dict"`
+	BeerAbv   float64 `json:"beer_abv"   parquet:"beer_abv,optional"`
+	Operation string  `json:"operation"  parquet:"operation,dict"`
 }
 
 func (m *Beer) TableName() string {

@@ -32,7 +32,7 @@ func Process(ctx context.Context, cfg aws.Config, objectKey string) error {
 		bucket  string
 	)
 
-	err = core.GetDynamoDBItem(cfg, ctx, objectKey, &item)
+	err = core.QueryByObjectKey(cfg, ctx, objectKey, &item)
 	if err != nil {
 		if strings.Contains(err.Error(), "object_key not found") {
 			log.Printf("Object %s not found in DynamoDB, skipping processing", objectKey)

@@ -7,11 +7,11 @@ func init() {
 }
 
 type Profile struct {
-	ProfileID   int64  `json:"profile_id"   parquet:"profile_id,optional,snappy"`
-	ProfileName string `json:"profile_name" parquet:"profile_name,optional,snappy"`
-	Email       string `json:"email"        parquet:"email,optional,snappy"`
-	State       string `json:"state"        parquet:"state,optional,snappy"`
-	Operation   string `json:"operation"    parquet:"operation,optional,snappy,dict"`
+	ProfileID   int64  `json:"profile_id"   parquet:"profile_id"`
+	ProfileName string `json:"profile_name" parquet:"profile_name"`
+	Email       string `json:"email"        parquet:"email"`
+	State       string `json:"state"        parquet:"state"`
+	Operation   string `json:"operation"    parquet:"operation,dict"`
 }
 
 func (m *Profile) TableName() string {

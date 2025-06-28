@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: Lambda Functions for the Data Master Project
+Description: Lambda functions used across all layers of the Data Master Project
 
 Resources:
 
@@ -67,27 +67,6 @@ Resources:
         - Key: Component
           Value: Functions
 
-  SilverProcessorFunction:
-    Type: AWS::Lambda::Function
-    Properties:
-      FunctionName: dm-silver-processor
-      Description: Responsible for processing bronze Parquet files and merging data into Iceberg tables in the silver layer.
-      Role: !ImportValue dm-worker-role-arn
-      Runtime: provided.al2023
-      Handler: bootstrap
-      Code:
-        S3Bucket: !ImportValue dm-artifacts-bucket
-        S3Key: silver-processor.zip
-      Architectures:
-        - x86_64
-      MemorySize: 1024
-      Timeout: 900
-      Tags:
-        - Key: Project
-          Value: DataMaster
-        - Key: Component
-          Value: Functions
-
 Outputs:
 
   FirehoseRouterFunctionArn:
@@ -107,10 +86,3 @@ Outputs:
     Value: !GetAtt BronzeIngestorFunction.Arn
     Export:
       Name: dm-bronze-ingestor-function-arn
-
-  SilverProcessorFunctionArn:
-    Description: ARN of the Lambda used to process bronze Parquet files and merge into Iceberg tables in the silver layer
-    Value: !GetAtt SilverProcessorFunction.Arn
-    Export:
-      Name: dm-silver-processor-function-arn
-
