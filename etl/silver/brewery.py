@@ -1,5 +1,6 @@
 from typing import List
-from core.processor import BaseProcessor, ProcessingControl
+from core.control import ProcessingControl
+from .processor import BaseProcessor
 
 class Processor(BaseProcessor):
     def __init__(self, spark, controls: List[ProcessingControl]):

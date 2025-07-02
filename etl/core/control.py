@@ -5,6 +5,7 @@ from dataclasses import asdict, dataclass, field, fields
 from datetime import datetime, timezone
 from enum import Enum
 from typing import Optional
+
 from .cfn import get_stack_output
 from .config import get_aws_session
 from .enums import ProcessingStatus
@@ -55,8 +56,8 @@ class ProcessingControl:
             if f.type is datetime and isinstance(plain_item.get(f.name), str):
                 try:
                     plain_item[f.name] = datetime.fromisoformat(plain_item[f.name].replace("Z", "+00:00"))
-                except Exception as e:
-                    raise e
+                except Exception:
+                    raise
 
         return cls(**plain_item)
 
@@ -111,7 +112,7 @@ class ProcessingControl:
         """
         try:
             table_name = get_stack_output("dm-control", "ProcessingControlTableName")
-        except Exception as e:
+        except Exception:
             logger.exception("Failed to resolve CloudFormation stack output")
             raise
 
@@ -136,26 +137,3 @@ class ProcessingControl:
         except ClientError as e:
             logger.exception("DynamoDB put_item failed")
             raise ProcessingControlPersistError("Failed to persist ProcessingControl") from e
-
-    # def register_next_layer(self, target_layer: str, parquet_bytes: bytes) -> "ProcessingControl":
-    #     """
-    #     Prepares the ProcessingControl for the next layer and computes checksum.
-    #     """
-    #     try:
-    #         dest_key = self.destination_key(target_layer)
-    #         checksum = hashlib.sha256(parquet_bytes).hexdigest()
-    #         item = ProcessingControl.from_key(target_layer, dest_key)
-    #
-    #         item.parent_key = self.object_key
-    #         item.record_count = self.record_count
-    #         item.file_format = "parquet"
-    #         item.compute_target = "glue"
-    #         item.file_size = len(parquet_bytes)
-    #         item.checksum = checksum
-    #
-    #         logger.info(f"[{self.table_name}] Registered next layer: {target_layer}/{dest_key}")
-    #         return item
-    #
-    #     except Exception as e:
-    #         logger.exception("Failed to register control for next layer")
-    #         raise

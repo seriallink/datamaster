@@ -1,0 +1,48 @@
+import logging
+from typing import List
+from pyspark.sql import functions as f
+
+from core.control import ProcessingControl
+from .processor import BaseProcessor
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
+class Processor(BaseProcessor):
+    """
+    Processor for generating the 'top_beers_by_rating' table in the gold layer.
+
+    This processor reads review_flat data from the silver layer, aggregates
+    beer ratings by month, and writes the top beers by average overall score.
+    """
+
+    def __init__(self, spark, controls: List[ProcessingControl]):
+        super().__init__(spark, controls)
+
+    def run(self):
+        try:
+            df = self.read()
+
+            result = (
+                df.groupBy(
+                    "beer_id",
+                    "beer_name",
+                    "beer_style",
+                    f.year(f.from_unixtime("review_time").cast("timestamp")).alias("review_year"),
+                    f.month(f.from_unixtime("review_time").cast("timestamp")).alias("review_month"),
+                )
+                .agg(
+                    f.avg("review_overall").alias("avg_rating"),
+                    f.count("*").alias("total_reviews"),
+                )
+                .filter(f.col("total_reviews") >= 25)
+                .orderBy(f.col("avg_rating").desc())
+            )
+
+            self.write(result)
+
+            logger.info(f"[{self.table}] Processing completed successfully")
+
+        except Exception as e:
+            logger.exception(f"[{self.table}] Failed to process top beers by rating")
+            raise

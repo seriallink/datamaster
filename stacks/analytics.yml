@@ -1,12 +1,12 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: Processing Pipeline for the Data Master Project
+Description: Analytics Pipeline for the Data Master Project
 
 Resources:
 
-  ProcessingApp:
+  AnalyticsApp:
     Type: AWS::EMRServerless::Application
     Properties:
-      Name: dm-processing-app
+      Name: dm-analytics-app
       ReleaseLabel: emr-7.9.0
       Type: Spark
       Architecture: ARM64
@@ -28,35 +28,35 @@ Resources:
         - Key: Project
           Value: DataMaster
         - Key: Component
-          Value: Processing
+          Value: Analytics
 
-  ProcessingLogGroup:
+  AnalyticsLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: /aws/stepfunctions/dm-processing-dispatcher
+      LogGroupName: /aws/stepfunctions/dm-analytics-dispatcher
       RetentionInDays: 7
 
-  ProcessingDispatcher:
+  AnalyticsDispatcher:
     Type: AWS::StepFunctions::StateMachine
-    DependsOn: ProcessingLogGroup
+    DependsOn: AnalyticsLogGroup
     Properties:
-      StateMachineName: dm-processing-dispatcher
+      StateMachineName: dm-analytics-dispatcher
       RoleArn: !ImportValue dm-step-function-role-arn
       LoggingConfiguration:
         Level: ALL
         IncludeExecutionData: true
         Destinations:
           - CloudWatchLogsLogGroup:
-              LogGroupArn: !GetAtt ProcessingLogGroup.Arn
+              LogGroupArn: !GetAtt AnalyticsLogGroup.Arn
       DefinitionSubstitutions:
-        AppId: !Ref ProcessingApp
+        AppId: !Ref AnalyticsApp
         ExecutionRole: !ImportValue dm-emr-execution-role-arn
         ArtifactsBucket: !ImportValue dm-artifacts-bucket
         ObserverBucket: !ImportValue dm-observer-bucket
       DefinitionString: !Sub
         - |
           {
-            "Comment": "Parallel processing from bronze to silver, then review_flat",
+            "Comment": "Fan-out gold processing by table",
             "TimeoutSeconds": 1800,
             "StartAt": "ProcessTables",
             "States": {
@@ -81,7 +81,7 @@ Resources:
                           "SparkSubmit": {
                             "EntryPoint": "s3://${ArtifactsBucket}/etl/main.py",
                             "SparkSubmitParameters": "--py-files s3://${ArtifactsBucket}/etl/bundle.zip",
-                            "EntryPointArguments.$": "States.Array('--layer', 'silver', '--table', $.table)"
+                            "EntryPointArguments.$": "States.Array('--layer', 'gold', '--table', $.table)"
                           }
                         },
                         "ConfigurationOverrides": {
@@ -109,36 +109,12 @@ Resources:
                   }
                 },
                 "ResultPath": "$.map",
-                "Next": "BuildReviewFlat"
-              },
-              "BuildReviewFlat": {
-                "Type": "Task",
-                "Resource": "arn:aws:states:::emr-serverless:startJobRun.sync",
-                "TimeoutSeconds": 900,
-                "Parameters": {
-                  "ApplicationId": "${AppId}",
-                  "ExecutionRoleArn": "${ExecutionRole}",
-                  "JobDriver": {
-                    "SparkSubmit": {
-                      "EntryPoint": "s3://${ArtifactsBucket}/etl/main.py",
-                      "SparkSubmitParameters": "--py-files s3://${ArtifactsBucket}/etl/bundle.zip",
-                      "EntryPointArguments": ["--layer", "silver", "--table", "review_flat"]
-                    }
-                  },
-                  "ConfigurationOverrides": {
-                    "MonitoringConfiguration": {
-                      "S3MonitoringConfiguration": {
-                        "LogUri": "s3://${ObserverBucket}/etl/logs/"
-                      }
-                    }
-                  }
-                },
                 "End": true
               }
             }
           }
         - {
-          AppId: !Ref ProcessingApp,
+          AppId: !Ref AnalyticsApp,
           ExecutionRole: !ImportValue dm-emr-execution-role-arn,
           ArtifactsBucket: !ImportValue dm-artifacts-bucket,
           ObserverBucket: !ImportValue dm-observer-bucket
@@ -147,33 +123,39 @@ Resources:
         - Key: Project
           Value: DataMaster
         - Key: Component
-          Value: Processing
+          Value: Analytics
 
-#  ProcessingCronRule:
+#  AnalyticsCronRule:
 #    Type: AWS::Events::Rule
 #    Properties:
-#      Name: dm-processing-cron
-#      ScheduleExpression: cron(0 6 * * ? *)  # 6h UTC daily
+#      Name: dm-analytics-cron
+#      ScheduleExpression: cron(0 7 * * ? *)  # 7h UTC daily
 #      State: ENABLED
 #      Targets:
-#        - Arn: !Ref ProcessingDispatcher
+#        - Arn: !Ref AnalyticsDispatcher
 #          Id: StepFunctionTarget
 #          RoleArn: !ImportValue dm-pipe-execution-role-arn
 #          Input: |
 #            {
-#              "tables": ["brewery", "beer", "profile", "review"]
+#              "tables": [
+#                "top_beers_by_rating",
+#                "top_breweries_by_rating",
+#                "state_by_review_volume",
+#                "top_styles_by_popularity",
+#                "top_drinkers"
+#              ]
 #            }
 
 Outputs:
 
-  ProcessingAppId:
+  AnalyticsAppId:
     Description: EMR Serverless Application ID
-    Value: !Ref ProcessingApp
+    Value: !Ref AnalyticsApp
     Export:
-      Name: dm-emr-processing-id
+      Name: dm-emr-analytics-id
 
-  ProcessingDispatcherArn:
+  AnalyticsDispatcherArn:
     Description: ARN of the Step Function dispatcher
-    Value: !Ref ProcessingDispatcher
+    Value: !Ref AnalyticsDispatcher
     Export:
-      Name: dm-processing-dispatcher-arn
+      Name: dm-analytics-dispatcher-

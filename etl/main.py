@@ -5,8 +5,7 @@ import sys
 from pyspark.sql import SparkSession
 from core.cfn import get_stack_output
 from core.enums import LayerType
-from silver.processor import process as process_silver
-# from gold.processor import process as process_gold
+from core.executor import execute
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -59,14 +58,10 @@ def main():
             .getOrCreate()
         )
 
-        if args.layer == LayerType.SILVER:
-            process_silver(spark,args.table)
-        # elif args.layer == LayerType.GOLD:
-        #     process_gold(spark, args.table)
+        if args.layer in [LayerType.SILVER, LayerType.GOLD]:
+            execute(spark, args.layer, args.table)
         else:
-            msg = f"Unsupported layer: {args.layer}"
-            logger.error(msg)
-            raise ValueError(msg)
+            raise ValueError(f"Unsupported layer: {args.layer}")
 
     except Exception as e:
         layer = args.layer if args else "unknown"

@@ -1,5 +1,6 @@
 from typing import Dict
 from botocore.exceptions import ClientError, BotoCoreError
+
 from .config import get_aws_session
 from .exceptions import StackNotFoundError, StackDescribeError, StackOutputNotFoundError
 

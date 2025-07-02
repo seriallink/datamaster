@@ -1,8 +1,8 @@
-from datetime import datetime, timezone
 from typing import List
 from uuid import uuid4
-from core.enums import ProcessingStatus
-from core.processor import BaseProcessor, ProcessingControl
+
+from core.control import ProcessingControl
+from .processor import BaseProcessor
 
 class Processor(BaseProcessor):
     def __init__(self, spark, controls: List[ProcessingControl]):
@@ -33,13 +33,10 @@ class Processor(BaseProcessor):
                 schema_name="dm_silver",
                 table_name="review_flat",
                 record_count=ctrl.record_count,
-                status=ProcessingStatus.PENDING,
                 compute_target="emr",
-                created_at=datetime.now(timezone.utc),
-                updated_at=datetime.now(timezone.utc),
             )
 
             try:
                 control.persist()
-            except Exception as e:
-                raise e
+            except Exception:
+                raise
