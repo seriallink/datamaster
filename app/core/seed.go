@@ -87,7 +87,7 @@ func SeedFromReader(data []byte, name string) error {
 		return fmt.Errorf("failed to query DynamoDB: %w", err)
 	}
 	if len(out.Items) > 0 {
-		fmt.Printf("✔ Seed already exists for table='%s' and checksum='%s', skipping.\n", name, checksum)
+		fmt.Printf("Seed already exists for table='%s' and checksum='%s', skipping.\n", name, checksum)
 		return nil
 	}
 
