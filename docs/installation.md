@@ -70,7 +70,7 @@ Crie um usuário IAM com permissões administrativas completas para executar tod
 * Guia para criar um usuário com `AdministratorAccess`:
   [Criar usuário IAM com permissão administrativa](https://docs.aws.amazon.com/pt_br/IAM/latest/UserGuide/id_roles_create_for-service.html)
 
-> Durante a autenticação no CLI, você poderá usar tanto **AWS Profile** quanto **Access Key/Secret Key** desse usuário.
+> Durante a autenticação no CLI, você poderá usar tanto **AWS Profile** quanto **Access Key / Secret Key** desse usuário.
 
 ---
 
@@ -169,3 +169,7 @@ go run ./main.go
 Se tudo estiver certo, você verá a interface interativa do Data Master CLI.
 
 ![img.png](../assets/cli-welcome-screen.png)
+
+---
+
+[Voltar para a página inicial](./README.md)
