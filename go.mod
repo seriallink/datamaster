@@ -15,6 +15,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/dynamodb v1.43.3
 	github.com/aws/aws-sdk-go-v2/service/ecr v1.45.0
 	github.com/aws/aws-sdk-go-v2/service/glue v1.113.2
+	github.com/aws/aws-sdk-go-v2/service/grafana v1.27.4
 	github.com/aws/aws-sdk-go-v2/service/iam v1.42.1
 	github.com/aws/aws-sdk-go-v2/service/lakeformation v1.41.7
 	github.com/aws/aws-sdk-go-v2/service/lambda v1.71.4

@@ -6,7 +6,7 @@ Resources:
   AthenaWorkGroup:
     Type: AWS::Athena::WorkGroup
     Properties:
-      Name: dm-workgroup
+      Name: dm-athena-workgroup
       Description: Athena Workgroup for querying and managing Iceberg tables in the Data Master project
       State: ENABLED
       WorkGroupConfiguration:
@@ -15,7 +15,7 @@ Resources:
         ResultConfiguration:
           OutputLocation:
             Fn::Sub:
-              - "s3://${Bucket}/athena/"
+              - "s3://${Bucket}/athena/results/"
               - Bucket: !ImportValue dm-observer-bucket
         EnforceWorkGroupConfiguration: true
       Tags:
@@ -27,7 +27,7 @@ Resources:
 Outputs:
 
   AthenaWorkGroupName:
-    Description: Athena workgroup name for Iceberg queries
+    Description: Athena workgroup name for queries on Glue tables
     Value: !Ref AthenaWorkGroup
     Export:
       Name: dm-athena-workgroup-name

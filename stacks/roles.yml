@@ -501,6 +501,42 @@ Resources:
         - Key: Component
           Value: Roles
 
+  GrafanaAccessRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: dm-grafana-access-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: grafana.amazonaws.com
+            Action: sts:AssumeRole
+      Description: IAM role for AWS Managed Grafana to access Athena, Glue and CloudWatch
+      Path: /
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonAthenaFullAccess
+        - arn:aws:iam::aws:policy/AWSGlueConsoleFullAccess
+        - arn:aws:iam::aws:policy/CloudWatchReadOnlyAccess
+      Policies:
+        - PolicyName: dm-grafana-s3-access
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: AllowS3AccessToAthenaResults
+                Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                  - s3:AbortMultipartUpload
+                  - s3:ListBucket
+                Resource: "*"
+      Tags:
+        - Key: Project
+          Value: DataMaster
+        - Key: Component
+          Value: Roles
+
 Outputs:
 
   DMSVpcRoleArn:
@@ -586,3 +622,9 @@ Outputs:
     Value: !GetAtt EmrServerlessExecutionRole.Arn
     Export:
       Name: dm-emr-execution-role-arn
+
+  GrafanaAccessRoleArn:
+    Description: ARN of the IAM role for AWS Managed Grafana
+    Value: !GetAtt GrafanaAccessRole.Arn
+    Export:
+      Name: dm-grafana-access-role-arn

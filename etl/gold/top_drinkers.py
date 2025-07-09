@@ -26,6 +26,7 @@ class Processor(BaseProcessor):
             result = (
                 df.groupBy(
                     "profile_id",
+                    "profile_name",
                     "state",
                     f.year(f.from_unixtime("review_time").cast("timestamp")).alias("review_year"),
                     f.month(f.from_unixtime("review_time").cast("timestamp")).alias("review_month"),

@@ -1,0 +1,336 @@
+{
+  "dashboard": {
+    "id": null,
+    "uid": null,
+    "title": "Beer Analytics",
+    "tags": ["gold", "analytics", "beer", "brewery"],
+    "timezone": "browser",
+    "schemaVersion": 37,
+    "version": 1,
+    "refresh": "5m",
+    "templating": {
+      "list": [
+        {
+          "name": "review_year",
+          "label": "Year",
+          "type": "query",
+          "refresh": 1,
+          "multi": false,
+          "hide": 0,
+          "datasource": {
+            "uid": "${Datasource}",
+            "type": "grafana-athena-datasource"
+          },
+          "query": {
+            "rawSQL": "SELECT DISTINCT CAST(review_year AS VARCHAR) AS review_year FROM dm_gold.top_breweries_by_rating ORDER BY review_year DESC"
+          }
+        },
+        {
+          "name": "review_month",
+          "label": "Month",
+          "type": "query",
+          "refresh": 1,
+          "multi": false,
+          "hide": 0,
+          "datasource": {
+            "uid": "${Datasource}",
+            "type": "grafana-athena-datasource"
+          },
+          "query": {
+            "rawSQL": "SELECT DISTINCT LPAD(CAST(review_month AS VARCHAR), 2, '0') AS review_month FROM dm_gold.top_breweries_by_rating ORDER BY review_month"
+          }
+        }
+      ]
+    },
+    "panels": [
+      {
+        "id": 1,
+        "title": "🍺 Top 10 Beers by Rating",
+        "type": "table",
+        "gridPos": { "x": 0, "y": 0, "w": 12, "h": 8 },
+        "datasource": {
+          "uid": "${Datasource}",
+          "type": "grafana-athena-datasource"
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "format": 1,
+            "rawSQL": "SELECT beer_name as \"Beer\", avg_rating as \"Avg Rating\" FROM dm_gold.top_beers_by_rating WHERE review_year = ${review_year} AND review_month = ${review_month} ORDER BY avg_rating DESC LIMIT 10;",
+            "connectionArgs": {
+              "catalog": "__default",
+              "database": "dm_gold",
+              "region": "__default"
+            }
+          }
+        ],
+        "fieldConfig": {
+          "overrides": [
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "Avg Rating"
+              },
+              "properties": [
+                {
+                  "id": "custom.width",
+                  "value": 100
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "title": "🏆 Top 10 Breweries by Rating",
+        "type": "table",
+        "gridPos": { "x": 12, "y": 0, "w": 12, "h": 8 },
+        "id": 2,
+        "datasource": {
+          "type": "grafana-athena-datasource",
+          "uid": "${Datasource}"
+        },
+        "targets": [
+          {
+            "format": 1,
+            "refId": "A",
+            "rawSQL": "SELECT brewery_name AS \"Brewery\", avg_rating AS \"Avg Rating\" FROM dm_gold.top_breweries_by_rating WHERE review_year = ${review_year} AND review_month = ${review_month} ORDER BY avg_rating DESC LIMIT 10;",
+            "connectionArgs": {
+              "catalog": "__default",
+              "database": "dm_gold",
+              "region": "__default"
+            }
+          }
+        ],
+        "fieldConfig": {
+          "overrides": [
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "Avg Rating"
+              },
+              "properties": [
+                {
+                  "id": "custom.width",
+                  "value": 100
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "title": "🗺️ Review Volume by State",
+        "type": "geomap",
+        "gridPos": {
+          "x": 0,
+          "y": 8,
+          "w": 24,
+          "h": 10
+        },
+        "id": 3,
+        "datasource": {
+          "type": "grafana-athena-datasource",
+          "uid": "${Datasource}"
+        },
+        "targets": [
+          {
+            "format": 1,
+            "refId": "A",
+            "rawSQL": "SELECT state AS \"State\", total_reviews AS \"Reviews\" FROM dm_gold.state_by_review_volume WHERE review_year = ${review_year} AND review_month = ${review_month};",
+            "connectionArgs": {
+              "catalog": "__default",
+              "database": "dm_gold",
+              "region": "__default"
+            }
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "custom": {
+              "hideFrom": {
+                "legend": false,
+                "tooltip": false,
+                "viz": false
+              }
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            }
+          },
+          "overrides": []
+        },
+        "options": {
+          "basemap": {
+            "config": {},
+            "name": "Layer 0",
+            "type": "default"
+          },
+          "controls": {
+            "mouseWheelZoom": true,
+            "showAttribution": true,
+            "showDebug": false,
+            "showMeasure": false,
+            "showScale": false,
+            "showZoom": true
+          },
+          "layers": [
+            {
+              "config": {
+                "showLegend": false,
+                "style": {
+                  "color": {
+                    "fixed": "dark-yellow"
+                  },
+                  "opacity": 0.5,
+                  "size": {
+                    "field": "Reviews",
+                    "fixed": 5,
+                    "max": 15,
+                    "min": 2
+                  },
+                  "text": {
+                    "fixed": "",
+                    "mode": "field"
+                  }
+                }
+              },
+              "filterData": {
+                "id": "byRefId",
+                "options": "A"
+              },
+              "location": {
+                "gazetteer": "public/gazetteer/usa-states.json",
+                "lookup": "State",
+                "mode": "lookup"
+              },
+              "lookup": {
+                "lookupField": "State",
+                "mode": "auto"
+              },
+              "name": "Total Reviews",
+              "tooltip": true,
+              "type": "markers",
+              "values": {
+                "fields": {
+                  "config": {
+                    "blur": 15,
+                    "radius": 20,
+                    "weight": {
+                      "fixed": 1,
+                      "max": 1,
+                      "min": 0
+                    }
+                  },
+                  "lookup": "State",
+                  "value": "Reviews"
+                }
+              }
+            }
+          ],
+          "tooltip": {
+            "mode": "details"
+          },
+          "view": {
+            "allLayers": true,
+            "id": "north-america",
+            "lat": 40,
+            "lon": -100,
+            "zoom": 4
+          }
+        }
+      },
+      {
+        "title": "🔥 Popular Styles (Volume x Rating)",
+        "type": "table",
+        "gridPos": { "x": 0, "y": 18, "w": 24, "h": 10 },
+        "id": 4,
+        "datasource": {
+          "uid": "${Datasource}",
+          "type": "grafana-athena-datasource"
+        },
+        "targets": [
+          {
+            "format": 1,
+            "refId": "A",
+            "rawSQL": "SELECT beer_style AS \"Style\", total_reviews AS \"Reviews\", avg_rating AS \"Avg Rating\" FROM dm_gold.top_styles_by_popularity WHERE review_year = ${review_year} AND review_month = ${review_month};",
+            "connectionArgs": {
+              "catalog": "__default",
+              "database": "dm_gold",
+              "region": "__default"
+            }
+          }
+        ],
+        "fieldConfig": {
+          "overrides": [
+            {
+              "matcher": { "id": "byName", "options": "Style" },
+              "properties": [
+                { "id": "custom.filterable", "value": true }
+              ]
+            },
+            {
+              "matcher": { "id": "byName", "options": "Reviews" },
+              "properties": [
+                { "id": "custom.width", "value": 100 }
+              ]
+            },
+            {
+              "matcher": { "id": "byName", "options": "Avg Rating" },
+              "properties": [
+                { "id": "custom.width", "value": 100 }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "title": "🥇 Top Drinkers",
+        "type": "barchart",
+        "gridPos": { "x": 0, "y": 28, "w": 24, "h": 10 },
+        "id": 5,
+        "datasource": {
+          "uid": "${Datasource}",
+          "type": "grafana-athena-datasource"
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "format": 1,
+            "rawSQL": "SELECT profile_name AS \"Profile\", total_reviews AS \"Tastings\" FROM dm_gold.top_drinkers WHERE review_year = ${review_year} AND review_month = ${review_month} ORDER BY total_reviews DESC LIMIT 10;",
+            "connectionArgs": {
+              "catalog": "__default",
+              "database": "dm_gold",
+              "region": "__default"
+            }
+          }
+        ],
+        "options": {
+          "orientation": "horizontal",
+          "showValue": "auto",
+          "barAlignment": 0,
+          "labelPlacement": "auto",
+          "xAxis": {
+            "show": true
+          },
+          "yAxis": {
+            "show": true
+          }
+        }
+      }
+    ]
+  },
+  "folderId": 0,
+  "overwrite": true
+}

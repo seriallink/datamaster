@@ -23,6 +23,9 @@ var scripts embed.FS
 //go:embed artifacts/*
 var artifacts embed.FS
 
+//go:embed dashboards/*.json
+var dashboards embed.FS
+
 //go:embed etl/main.py etl/bundle.zip
 var assets embed.FS
 
@@ -54,6 +57,7 @@ func main() {
 	shell.AddCmd(cmd.LambdaCmd(artifacts))
 	shell.AddCmd(cmd.SeedCmd())
 	shell.AddCmd(cmd.StreamCmd())
+	shell.AddCmd(cmd.GrafanaCmd(dashboards))
 	shell.AddCmd(cmd.ExitCmd(shell))
 	shell.AddCmd(cmd.ClearCmd(shell))
 	shell.AddCmd(cmd.Help(helps))

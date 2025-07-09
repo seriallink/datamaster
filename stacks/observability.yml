@@ -6,37 +6,28 @@ Resources:
   GrafanaWorkspace:
     Type: AWS::Grafana::Workspace
     Properties:
+      Description: Grafana workspace for Data Master observability
       AccountAccessType: CURRENT_ACCOUNT
       AuthenticationProviders:
-        - AWS_SSO
+        - SAML
       PermissionType: SERVICE_MANAGED
-      RoleArn: !ImportValue dm-grafana-role-arn
-      Name: dm-grafana
+      PluginAdminEnabled: true
+      RoleArn: !ImportValue dm-grafana-access-role-arn
+      Name: dm-grafana-workspace
       DataSources:
         - ATHENA
         - CLOUDWATCH
-      WorkspaceDataSources:
-        - ATHENA
-        - CLOUDWATCH
-      WorkspaceDescription: Grafana workspace for Data Master observability
-      WorkspaceOrganizationalUnits: []
-      WorkspaceRoleArn: !ImportValue dm-grafana-role-arn
-      Tags:
-        - Key: Project
-          Value: DataMaster
-        - Key: Component
-          Value: Observability
 
 Outputs:
-
-  GrafanaWorkspaceURL:
-    Description: URL to access the Grafana Workspace
-    Value: !GetAtt GrafanaWorkspace.Endpoint
-    Export:
-      Name: dm-grafana-endpoint
 
   GrafanaWorkspaceId:
     Description: Workspace ID
     Value: !Ref GrafanaWorkspace
     Export:
       Name: dm-grafana-workspace-id
+
+  GrafanaWorkspaceEndpoint:
+    Description: URL to access the Grafana Workspace
+    Value: !GetAtt GrafanaWorkspace.Endpoint
+    Export:
+      Name: dm-grafana-workspace-endpoint
