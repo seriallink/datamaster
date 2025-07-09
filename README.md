@@ -1,5 +1,7 @@
 # Data Master Case – Serverless Data Lake na AWS
 
+![img.png](assets/go-data-master.png)
+
 > Projeto de arquitetura serverless e orientada a eventos para data lakes na AWS — escalável, de baixo custo e pronta para produção. Desenvolvido para o programa Data Master da F1rst/Santander.
 
 ---
@@ -17,20 +19,15 @@ Este projeto tem como objetivo construir uma solução completa de engenharia de
 
 ---
 
-## Índice da Documentação
+## Documentação
 
 > A documentação completa está disponível na pasta [`docs/`](./docs)
 
-- [1. Instalação](./docs/installation.md)
-- [2. Arquitetura](./docs/architecture.md)
-- [3. Camadas de Dados](./docs/layers/overview.md)
-    - [Raw](./docs/layers/raw.md)
-    - [Bronze](./docs/layers/bronze.md)
-    - [Silver](./docs/layers/silver.md)
-    - [Gold](./docs/layers/gold.md)
-- [4. CLI (Go)](./docs/cli/overview.md)
-- [5. Orquestração](./docs/orchestration.md)
+- [1. Visão Geral da Arquitetura](./docs/architecture.md)
+- [2. Instalação do Projeto](./docs/installation.md)
+- [3. Uso do CLI](./docs/cli.md)
+- [4. Provisionamento do Ambiente](./docs/provisioning.md)
+- [5. Camadas de Dados](./docs/layers.md)
 - [6. Observabilidade](./docs/observability.md)
 - [7. Governança e Custos](./docs/governance.md)
-- [8. Deploy Completo](./docs/deployment.md)
-- [9. FAQ](./docs/faq.md)
+- [8. FAQ](./docs/faq.md)
