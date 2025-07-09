@@ -172,4 +172,4 @@ Se tudo estiver certo, você verá a interface interativa do Data Master CLI.
 
 ---
 
-[Voltar para a página inicial](./README.md)
+[Voltar para a página inicial](../README.md)
