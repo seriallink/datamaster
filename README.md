@@ -28,7 +28,7 @@ Este projeto tem como objetivo construir uma solução completa de engenharia de
 - [03. Visão Geral da Arquitetura](./docs/architecture.md)
 - [04. Componentização da Arquitetura por Stacks](./docs/stacks.md)
 - [05. Trade-offs e Decisões de Arquitetura](./docs/tradeoffs.md)
-- [06. Instalação do Data Master CLI](./docs/installation.md)
+- [06. Data Master CLI](docs/data-master-cli.md)
 - [07. Utilização do Data Master CLI](./docs/how-to-use.md)
 - [08. Provisionamento do Ambiente](./docs/provisioning.md)
 - [09. Observabilidade](./docs/observability.md)
