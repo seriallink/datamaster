@@ -34,7 +34,7 @@ func RunAllMigrations(fs embed.FS) error {
 //
 // Parameters:
 //   - fs: embedded file system containing SQL scripts.
-//   - script: path to the SQL script within the embedded FS. If empty, uses misc.DefaultScript.
+//   - script: path to the SQL script within the embedded FS.
 //
 // Behavior:
 //   - Reads the script file from the embedded FS.

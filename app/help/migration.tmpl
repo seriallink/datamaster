@@ -1,15 +1,15 @@
-Run Aurora database migrations.
+Help: `Run Aurora database migrations.
 
 Usage:
   migration
-      Executes the default migration script (001_create_dm_core.sql) against Aurora.
+      Executes all embedded migration scripts in order:
+        - 001_create_dm_core.sql
+        - 002_create_dm_view.sql
+        - 003_create_dm_mart.sql
 
-  migration --script <filename>
-      Executes a specific migration script embedded in the binary.
+  migration --script <filepath>
+      Executes a specific embedded migration script.
 
 Examples:
   migration
-  migration --script database/migrations/001_create_dm_core.sql
-
-Note:
-  To see a list of available scripts, run: scripts
+  migration --script database/migrations/001_create_dm_core.sql`
