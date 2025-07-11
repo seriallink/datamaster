@@ -24,21 +24,6 @@ Resources:
       Permissions:
         - ALL
 
-#  GrantGlueOnStage:
-#    Type: AWS::LakeFormation::Permissions
-#    Properties:
-#      DataLakePrincipal:
-#        DataLakePrincipalIdentifier: !ImportValue dm-glue-role-arn
-#      Permissions:
-#        - SELECT
-#        - INSERT
-#        - ALTER
-#        - DESCRIBE
-#      Resource:
-#        TableResource:
-#          DatabaseName: !ImportValue dm-stage-db
-#          TableWildcard: { }
-
   GrantLakeFormationOnBronze:
     Type: AWS::LakeFormation::Permissions
     Properties:
@@ -49,21 +34,6 @@ Resources:
           Name: !ImportValue dm-bronze-db
       Permissions:
         - ALL
-
-#  GrantGlueOnBronze:
-#    Type: AWS::LakeFormation::Permissions
-#    Properties:
-#      DataLakePrincipal:
-#        DataLakePrincipalIdentifier: !ImportValue dm-glue-role-arn
-#      Permissions:
-#        - SELECT
-#        - INSERT
-#        - ALTER
-#        - DESCRIBE
-#      Resource:
-#        TableResource:
-#          DatabaseName: !ImportValue dm-bronze-db
-#          TableWildcard: { }
 
   GrantLakeFormationOnSilver:
     Type: AWS::LakeFormation::Permissions
@@ -76,21 +46,6 @@ Resources:
       Permissions:
         - ALL
 
-#  GrantGlueOnSilver:
-#    Type: AWS::LakeFormation::Permissions
-#    Properties:
-#      DataLakePrincipal:
-#        DataLakePrincipalIdentifier: !ImportValue dm-glue-role-arn
-#      Permissions:
-#        - SELECT
-#        - INSERT
-#        - ALTER
-#        - DESCRIBE
-#      Resource:
-#        TableResource:
-#          DatabaseName: !ImportValue dm-silver-db
-#          TableWildcard: { }
-
   GrantLakeFormationOnGold:
     Type: AWS::LakeFormation::Permissions
     Properties:
@@ -101,18 +56,3 @@ Resources:
           Name: !ImportValue dm-gold-db
       Permissions:
         - ALL
-
-#  GrantGlueOnGold:
-#    Type: AWS::LakeFormation::Permissions
-#    Properties:
-#      DataLakePrincipal:
-#        DataLakePrincipalIdentifier: !ImportValue dm-glue-role-arn
-#      Permissions:
-#        - SELECT
-#        - INSERT
-#        - ALTER
-#        - DESCRIBE
-#      Resource:
-#        TableResource:
-#          DatabaseName: !ImportValue dm-gold-db
-#          TableWildcard: { }
