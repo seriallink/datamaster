@@ -1,122 +1,237 @@
-# 🚀 Como Usar o Data Master CLI
+# Como Usar o Data Master CLI
 
-Este guia apresenta os principais comandos e fluxos de uso do **Data Master CLI**, a ferramenta central para provisionamento, simulação, processamento e gestão de dados no projeto Data Master.
+O **Data Master CLI** é a ferramenta principal para operar todos os componentes do projeto, incluindo provisionamento de infraestrutura, deploy de funções Lambda, gerenciamento de catálogo no Glue, geração de dashboards e simulação de dados.
+
+> ⚠️ A **sequência recomendada de execução para provisionamento** será apresentada na próxima seção da documentação.
 
 ---
 
-## 🧑‍💻 Sessão Interativa
+## Sessão Interativa
 
-Para começar, basta digitar:
+Inicie a interface interativa com:
 
 ```bash
 datamaster
-````
+```
 
-A sessão interativa guiará você por:
+Durante a sessão, o CLI oferece:
 
-1. Autenticação via AWS Profile ou Access Key
-2. Verificação de identidade com `whoami`
-3. Fluxo guiado com opções como:
-
-    * [x] Deploy de infraestrutura
-    * [x] Simulação de dados (`stream`)
-    * [x] Execução do pipeline de processamento (`processing`)
-    * [x] Gerenciamento de tabelas no Glue Catalog (`catalog`)
-
-> 💡 A sessão mantém variáveis de ambiente ativas e permite comandos encadeados.
+* Autenticação com AWS (Profile ou Access/Secret)
+* Execução de comandos como `deploy`, `catalog`, `grafana`, etc.
+* Retenção de variáveis de ambiente
+* Suporte a múltiplos comandos encadeados
 
 ---
 
-## 🔧 Comandos Diretos
+## Comandos Disponíveis
 
-Você também pode usar o CLI fora da sessão interativa, com comandos diretos.
+### `artifacts`
 
-### 1. Deploy
-
-Provisiona toda a infraestrutura do projeto (buckets, roles, Glue, Lambda, DMS, etc):
+Lista os artefatos Lambda embarcados no CLI:
 
 ```bash
-datamaster deploy
-```
-
-> Requer permissões `AdministratorAccess` na conta AWS.
-
----
-
-### 2. Stream
-
-Simula eventos de inserção em tabelas do Aurora para testar o pipeline de streaming:
-
-```bash
-datamaster stream --table customer --count 100
-```
-
-Parâmetros:
-
-* `--table`: nome da tabela a ser simulada
-* `--count`: número de eventos a gerar
-
----
-
-### 3. Processing
-
-Executa o processamento de arquivos `.gz` no bucket `dm-stage` e grava Parquet no `dm-datalake`.
-
-```bash
-datamaster processing --layer bronze --table customer
-```
-
-Também é possível processar um arquivo específico:
-
-```bash
-datamaster processing --object raw/customer/file-2025-06-01.json.gz
+datamaster artifacts
 ```
 
 ---
 
-### 4. Catalog
+### `auth`
 
-Cria ou atualiza tabelas no Glue Catalog com base no schema do Aurora:
+Autentica com a AWS:
+
+```bash
+datamaster auth
+```
+
+O CLI guiará você para usar:
+
+* Um **AWS Profile nomeado**, ou
+* Uma **Access Key e Secret**
+
+---
+
+### `catalog`
+
+Cria ou atualiza tabelas no Glue Catalog com base nos schemas do Aurora:
 
 ```bash
 datamaster catalog
 ```
 
-Ou para atualizar apenas uma camada ou tabela específica:
+Para uma camada específica:
 
 ```bash
-datamaster catalog --layer silver --tables order_items,products
+datamaster catalog --layer bronze
+```
+
+Para tabelas específicas em uma camada:
+
+```bash
+datamaster catalog --layer bronze --tables brewery,beer
+```
+
+> As tabelas serão criadas se não existirem ou atualizadas se já existirem.
+
+---
+
+### `clear`
+
+Limpa a tela da sessão interativa:
+
+```bash
+datamaster clear
 ```
 
 ---
 
-## ✅ Dicas Gerais
+### `deploy`
 
-* Use `--help` em qualquer comando para ver opções disponíveis:
+Provisiona a infraestrutura via CloudFormation:
 
 ```bash
-datamaster processing --help
+datamaster deploy
 ```
 
-* Todos os comandos respeitam o ambiente (`--env`) e nível de log (`--loglevel`).
+Ou para uma stack específica:
+
+```bash
+datamaster deploy --stack storage
+```
+
+Use `datamaster stacks` para listar as stacks disponíveis.
 
 ---
 
-## 🧪 Fluxo sugerido para testes
+### `exit`
 
-1. Execute `datamaster` e autentique-se
-2. Faça o deploy da infraestrutura
-3. Simule dados com `stream`
-4. Verifique os arquivos `.gz` no bucket `dm-stage`
-5. Execute `processing` para gerar os Parquets
-6. Confirme a presença dos dados no `dm-datalake`
+Sai da sessão interativa:
+
+```bash
+datamaster exit
+```
 
 ---
 
-Se desejar, podemos agora expandir com:
+### `grafana`
 
-* Sessões avançadas (ex: comandos para debug ou integração com Step Functions)
-* Comportamento detalhado de logs
-* Lista de erros comuns e como resolvê-los
+Cria ou atualiza dashboards no Grafana:
 
-Deseja que eu crie o arquivo `how-to-use.md` com esse conteúdo e envie como resposta completa?
+```bash
+datamaster grafana
+```
+
+Para uma dashboard específica:
+
+```bash
+datamaster grafana --dashboard analytics
+```
+
+Dashboards disponíveis:
+
+* `analytics`: mostra top beers, breweries, drinkers, styles e volume de reviews
+* `logs`: (futuro) logs de erro e execução
+* `costs`: (futuro) métricas de custo e alertas
+
+---
+
+### `lambda`
+
+Deploy de funções Lambda usando artefatos embarcados:
+
+```bash
+datamaster lambda
+```
+
+Para uma função específica com configurações customizadas:
+
+```bash
+datamaster lambda --name processing-controller --memory 256 --timeout 120
+```
+
+> Os artefatos são enviados automaticamente para o S3.
+> Veja todas as funções disponíveis com: `datamaster artifacts`.
+
+---
+
+### `migration`
+
+Executa scripts de migração no Aurora.
+
+#### Executar todos os scripts embarcados, na ordem:
+
+```bash
+datamaster migration
+```
+
+Scripts incluídos (em ordem de execução):
+
+* `001_create_dm_core.sql`
+* `002_create_dm_view.sql`
+* `003_create_dm_mart.sql`
+
+#### Executar um script específico:
+
+```bash
+datamaster migration --script database/migrations/001_create_dm_core.sql
+```
+
+---
+
+### `seed`
+
+Insere datasets no Aurora (streaming) ou S3 (batch):
+
+```bash
+datamaster seed
+```
+
+Para um dataset específico:
+
+```bash
+datamaster seed --file beer
+```
+
+Datasets disponíveis:
+
+* `beer`, `brewery`, `profile`: inserção em Aurora (streaming)
+* `review`: upload para S3 (batch)
+
+---
+
+### `stacks`
+
+Exibe todas as stacks disponíveis para o comando `deploy`:
+
+```bash
+datamaster stacks
+```
+
+---
+
+### `whoami`
+
+Exibe a identidade atual da sessão AWS:
+
+```bash
+datamaster whoami
+```
+
+Mostra:
+
+* AWS Account ID
+* IAM Role/User
+* Região
+
+---
+
+## Dicas Gerais
+
+* Use `help` com qualquer comando para ver suas opções:
+
+```bash
+datamaster help deploy
+```
+
+---
+
+[Voltar para a página inicial](../README.md)
