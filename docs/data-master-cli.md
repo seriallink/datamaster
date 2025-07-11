@@ -1,4 +1,4 @@
-# Instalação do Data Master CLI
+# Data Master CLI
 
 O **Data Master CLI** é o ponto de entrada para toda a experiência deste projeto. Em vez de depender de interfaces gráficas ou scripts manuais, **todo o fluxo é guiado por uma interface de linha de comando interativa**, projetada para ser simples, clara e totalmente automatizada.
 
