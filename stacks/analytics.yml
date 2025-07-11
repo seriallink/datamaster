@@ -125,26 +125,26 @@ Resources:
         - Key: Component
           Value: Analytics
 
-#  AnalyticsCronRule:
-#    Type: AWS::Events::Rule
-#    Properties:
-#      Name: dm-analytics-cron
-#      ScheduleExpression: cron(0 7 * * ? *)  # 7h UTC daily
-#      State: ENABLED
-#      Targets:
-#        - Arn: !Ref AnalyticsDispatcher
-#          Id: StepFunctionTarget
-#          RoleArn: !ImportValue dm-pipe-execution-role-arn
-#          Input: |
-#            {
-#              "tables": [
-#                "top_beers_by_rating",
-#                "top_breweries_by_rating",
-#                "state_by_review_volume",
-#                "top_styles_by_popularity",
-#                "top_drinkers"
-#              ]
-#            }
+  AnalyticsCronRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: dm-analytics-cron
+      ScheduleExpression: cron(0 7 * * ? *)  # 7h UTC daily
+      State: ENABLED
+      Targets:
+        - Arn: !Ref AnalyticsDispatcher
+          Id: StepFunctionTarget
+          RoleArn: !ImportValue dm-pipe-execution-role-arn
+          Input: |
+            {
+              "tables": [
+                "top_beers_by_rating",
+                "top_breweries_by_rating",
+                "state_by_review_volume",
+                "top_styles_by_popularity",
+                "top_drinkers"
+              ]
+            }
 
 Outputs:
 

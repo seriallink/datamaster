@@ -149,20 +149,20 @@ Resources:
         - Key: Component
           Value: Processing
 
-#  ProcessingCronRule:
-#    Type: AWS::Events::Rule
-#    Properties:
-#      Name: dm-processing-cron
-#      ScheduleExpression: cron(0 6 * * ? *)  # 6h UTC daily
-#      State: ENABLED
-#      Targets:
-#        - Arn: !Ref ProcessingDispatcher
-#          Id: StepFunctionTarget
-#          RoleArn: !ImportValue dm-pipe-execution-role-arn
-#          Input: |
-#            {
-#              "tables": ["brewery", "beer", "profile", "review"]
-#            }
+  ProcessingCronRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: dm-processing-cron
+      ScheduleExpression: cron(0 6 * * ? *)  # 6h UTC daily
+      State: ENABLED
+      Targets:
+        - Arn: !Ref ProcessingDispatcher
+          Id: StepFunctionTarget
+          RoleArn: !ImportValue dm-pipe-execution-role-arn
+          Input: |
+            {
+              "tables": ["brewery", "beer", "profile", "review"]
+            }
 
 Outputs:
 
