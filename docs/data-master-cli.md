@@ -107,7 +107,7 @@ $GOPATH/bin
 
 ### 3. Adicione o Go binário ao seu `PATH`
 
-#### 🔧 Linux/macOS:
+#### Linux/macOS:
 
 Se ainda não estiver no `PATH`, adicione o diretório ao seu shell (`.bashrc`, `.zshrc`, etc.):
 
