@@ -11,23 +11,23 @@ import (
 	"github.com/abiosoft/ishell"
 )
 
-//go:embed app/help/*.tmpl
-var helps embed.FS
-
-//go:embed stacks/*.yml
-var stacks embed.FS
-
-//go:embed database/migrations/*.sql
-var scripts embed.FS
-
 //go:embed artifacts/*
 var artifacts embed.FS
+
+//go:embed etl/main.py etl/bundle.zip
+var assets embed.FS
 
 //go:embed dashboards/*.json
 var dashboards embed.FS
 
-//go:embed etl/main.py etl/bundle.zip
-var assets embed.FS
+//go:embed app/help/*.tmpl
+var helps embed.FS
+
+//go:embed database/migrations/*.sql
+var scripts embed.FS
+
+//go:embed stacks/*.yml
+var stacks embed.FS
 
 func main() {
 
