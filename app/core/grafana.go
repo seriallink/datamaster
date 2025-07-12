@@ -69,14 +69,10 @@ func PushDashboard(name string, fs embed.FS) error {
 		if gds, err = FindOrCreateAthenaDatasource(cfg); err != nil {
 			return fmt.Errorf("failed to ensure Athena datasource: %w", err)
 		}
-		//case "logs", "errors", "processing":
-		//	if err := EnsureCloudWatchDatasource(cfg); err != nil {
-		//		return fmt.Errorf("failed to ensure CloudWatch datasource: %w", err)
-		//	}
-		//case "costs":
-		//	if err := FindOrCreateAthenaDatasource(cfg); err != nil {
-		//		return fmt.Errorf("failed to ensure Athena datasource: %w", err)
-		//	}
+	case "health", "costs":
+		if gds, err = FindOrCreateCloudWatchDatasource(cfg); err != nil {
+			return fmt.Errorf("failed to ensure Athena datasource: %w", err)
+		}
 	default:
 		return fmt.Errorf("unknown dashboard: %s", name)
 	}
@@ -144,6 +140,53 @@ func FindOrCreateAthenaDatasource(cfg aws.Config) (*GrafanaDatasource, error) {
 	}
 
 	fmt.Println(misc.Green("Athena datasource created successfully."))
+	return &gds, nil
+
+}
+
+func FindOrCreateCloudWatchDatasource(cfg aws.Config) (*GrafanaDatasource, error) {
+
+	var (
+		err  error
+		body []byte
+		gds  GrafanaDatasource
+	)
+
+	name := "CloudWatch"
+	endpoint := "/api/datasources/name/" + name
+
+	body, err = doGrafanaRequest(cfg, http.MethodGet, endpoint, nil)
+	if err == nil {
+		if err = json.Unmarshal(body, &gds); err != nil {
+			return nil, fmt.Errorf("failed to parse existing datasource: %w", err)
+		}
+		return &gds, nil
+	} else if !strings.Contains(err.Error(), "404") {
+		return nil, fmt.Errorf("failed to check existing datasource: %w", err)
+	}
+
+	payload := map[string]interface{}{
+		"name":      name,
+		"type":      "cloudwatch",
+		"access":    "proxy",
+		"uid":       "cloudwatch",
+		"isDefault": false,
+		"jsonData": map[string]interface{}{
+			"authType":      "default", // usa a role padrão do ambiente (federado ou EC2)
+			"defaultRegion": cfg.Region,
+		},
+	}
+
+	body, err = doGrafanaRequest(cfg, http.MethodPost, "/api/datasources", payload)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create CloudWatch datasource: %w", err)
+	}
+
+	if err = json.Unmarshal(body, &gds); err != nil {
+		return nil, fmt.Errorf("failed to parse created datasource: %w", err)
+	}
+
+	fmt.Println(misc.Green("CloudWatch datasource created successfully."))
 	return &gds, nil
 
 }

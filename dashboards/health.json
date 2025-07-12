@@ -1,0 +1,308 @@
+{
+  "dashboard": {
+    "timepicker": {},
+    "timezone": "browser",
+    "title": "Environment Health",
+    "tags": ["health", "observability", "monitoring"],
+    "version": 0,
+    "refresh": "5m",
+    "schemaVersion": 39,
+    "time": {
+      "from": "now-90d",
+      "to": "now"
+    },
+    "annotations": {
+      "list": [
+        {
+          "builtIn": 1,
+          "datasource": {
+            "type": "grafana",
+            "uid": "-- Grafana --"
+          },
+          "enable": true,
+          "hide": true,
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "name": "Annotations & Alerts",
+          "type": "dashboard"
+        }
+      ]
+    },
+    "editable": true,
+    "fiscalYearStartMonth": 0,
+    "graphTooltip": 0,
+    "panels": [
+      {
+        "title": "Lambda Invocations",
+        "type": "timeseries",
+        "gridPos": { "x": 0, "y": 0, "w": 12, "h": 8 },
+        "datasource": {
+          "type": "cloudwatch",
+          "uid": "${Datasource}"
+        },
+        "targets": [
+          {
+            "datasource": {
+              "type": "cloudwatch",
+              "uid": "${Datasource}"
+            },
+            "dimensions": {
+              "FunctionName": "dm-firehose-router"
+            },
+            "label": "",
+            "matchExact": true,
+            "metricEditorMode": 0,
+            "metricName": "Invocations",
+            "metricQueryType": 0,
+            "namespace": "AWS/Lambda",
+            "period": "",
+            "queryMode": "Metrics",
+            "refId": "A",
+            "region": "default",
+            "statistic": "Sum"
+          },
+          {
+            "datasource": {
+              "type": "cloudwatch",
+              "uid": "${Datasource}"
+            },
+            "dimensions": {
+              "FunctionName": "dm-processing-controller"
+            },
+            "hide": false,
+            "label": "",
+            "matchExact": true,
+            "metricEditorMode": 0,
+            "metricName": "Invocations",
+            "metricQueryType": 0,
+            "namespace": "AWS/Lambda",
+            "period": "",
+            "queryMode": "Metrics",
+            "refId": "B",
+            "region": "default",
+            "statistic": "Sum"
+          },
+          {
+            "datasource": {
+              "type": "cloudwatch",
+              "uid": "${Datasource}"
+            },
+            "dimensions": {
+              "FunctionName": "dm-bronze-ingestor-lite"
+            },
+            "hide": false,
+            "label": "",
+            "matchExact": true,
+            "metricEditorMode": 0,
+            "metricName": "Invocations",
+            "metricQueryType": 0,
+            "namespace": "AWS/Lambda",
+            "period": "",
+            "queryMode": "Metrics",
+            "refId": "C",
+            "region": "default",
+            "statistic": "Sum"
+          }
+        ]
+      },
+      {
+        "title": "Lambda Errors",
+        "type": "timeseries",
+        "gridPos": { "x": 12, "y": 0, "w": 12, "h": 8 },
+        "datasource": {
+          "type": "cloudwatch",
+          "uid": "${Datasource}"
+        },
+        "targets": [
+          {
+            "datasource": {
+              "type": "cloudwatch",
+              "uid": "${Datasource}"
+            },
+            "dimensions": {
+              "FunctionName": "dm-firehose-router"
+            },
+            "label": "",
+            "matchExact": true,
+            "metricEditorMode": 0,
+            "metricName": "Errors",
+            "metricQueryType": 0,
+            "namespace": "AWS/Lambda",
+            "period": "",
+            "queryMode": "Metrics",
+            "refId": "A",
+            "region": "default",
+            "statistic": "Sum"
+          },
+          {
+            "datasource": {
+              "type": "cloudwatch",
+              "uid": "${Datasource}"
+            },
+            "dimensions": {
+              "FunctionName": "dm-processing-controller"
+            },
+            "hide": false,
+            "label": "",
+            "matchExact": true,
+            "metricEditorMode": 0,
+            "metricName": "Errors",
+            "metricQueryType": 0,
+            "namespace": "AWS/Lambda",
+            "period": "",
+            "queryMode": "Metrics",
+            "refId": "B",
+            "region": "default",
+            "statistic": "Sum"
+          },
+          {
+            "datasource": {
+              "type": "cloudwatch",
+              "uid": "${Datasource}"
+            },
+            "dimensions": {
+              "FunctionName": "dm-bronze-ingestor-lite"
+            },
+            "hide": false,
+            "label": "",
+            "matchExact": true,
+            "metricEditorMode": 0,
+            "metricName": "Errors",
+            "metricQueryType": 0,
+            "namespace": "AWS/Lambda",
+            "period": "",
+            "queryMode": "Metrics",
+            "refId": "C",
+            "region": "default",
+            "statistic": "Sum"
+          }
+        ]
+      },
+      {
+        "title": "Step Functions ExecutionsSucceeded",
+        "type": "timeseries",
+        "gridPos": { "x": 0, "y": 8, "w": 12, "h": 8 },
+        "datasource": {
+          "type": "cloudwatch",
+          "uid": "${Datasource}"
+        },
+        "targets": [
+          {
+            "datasource": {
+              "type": "cloudwatch",
+              "uid": "${Datasource}"
+            },
+            "dimensions": {
+              "StateMachineArn": "*"
+            },
+            "label": "",
+            "matchExact": true,
+            "metricEditorMode": 0,
+            "metricName": "ExecutionsSucceeded",
+            "metricQueryType": 0,
+            "namespace": "AWS/States",
+            "period": "",
+            "queryMode": "Metrics",
+            "refId": "A",
+            "region": "default",
+            "statistic": "Sum"
+          }
+        ]
+      },
+      {
+        "title": "Step Functions ExecutionsFailed",
+        "type": "timeseries",
+        "gridPos": { "x": 12, "y": 8, "w": 12, "h": 8 },
+        "datasource": {
+          "type": "cloudwatch",
+          "uid": "${Datasource}"
+        },
+        "targets": [
+          {
+            "datasource": {
+              "type": "cloudwatch",
+              "uid": "${Datasource}"
+            },
+            "dimensions": {
+              "StateMachineArn": "*"
+            },
+            "label": "",
+            "matchExact": true,
+            "metricEditorMode": 0,
+            "metricName": "ExecutionsFailed",
+            "metricQueryType": 0,
+            "namespace": "AWS/States",
+            "period": "",
+            "queryMode": "Metrics",
+            "refId": "A",
+            "region": "default",
+            "statistic": "Sum"
+          }
+        ]
+      },
+      {
+        "title": "ERM SuccessJobs",
+        "type": "timeseries",
+        "gridPos": { "x": 0, "y": 16, "w": 12, "h": 8 },
+        "datasource": {
+          "type": "cloudwatch",
+          "uid": "${Datasource}"
+        },
+        "targets": [
+          {
+            "datasource": {
+              "type": "cloudwatch",
+              "uid": "${Datasource}"
+            },
+            "dimensions": {
+              "ApplicationId": "*"
+            },
+            "label": "",
+            "matchExact": true,
+            "metricEditorMode": 0,
+            "metricName": "SuccessJobs",
+            "metricQueryType": 0,
+            "namespace": "AWS/EMRServerless",
+            "period": "",
+            "queryMode": "Metrics",
+            "refId": "A",
+            "region": "default",
+            "statistic": "Sum"
+          }
+        ]
+      },
+      {
+        "title": "ERM FailedJobs",
+        "type": "timeseries",
+        "gridPos": { "x": 12, "y": 16, "w": 12, "h": 8 },
+        "datasource": {
+          "type": "cloudwatch",
+          "uid": "${Datasource}"
+        },
+        "targets": [
+          {
+            "datasource": {
+              "type": "cloudwatch",
+              "uid": "${Datasource}"
+            },
+            "dimensions": {
+              "ApplicationId": "*"
+            },
+            "label": "",
+            "matchExact": true,
+            "metricEditorMode": 0,
+            "metricName": "FailedJobs",
+            "metricQueryType": 0,
+            "namespace": "AWS/EMRServerless",
+            "period": "",
+            "queryMode": "Metrics",
+            "refId": "A",
+            "region": "default",
+            "statistic": "Sum"
+          }
+        ]
+      }
+    ]
+  },
+  "overwrite": true,
+  "folderId": 0
+}

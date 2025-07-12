@@ -519,7 +519,7 @@ Resources:
         - arn:aws:iam::aws:policy/AWSGlueConsoleFullAccess
         - arn:aws:iam::aws:policy/CloudWatchReadOnlyAccess
       Policies:
-        - PolicyName: dm-grafana-s3-access
+        - PolicyName: dm-grafana-access-policy
           PolicyDocument:
             Version: "2012-10-17"
             Statement:
@@ -530,6 +530,13 @@ Resources:
                   - s3:PutObject
                   - s3:AbortMultipartUpload
                   - s3:ListBucket
+                Resource: "*"
+              - Sid: AllowCloudWatchMetrics
+                Effect: Allow
+                Action:
+                  - cloudwatch:GetMetricData
+                  - cloudwatch:ListMetrics
+                  - cloudwatch:GetMetricStatistics
                 Resource: "*"
       Tags:
         - Key: Project
