@@ -6,22 +6,22 @@ require (
 	github.com/abiosoft/ishell v2.0.0+incompatible
 	github.com/aws/aws-lambda-go v1.49.0
 	github.com/aws/aws-sdk-go-v2 v1.36.5
-	github.com/aws/aws-sdk-go-v2/config v1.29.16
-	github.com/aws/aws-sdk-go-v2/credentials v1.17.69
-	github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue v1.19.2
-	github.com/aws/aws-sdk-go-v2/service/athena v1.51.1
-	github.com/aws/aws-sdk-go-v2/service/cloudformation v1.60.2
-	github.com/aws/aws-sdk-go-v2/service/databasemigrationservice v1.52.2
-	github.com/aws/aws-sdk-go-v2/service/dynamodb v1.43.3
-	github.com/aws/aws-sdk-go-v2/service/ecr v1.45.0
-	github.com/aws/aws-sdk-go-v2/service/glue v1.113.2
+	github.com/aws/aws-sdk-go-v2/config v1.29.17
+	github.com/aws/aws-sdk-go-v2/credentials v1.17.70
+	github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue v1.19.4
+	github.com/aws/aws-sdk-go-v2/service/athena v1.51.3
+	github.com/aws/aws-sdk-go-v2/service/cloudformation v1.61.0
+	github.com/aws/aws-sdk-go-v2/service/databasemigrationservice v1.53.0
+	github.com/aws/aws-sdk-go-v2/service/dynamodb v1.44.0
+	github.com/aws/aws-sdk-go-v2/service/ecr v1.45.1
+	github.com/aws/aws-sdk-go-v2/service/glue v1.117.0
 	github.com/aws/aws-sdk-go-v2/service/grafana v1.27.4
-	github.com/aws/aws-sdk-go-v2/service/iam v1.42.1
-	github.com/aws/aws-sdk-go-v2/service/lakeformation v1.41.7
-	github.com/aws/aws-sdk-go-v2/service/lambda v1.71.4
-	github.com/aws/aws-sdk-go-v2/service/s3 v1.80.2
-	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.35.6
-	github.com/aws/aws-sdk-go-v2/service/sts v1.33.21
+	github.com/aws/aws-sdk-go-v2/service/iam v1.43.0
+	github.com/aws/aws-sdk-go-v2/service/lakeformation v1.41.8
+	github.com/aws/aws-sdk-go-v2/service/lambda v1.72.0
+	github.com/aws/aws-sdk-go-v2/service/s3 v1.83.0
+	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.35.7
+	github.com/aws/aws-sdk-go-v2/service/sts v1.34.0
 	github.com/fatih/color v1.18.0
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgtype v1.14.4
@@ -36,20 +36,20 @@ require (
 require (
 	github.com/abiosoft/readline v0.0.0-20180607040430-155bce2042db // indirect
 	github.com/andybalholm/brotli v1.1.1 // indirect
-	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.6.10 // indirect
-	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.16.31 // indirect
+	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.6.11 // indirect
+	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.16.32 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.3.36 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.6.36 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/ini v1.8.3 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/v4a v1.3.35 // indirect
-	github.com/aws/aws-sdk-go-v2/service/dynamodbstreams v1.25.5 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.12.3 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.7.3 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/endpoint-discovery v1.10.16 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.12.16 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.18.16 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sso v1.25.4 // indirect
-	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.30.2 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/v4a v1.3.36 // indirect
+	github.com/aws/aws-sdk-go-v2/service/dynamodbstreams v1.25.6 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.12.4 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.7.4 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/endpoint-discovery v1.10.17 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.12.17 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.18.17 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sso v1.25.5 // indirect
+	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.30.3 // indirect
 	github.com/aws/smithy-go v1.22.4 // indirect
 	github.com/chzyer/test v1.0.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
