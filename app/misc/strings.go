@@ -57,6 +57,13 @@ func Dedent(s string) string {
 	return strings.Join(lines, "\n")
 }
 
+// ToPascalCase converts a kebab-case string into PascalCase.
+//
+// Parameters:
+//   - input: string - The input string in kebab-case format (e.g., "my-variable-name").
+//
+// Returns:
+//   - string: The resulting string in PascalCase format (e.g., "MyVariableName").
 func ToPascalCase(input string) string {
 	parts := strings.Split(input, "-")
 	for i, part := range parts {

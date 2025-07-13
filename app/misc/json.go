@@ -2,6 +2,14 @@ package misc
 
 import "encoding/json"
 
+// Copier copies data from a source into a target instance by marshaling to JSON and unmarshaling.
+//
+// Parameters:
+//   - instance: any - The target instance to populate (must be a pointer).
+//   - data: any - The source data to copy from.
+//
+// Returns:
+//   - error: an error if the copy operation fails, or nil if successful.
 func Copier(instance any, data any) error {
 
 	// marshal any data to JSON
