@@ -14,6 +14,18 @@ import (
 	"github.com/parquet-go/parquet-go"
 )
 
+// WriteParquet writes a slice of records to the provided io.Writer in Parquet format.
+//
+// The function expects a slice or pointer to slice as input. It uses the schema of the first
+// element in the slice to construct the Parquet schema, compresses with Snappy, and encodes
+// with Plain encoding. The function uses concurrency to prepare the records for writing.
+//
+// Parameters:
+//   - records: A slice or pointer to a slice of structs representing the data.
+//   - writer: Destination writer to which the Parquet data will be written.
+//
+// Returns:
+//   - error: An error if writing fails, the input is invalid, or the slice is empty.
 func WriteParquet(records any, writer io.Writer) error {
 
 	v := reflect.ValueOf(records)
@@ -99,13 +111,20 @@ func WriteParquet(records any, writer io.Writer) error {
 
 }
 
-func derefValue(v reflect.Value) reflect.Value {
-	if v.Kind() == reflect.Ptr {
-		return v.Elem()
-	}
-	return v
-}
-
+// StreamCsvToParquet reads CSV data from an input stream, parses it into model instances,
+// and encodes the result into a Parquet-formatted buffer using concurrent workers.
+//
+// This function uses the CSV header to map column names to indices and processes each
+// record concurrently. Each line is converted into a model instance via `FromCSV`.
+// The resulting records are written to a Parquet buffer using Snappy compression.
+//
+// Parameters:
+//   - r: CSV input stream (typically a .csv.gz file decompressed).
+//   - model: An implementation of the bronze.Model interface used to instantiate records.
+//
+// Returns:
+//   - *bytes.Buffer: A buffer containing the resulting Parquet data.
+//   - error: An error if any step in the parsing or writing process fails.
 func StreamCsvToParquet(r io.Reader, model bronze.Model) (*bytes.Buffer, error) {
 
 	csvReader := csv.NewReader(r)

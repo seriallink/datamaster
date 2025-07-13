@@ -11,6 +11,14 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 )
 
+// UploadEtlAssets uploads the ETL assets (e.g., main.py and bundle.zip) from the embedded filesystem to the S3 artifacts bucket.
+//
+// Parameters:
+//   - cfg: the AWS configuration used to access S3 and resolve the bucket name.
+//   - assets: the embedded filesystem containing the ETL asset files.
+//
+// Returns:
+//   - error: an error if any of the assets fail to be read or uploaded.
 func UploadEtlAssets(cfg aws.Config, assets embed.FS) error {
 
 	files := []string{

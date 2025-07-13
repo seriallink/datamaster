@@ -11,6 +11,15 @@ import (
 	_ "github.com/lib/pq"
 )
 
+// RunAllMigrations executes all predefined SQL migration scripts in order.
+//
+// It runs the core, view, and mart scripts sequentially using the embedded filesystem.
+//
+// Parameters:
+//   - fs: Embedded filesystem containing the SQL migration scripts.
+//
+// Returns:
+//   - error: An error if any of the migration scripts fail to execute.
 func RunAllMigrations(fs embed.FS) error {
 
 	scripts := []string{

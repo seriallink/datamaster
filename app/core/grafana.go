@@ -27,6 +27,13 @@ type GrafanaDatasource struct {
 	Name string `json:"name"`
 }
 
+// PushAllDashboards reads all JSON dashboards from the embedded filesystem and pushes them to Grafana.
+//
+// Parameters:
+//   - fs: the embedded filesystem containing JSON dashboard files under the "dashboards" directory.
+//
+// Returns:
+//   - error: an error if reading the directory or pushing any dashboard fails.
 func PushAllDashboards(fs embed.FS) error {
 
 	entries, err := fs.ReadDir("dashboards")
@@ -48,6 +55,14 @@ func PushAllDashboards(fs embed.FS) error {
 
 }
 
+// PushDashboard uploads a JSON dashboard to Grafana, replacing its datasource placeholder.
+//
+// Parameters:
+//   - name: the name of the dashboard file (without .json extension) located in the "dashboards" folder.
+//   - fs: the embedded filesystem containing the dashboard definitions.
+//
+// Returns:
+//   - error: an error if the dashboard file is missing, the datasource is not created, or the upload fails.
 func PushDashboard(name string, fs embed.FS) error {
 
 	var (
@@ -88,6 +103,18 @@ func PushDashboard(name string, fs embed.FS) error {
 
 }
 
+// FindOrCreateAthenaDatasource ensures that a Grafana Athena datasource exists and returns its metadata.
+//
+// If the datasource named "Athena" exists, it is returned. Otherwise, it is created
+// using the default configuration with IAM role authentication and the S3 output path
+// based on the `ObserverBucketName` stack output.
+//
+// Parameters:
+//   - cfg: AWS configuration used to resolve stack outputs and region.
+//
+// Returns:
+//   - *GrafanaDatasource: the existing or newly created datasource metadata.
+//   - error: an error if the operation fails at any step.
 func FindOrCreateAthenaDatasource(cfg aws.Config) (*GrafanaDatasource, error) {
 
 	var (
@@ -144,6 +171,18 @@ func FindOrCreateAthenaDatasource(cfg aws.Config) (*GrafanaDatasource, error) {
 
 }
 
+// FindOrCreateCloudWatchDatasource ensures that a Grafana CloudWatch datasource exists and returns its metadata.
+//
+// If a datasource named "CloudWatch" already exists in Grafana, it is returned.
+// Otherwise, the function creates a new CloudWatch datasource using the default authentication
+// method (IAM role from environment) and region specified in the AWS config.
+//
+// Parameters:
+//   - cfg: AWS configuration used to determine the region and credentials.
+//
+// Returns:
+//   - *GrafanaDatasource: the existing or newly created CloudWatch datasource.
+//   - error: an error if the operation fails at any step.
 func FindOrCreateCloudWatchDatasource(cfg aws.Config) (*GrafanaDatasource, error) {
 
 	var (
@@ -191,6 +230,18 @@ func FindOrCreateCloudWatchDatasource(cfg aws.Config) (*GrafanaDatasource, error
 
 }
 
+// CreateGrafanaToken generates a temporary API token for a service account in an AWS-managed Grafana workspace.
+//
+// It retrieves the workspace ID from the CloudFormation stack, ensures that the required service account exists,
+// and then creates a new token with a unique name and the specified TTL (time-to-live).
+//
+// Parameters:
+//   - cfg: AWS configuration used to authenticate and interact with the Grafana service.
+//   - ttlSeconds: time-to-live for the token, in seconds.
+//
+// Returns:
+//   - string: the token key that can be used to authenticate Grafana API requests.
+//   - error: an error if the token creation fails at any step.
 func CreateGrafanaToken(cfg aws.Config, ttlSeconds int32) (string, error) {
 
 	client := grafana.NewFromConfig(cfg)
@@ -220,6 +271,18 @@ func CreateGrafanaToken(cfg aws.Config, ttlSeconds int32) (string, error) {
 
 }
 
+// FindOrCreateServiceAccount locates an existing service account in a Grafana workspace or creates a new one if it doesn't exist.
+//
+// It searches for a service account with the predefined name and returns its ID. If not found, it creates
+// a new service account with `admin` privileges.
+//
+// Parameters:
+//   - cfg: AWS configuration used for authenticating Grafana service calls.
+//   - workspaceID: ID of the Grafana workspace where the service account should be found or created.
+//
+// Returns:
+//   - string: the ID of the existing or newly created service account.
+//   - error: an error if the listing or creation of the service account fails.
 func FindOrCreateServiceAccount(cfg aws.Config, workspaceID string) (string, error) {
 
 	client := grafana.NewFromConfig(cfg)
@@ -250,6 +313,21 @@ func FindOrCreateServiceAccount(cfg aws.Config, workspaceID string) (string, err
 
 }
 
+// doGrafanaRequest performs an authenticated HTTP request to the Grafana workspace API.
+//
+// It retrieves the workspace endpoint and creates a temporary token with 60 seconds of TTL.
+// The request is made with the provided HTTP method, path, and payload. The payload can be
+// a raw JSON byte slice or a Go value that will be marshaled into JSON.
+//
+// Parameters:
+//   - cfg: AWS configuration used to access stack outputs and Grafana token.
+//   - method: HTTP method (e.g., "GET", "POST").
+//   - path: Relative API path (e.g., "/api/datasources").
+//   - payload: Request body. Can be a raw `[]byte` or a struct/map to be marshaled into JSON.
+//
+// Returns:
+//   - []byte: The response body from Grafana.
+//   - error: An error if any step (token, request, response) fails.
 func doGrafanaRequest(cfg aws.Config, method, path string, payload interface{}) ([]byte, error) {
 
 	var (

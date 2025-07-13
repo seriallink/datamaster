@@ -19,6 +19,19 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 )
 
+// ConfigureS3Notification sets up an S3 event notification to trigger a Lambda function
+// when `.gz` files are uploaded to the `raw/` prefix of the staging bucket.
+//
+// It first grants invoke permission to the S3 service on the specified Lambda, and then
+// configures the notification rules on the bucket. If the permission already exists, it skips that step.
+//
+// Parameters:
+//   - ctx: The context for the AWS SDK requests.
+//   - s3Client: A configured S3 client used to set the bucket notification.
+//   - lambdaClient: A configured Lambda client used to add invoke permissions.
+//
+// Returns:
+//   - error: Any error encountered while configuring the notification or permission. Returns nil if successful.
 func ConfigureS3Notification(ctx context.Context, s3Client *s3.Client, lambdaClient *lambda.Client) error {
 
 	var (
@@ -92,6 +105,19 @@ func ConfigureS3Notification(ctx context.Context, s3Client *s3.Client, lambdaCli
 
 }
 
+// UploadDataToS3 uploads a byte slice to a specified S3 bucket and key.
+//
+// It creates an S3 client from the provided AWS config and sends the data using `PutObject`.
+//
+// Parameters:
+//   - cfg: The AWS configuration used to create the S3 client.
+//   - ctx: The context for the upload operation.
+//   - bucket: The name of the S3 bucket.
+//   - key: The key (path) where the object will be stored.
+//   - data: The byte slice to be uploaded.
+//
+// Returns:
+//   - error: Any error encountered during the upload. Returns nil if the upload is successful.
 func UploadDataToS3(cfg aws.Config, ctx context.Context, bucket, key string, data []byte) error {
 
 	_, err := s3.NewFromConfig(cfg).PutObject(ctx, &s3.PutObjectInput{
@@ -107,6 +133,19 @@ func UploadDataToS3(cfg aws.Config, ctx context.Context, bucket, key string, dat
 
 }
 
+// DownloadS3Object retrieves an object from an S3 bucket using the given bucket and key.
+//
+// It uses the provided AWS configuration to create an S3 client and performs a `GetObject` call.
+//
+// Parameters:
+//   - ctx: Context for the request.
+//   - cfg: AWS configuration used to create the S3 client.
+//   - bucket: Name of the S3 bucket.
+//   - key: Key (path) of the object to retrieve.
+//
+// Returns:
+//   - *s3.GetObjectOutput: The S3 object output, including metadata and the object's body.
+//   - error: Any error encountered during the download operation. Returns nil if successful.
 func DownloadS3Object(ctx context.Context, cfg aws.Config, bucket, key string) (*s3.GetObjectOutput, error) {
 	client := s3.NewFromConfig(cfg)
 	object, err := client.GetObject(ctx, &s3.GetObjectInput{
@@ -119,6 +158,18 @@ func DownloadS3Object(ctx context.Context, cfg aws.Config, bucket, key string) (
 	return object, nil
 }
 
+// LoadRawS3Data downloads and parses a raw data file from S3 based on the metadata in ProcessingControl.
+//
+// The file is expected to be compressed with gzip and stored in the `StageBucket`. It supports CSV and JSON formats.
+//
+// Parameters:
+//   - cfg: AWS configuration used to access S3.
+//   - ctx: Context for the request.
+//   - item: ProcessingControl containing metadata like ObjectKey and FileFormat.
+//
+// Returns:
+//   - []map[string]any: A slice of parsed records, where each record is a key-value map.
+//   - error: Any error encountered during the process (S3 access, decompression, or parsing).
 func LoadRawS3Data(cfg aws.Config, ctx context.Context, item *ProcessingControl) ([]map[string]any, error) {
 
 	bucket, err := (&Stack{Name: misc.StackNameStorage}).GetStackOutput(cfg, "StageBucketName")
@@ -149,6 +200,17 @@ func LoadRawS3Data(cfg aws.Config, ctx context.Context, item *ProcessingControl)
 
 }
 
+// parseCSV reads and parses a CSV input stream into a slice of maps.
+//
+// Each row in the CSV is converted to a map where the keys are column headers
+// and the values are the corresponding cell values (as strings).
+//
+// Parameters:
+//   - r: io.Reader providing the CSV data.
+//
+// Returns:
+//   - []map[string]any: Slice of maps representing the parsed CSV records.
+//   - error: Any error encountered while reading or parsing the CSV.
 func parseCSV(r io.Reader) ([]map[string]any, error) {
 
 	var data []map[string]any
@@ -178,6 +240,17 @@ func parseCSV(r io.Reader) ([]map[string]any, error) {
 
 }
 
+// parseJSON reads and parses a stream of JSON objects into a slice of maps.
+//
+// The input is expected to be a JSON stream where each line or object represents
+// a single record (e.g., NDJSON format or array of objects).
+//
+// Parameters:
+//   - r: io.Reader providing the JSON data.
+//
+// Returns:
+//   - []map[string]any: Slice of maps representing the decoded JSON records.
+//   - error: Any error encountered while decoding the JSON.
 func parseJSON(r io.Reader) ([]map[string]any, error) {
 
 	var data []map[string]any

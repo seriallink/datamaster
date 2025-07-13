@@ -11,6 +11,16 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/lakeformation/types"
 )
 
+// GrantDataLocationAccess grants Lake Formation data location access to the Glue service role.
+//
+// It retrieves the data lake bucket name and the Glue service role ARN from CloudFormation stack outputs,
+// then issues a GrantPermissions call to Lake Formation, allowing Glue to access the specified S3 bucket.
+//
+// Parameters:
+//   - cfg: AWS configuration used to create the Lake Formation client and access stack outputs.
+//
+// Returns:
+//   - error: An error if retrieving outputs or granting permissions fails.
 func GrantDataLocationAccess(cfg aws.Config) error {
 
 	client := lakeformation.NewFromConfig(cfg)

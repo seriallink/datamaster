@@ -17,6 +17,18 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/sts"
 )
 
+// PublishDockerImages loads, tags, and pushes Docker images from embedded .tar artifacts to AWS ECR.
+// If image names are provided, only those will be published. Otherwise, all .tar files in the artifacts
+// directory are processed. The function requires Docker to be installed and available in the system PATH.
+//
+// Parameters:
+//   - cfg: the AWS configuration used for ECR authentication and account resolution.
+//   - artifacts: the embedded filesystem containing Docker .tar files.
+//   - images: optional list of image base names (without extension) to publish.
+//
+// Returns:
+//   - map[string]string: a mapping of image names to their full ECR URIs.
+//   - error: an error if any step in the publishing process fails.
 func PublishDockerImages(cfg aws.Config, artifacts embed.FS, images ...string) (map[string]string, error) {
 
 	var (
@@ -119,6 +131,14 @@ func PublishDockerImages(cfg aws.Config, artifacts embed.FS, images ...string) (
 
 }
 
+// loginToECRWithSDK authenticates the Docker CLI with AWS ECR using credentials retrieved via the AWS SDK.
+// It fetches the ECR authorization token, decodes it, and performs a `docker login` using `--password-stdin`.
+//
+// Parameters:
+//   - cfg: the AWS configuration used to create the ECR client.
+//
+// Returns:
+//   - error: an error if the token retrieval, decoding, or Docker login fails.
 func loginToECRWithSDK(cfg aws.Config) error {
 
 	client := ecr.NewFromConfig(cfg)

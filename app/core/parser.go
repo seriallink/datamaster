@@ -13,6 +13,18 @@ import (
 	"github.com/seriallink/datamaster/app/misc"
 )
 
+// UnmarshalRecords converts a slice of generic maps into a typed slice using reflection.
+//
+// This function uses the type of the `model` parameter to infer the target slice type,
+// allocates a new slice of that type, e preenche os valores usando `misc.Copier`.
+//
+// Parameters:
+//   - model: An instance of the target struct type (e.g., &MyStruct{}) used to determine the slice element type.
+//   - data: A slice of `map[string]any`, typically obtained from JSON or dynamic decoding.
+//
+// Returns:
+//   - any: A pointer to a slice of the inferred type, e.g., *[]MyStruct.
+//   - error: An error if the conversion fails.
 func UnmarshalRecords(model any, data []map[string]any) (any, error) {
 
 	// expected return type
@@ -30,6 +42,19 @@ func UnmarshalRecords(model any, data []map[string]any) (any, error) {
 
 }
 
+// CsvToMap reads a CSV stream and converts each valid row into a map[string]any.
+//
+// This function parses the CSV header to determine column names and processes each row,
+// trimming whitespace and converting empty strings to `nil`. Each row is validated using
+// the provided model via `ValidateRow`. Invalid rows are skipped with warnings.
+//
+// Parameters:
+//   - r: An `io.Reader` containing the CSV data.
+//   - model: A reference model used to validate each row's structure and content.
+//
+// Returns:
+//   - []map[string]any: A slice of validated row maps with column names as keys.
+//   - error: An error if reading the header fails.
 func CsvToMap(r io.Reader, model any) ([]map[string]any, error) {
 
 	reader := csv.NewReader(r)
@@ -83,6 +108,19 @@ func CsvToMap(r io.Reader, model any) ([]map[string]any, error) {
 
 }
 
+// ValidateRow checks if a given CSV row map conforms to the structure and types defined in a model struct.
+//
+// It verifies the presence of all required fields (based on JSON tags) and attempts to convert values
+// to the expected types. Pointer fields are allowed to be nil. Supported types include string, int64,
+// float64, json.Number, and time.Time (RFC3339). Unsupported types result in an error.
+//
+// Parameters:
+//   - row: A map representing a parsed CSV row, with column names as keys.
+//   - model: A struct type used to validate field presence and types (must be a pointer to struct).
+//   - line: The line number in the CSV file, used for error context.
+//
+// Returns:
+//   - error: A validation error if the row is invalid, otherwise nil.
 func ValidateRow(row map[string]any, model any, line int) error {
 
 	t := reflect.TypeOf(model).Elem()

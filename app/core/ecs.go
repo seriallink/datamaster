@@ -8,6 +8,13 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/iam"
 )
 
+// EnsureECSServiceLinkedRole checks for the existence of the ECS service-linked role and creates it if missing.
+//
+// Parameters:
+//   - cfg: the AWS configuration used to initialize the IAM client.
+//
+// Returns:
+//   - error: an error if the role creation fails or IAM access is misconfigured.
 func EnsureECSServiceLinkedRole(cfg aws.Config) error {
 
 	client := iam.NewFromConfig(cfg)

@@ -25,6 +25,13 @@ import (
 	"github.com/google/uuid"
 )
 
+// SeedThemAll seeds all predefined datasets sequentially.
+//
+// This function iterates over a hardcoded list of dataset names and calls
+// `SeedFile` for each one. If any dataset fails to seed, the process is aborted.
+//
+// Returns:
+//   - error: An error if any seeding operation fails; otherwise, nil.
 func SeedThemAll() error {
 	datasets := []string{"brewery", "beer", "profile", "review"}
 
@@ -38,6 +45,13 @@ func SeedThemAll() error {
 	return nil
 }
 
+// SeedFile downloads a compressed CSV dataset from GitHub and seeds it.
+//
+// Parameters:
+//   - name: Name of the dataset (e.g., "brewery", "beer").
+//
+// Returns:
+//   - error: An error if the download, read, or seeding fails; otherwise, nil.
 func SeedFile(name string) error {
 
 	url := fmt.Sprintf("https://raw.githubusercontent.com/seriallink/beer-datasets/main/%s.csv.gz", name)
@@ -61,6 +75,15 @@ func SeedFile(name string) error {
 
 }
 
+// SeedFromReader seeds a dataset into Aurora or uploads it to S3, depending on the table name.
+// It checks for duplicates using a checksum stored in DynamoDB and skips the operation if the seed already exists.
+//
+// Parameters:
+//   - data: Compressed CSV content in bytes (gzip).
+//   - name: Dataset name. Must be one of: "brewery", "beer", "profile", or "review".
+//
+// Returns:
+//   - error: An error if decompression, duplicate check, or seeding/upload fails.
 func SeedFromReader(data []byte, name string) error {
 
 	cfg := GetAWSConfig()
@@ -109,6 +132,15 @@ func SeedFromReader(data []byte, name string) error {
 
 }
 
+// LoadCsvToAurora reads CSV data from a reader, parses it into a slice of records,
+// and inserts the data into the corresponding Aurora PostgreSQL table.
+//
+// Parameters:
+//   - r: Reader containing CSV data (typically a gzip-decompressed CSV).
+//   - name: Name of the table to insert the data into (e.g., "brewery", "beer").
+//
+// Returns:
+//   - error: If any step fails (e.g., DB connection, model loading, CSV parsing, or insertion), an error is returned.
 func LoadCsvToAurora(r io.Reader, name string) error {
 
 	db, err := GetConnection()
@@ -140,6 +172,17 @@ func LoadCsvToAurora(r io.Reader, name string) error {
 
 }
 
+// UploadBatchFile uploads a batch data file to the raw ingestion path in S3.
+//
+// The uploaded object is placed under the "raw/{tableName}/" prefix with a
+// unique name based on timestamp and UUID.
+//
+// Parameters:
+//   - reader: io.Reader providing the compressed file content (e.g., gzip).
+//   - tableName: Name of the logical table associated with the batch file.
+//
+// Returns:
+//   - error: If the upload fails due to stack resolution, read error, or S3 operation.
 func UploadBatchFile(reader io.Reader, tableName string) error {
 
 	cfg := GetAWSConfig()
@@ -174,6 +217,19 @@ func UploadBatchFile(reader io.Reader, tableName string) error {
 
 }
 
+// insertInChunks inserts a slice of records into the database in batches.
+//
+// This function splits the input slice into chunks of size `chunkSize` and performs
+// batched inserts using GORM's `Create` method to improve performance and reduce
+// memory usage on large datasets.
+//
+// Parameters:
+//   - db: *gorm.DB - Active GORM database connection.
+//   - slice: any - Pointer to a slice of records to be inserted.
+//   - chunkSize: int - Number of records per batch.
+//
+// Returns:
+//   - error: If the input is not a slice or any insert operation fails.
 func insertInChunks(db *gorm.DB, slice any, chunkSize int) error {
 	v := reflect.ValueOf(slice)
 	if v.Kind() == reflect.Ptr {
@@ -195,6 +251,13 @@ func insertInChunks(db *gorm.DB, slice any, chunkSize int) error {
 	return nil
 }
 
+// computeChecksum calculates the SHA-256 checksum of the given data.
+//
+// Parameters:
+//   - data: []byte - The input byte slice to hash.
+//
+// Returns:
+//   - string: Hexadecimal-encoded SHA-256 hash of the input.
 func computeChecksum(data []byte) string {
 	sum := sha256.Sum256(data)
 	return hex.EncodeToString(sum[:])

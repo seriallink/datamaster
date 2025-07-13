@@ -44,6 +44,15 @@ type ProcessingControl struct {
 	ErrorMessage  *string `dynamodbav:"error_message,omitempty"`
 }
 
+// NewProcessingControl creates a new ProcessingControl instance based on the given data lake layer and S3 object key.
+//
+// Parameters:
+//   - layer: the logical lakehouse layer name (e.g., "bronze", "silver", "gold").
+//   - key: the S3 object key in the format "<prefix>/<table>/<filename>".
+//
+// Returns:
+//   - *ProcessingControl: the initialized control record for tracking processing status.
+//   - error: an error if the key format is invalid.
 func NewProcessingControl(layer, key string) (*ProcessingControl, error) {
 
 	parts := strings.Split(key, "/")
@@ -68,6 +77,14 @@ func NewProcessingControl(layer, key string) (*ProcessingControl, error) {
 
 }
 
+// DestinationKey returns the destination S3 key for the processed file in the target lakehouse layer.
+// It normalizes the original file name by removing known extensions and appending ".parquet".
+//
+// Parameters:
+//   - targetLayer: the destination layer name (e.g., "bronze", "silver", "gold").
+//
+// Returns:
+//   - string: the normalized destination S3 key for the processed Parquet file.
 func (m *ProcessingControl) DestinationKey(targetLayer string) string {
 
 	parts := strings.Split(m.ObjectKey, "/")
@@ -86,6 +103,15 @@ func (m *ProcessingControl) DestinationKey(targetLayer string) string {
 
 }
 
+// Put stores the ProcessingControl item in the DynamoDB table if it does not already exist.
+// It uses a conditional expression to prevent overwriting existing items.
+//
+// Parameters:
+//   - ctx: the context for the AWS request.
+//   - cfg: the AWS configuration used to create the DynamoDB client.
+//
+// Returns:
+//   - error: an error if the operation fails (except when the item already exists).
 func (m *ProcessingControl) Put(ctx context.Context, cfg aws.Config) error {
 
 	client := dynamodb.NewFromConfig(cfg)
@@ -118,6 +144,16 @@ func (m *ProcessingControl) Put(ctx context.Context, cfg aws.Config) error {
 
 }
 
+// Start marks the beginning of the processing execution for the current control item.
+// It updates the status to "running", increments the attempt count, resets the duration and error state,
+// and sets the start timestamp.
+//
+// Parameters:
+//   - ctx: the context for the AWS request.
+//   - cfg: the AWS configuration used to connect to DynamoDB.
+//
+// Returns:
+//   - error: an error if the item fails to be persisted in DynamoDB.
 func (m *ProcessingControl) Start(ctx context.Context, cfg aws.Config) error {
 
 	now := time.Now().UTC().Format(time.RFC3339)
@@ -133,6 +169,17 @@ func (m *ProcessingControl) Start(ctx context.Context, cfg aws.Config) error {
 
 }
 
+// Finish finalizes the processing execution by updating the control item with completion metadata.
+// It sets the finish timestamp, calculates the duration (if start time is available),
+// and updates the status to "success" or "error" based on the presence of a failure.
+//
+// Parameters:
+//   - ctx: the context for the AWS request.
+//   - cfg: the AWS configuration used to connect to DynamoDB.
+//   - failure: an error indicating if the execution failed; nil means success.
+//
+// Returns:
+//   - error: the original failure if present, or an error saving the updated item to DynamoDB.
 func (m *ProcessingControl) Finish(ctx context.Context, cfg aws.Config, failure error) error {
 
 	finish := time.Now().UTC()
@@ -162,6 +209,18 @@ func (m *ProcessingControl) Finish(ctx context.Context, cfg aws.Config, failure 
 
 }
 
+// RegisterNextLayerControl creates and stores a new ProcessingControl entry for the next lakehouse layer.
+// It derives the destination key from the current control, calculates metadata (e.g., file size, checksum),
+// and sets attributes such as format, compute target, and record count.
+//
+// Parameters:
+//   - ctx: the context for the AWS request.
+//   - cfg: the AWS configuration used to connect to DynamoDB.
+//   - data: the raw byte content of the transformed file.
+//
+// Returns:
+//   - *ProcessingControl: the newly created control item for the next layer.
+//   - error: an error if the control creation or persistence fails.
 func (m *ProcessingControl) RegisterNextLayerControl(ctx context.Context, cfg aws.Config, data []byte) (*ProcessingControl, error) {
 
 	if m.ObjectKey == "" {
@@ -189,6 +248,12 @@ func (m *ProcessingControl) RegisterNextLayerControl(ctx context.Context, cfg aw
 
 }
 
+// GetMaxAttempts returns the maximum number of processing attempts allowed.
+// It reads the MAX_ATTEMPTS environment variable and falls back to a default value
+// if the variable is unset, invalid, or less than or equal to zero.
+//
+// Returns:
+//   - int: the configured or default maximum number of attempts.
 func GetMaxAttempts() int {
 	val := os.Getenv("MAX_ATTEMPTS")
 	if val == "" {

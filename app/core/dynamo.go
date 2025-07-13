@@ -12,6 +12,17 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 )
 
+// QueryByObjectKey retrieves a single item from the ProcessingControl table using the object_key GSI.
+// It queries the appropriate DynamoDB index and unmarshals the result into the provided destination.
+//
+// Parameters:
+//   - cfg: the AWS configuration used to connect to DynamoDB.
+//   - ctx: the context for the AWS request.
+//   - objectKey: the S3 object key to query.
+//   - md: a pointer to a struct where the result will be unmarshaled.
+//
+// Returns:
+//   - error: an error if the query fails, no record is found, or unmarshaling fails.
 func QueryByObjectKey(cfg aws.Config, ctx context.Context, objectKey string, md any) error {
 
 	var (
@@ -58,6 +69,16 @@ func QueryByObjectKey(cfg aws.Config, ctx context.Context, objectKey string, md 
 
 }
 
+// PutDynamoDBItem stores a ProcessingControl item in the DynamoDB table "dm-processing-control".
+// It marshals the item into a DynamoDB attribute map and performs a PutItem operation.
+//
+// Parameters:
+//   - cfg: the AWS configuration used to connect to DynamoDB.
+//   - ctx: the context for the AWS request.
+//   - item: the ProcessingControl struct to persist.
+//
+// Returns:
+//   - error: an error if the item fails to be marshaled or inserted into DynamoDB.
 func PutDynamoDBItem(cfg aws.Config, ctx context.Context, item *ProcessingControl) error {
 
 	client := dynamodb.NewFromConfig(cfg)
