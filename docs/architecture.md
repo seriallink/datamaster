@@ -54,7 +54,7 @@ O pipeline de transformação da camada **bronze para silver** é acionado por u
 
 Cada uma dessas tabelas é processada por um **Job PySpark em EMR Serverless**, com suporte ao **Glue Catalog**. Os dados da camada bronze são lidos no formato **Parquet**, e enriquecidos com os campos `created_at` e `updated_at`, derivados do timestamp de processamento registrado no controle do DynamoDB.
 
-Durante o processamento, todas as operações de *insert*, *update* e *delete* registradas na camada bronze são identificadas e tratadas de forma explícita. No entanto, **a versão atual do pipeline suporta apenas operações de insert**, para demonstrar os objetivos analíticos do projeto. As operações de update e delete estão mapeadas no fluxo e poderão ser implementadas futuramente como uma evolução natural da arquitetura.
+Durante o processamento, todas as operações de *insert*, *update* e *delete* registradas na camada bronze são **identificadas e tratadas de forma explícita**. A implementação atual aplica inserções via `append` e realiza *upserts* e *soft deletes* utilizando comandos `MERGE` do Apache Iceberg. Esse comportamento garante consistência dos dados na camada silver, mantendo um histórico confiável e alinhado com os princípios de governança e rastreabilidade definidos no projeto.
 
 As tabelas geradas são gravadas no formato **Iceberg** e particionadas por `review_year` e `review_month`, otimizadas para leitura via motores analíticos como Athena e compatíveis com consultas incrementais.
 
