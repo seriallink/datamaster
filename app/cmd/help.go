@@ -11,6 +11,10 @@ import (
 	"github.com/abiosoft/ishell"
 )
 
+// Help returns an interactive shell command that displays help information for available commands.
+// When run without arguments, it lists all registered commands and their short descriptions.
+// When a specific command is provided (e.g. "help deploy"), it tries to load a detailed help template
+// from the embedded filesystem. If not found, it falls back to the built-in help description.
 func Help(helps embed.FS) *ishell.Cmd {
 	return &ishell.Cmd{
 		Name: "help",

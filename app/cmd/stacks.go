@@ -11,6 +11,8 @@ import (
 	"github.com/abiosoft/ishell"
 )
 
+// StacksCmd returns an interactive shell command that lists all available infrastructure stacks.
+// It reads the embedded templates directory and extracts stack names based on the configured template extension.
 func StacksCmd(templates embed.FS) *ishell.Cmd {
 	return &ishell.Cmd{
 		Name: "stacks",

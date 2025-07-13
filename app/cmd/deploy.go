@@ -14,6 +14,9 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/cloudformation/types"
 )
 
+// DeployCmd returns an interactive shell command that deploys infrastructure stacks using embedded CloudFormation templates.
+// The user can deploy a specific stack via the --stack flag, optionally passing parameters with --params (key=value pairs).
+// If no stack is specified, all stacks will be deployed.
 func DeployCmd(templates, artifacts, assets embed.FS) *ishell.Cmd {
 	return &ishell.Cmd{
 		Name: "deploy",
@@ -27,7 +30,6 @@ func DeployCmd(templates, artifacts, assets embed.FS) *ishell.Cmd {
 				return
 			}
 
-			// Parse --params into []types.Parameter
 			var parsedParams []types.Parameter
 			if *params != "" {
 				for _, pair := range strings.Split(*params, ",") {
@@ -41,7 +43,6 @@ func DeployCmd(templates, artifacts, assets embed.FS) *ishell.Cmd {
 				}
 			}
 
-			// Deploy a specific stack
 			if *stackName != "" {
 				stack := core.Stack{
 					Name:   *stackName,
@@ -70,7 +71,6 @@ func DeployCmd(templates, artifacts, assets embed.FS) *ishell.Cmd {
 				return
 			}
 
-			// Deploy all stacks
 			c.Println(misc.Blue("You are about to deploy all stacks."))
 			c.Print("Type 'go' to continue: ")
 			if strings.ToLower(c.ReadLine()) != "go" {

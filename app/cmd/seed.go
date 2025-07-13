@@ -11,6 +11,9 @@ import (
 	"github.com/abiosoft/ishell"
 )
 
+// SeedCmd returns an interactive shell command that seeds datasets into Aurora or S3.
+// The user can optionally specify a dataset file with --file to seed a single dataset,
+// or omit it to seed all datasets from the default source (GitHub).
 func SeedCmd() *ishell.Cmd {
 	return &ishell.Cmd{
 		Name: "seed",

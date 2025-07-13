@@ -12,6 +12,9 @@ import (
 	"github.com/abiosoft/ishell"
 )
 
+// LambdaCmd returns an interactive shell command that deploys one or all Lambda functions from embedded artifacts.
+// The user can specify a function name with --name, or deploy all available .zip artifacts if not provided.
+// Optional flags include --memory (in MB) and --timeout (in seconds).
 func LambdaCmd(artifacts embed.FS) *ishell.Cmd {
 	return &ishell.Cmd{
 		Name: "lambda",

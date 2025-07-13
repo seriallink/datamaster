@@ -11,6 +11,9 @@ import (
 	"github.com/abiosoft/ishell"
 )
 
+// ArtifactsCmd returns an interactive shell command that lists all embedded Lambda artifacts.
+// It reads the embedded filesystem under the predefined artifact path and prints the names of
+// all .zip files (without the extension) to the shell. If no artifacts are found, it prints an appropriate message.
 func ArtifactsCmd(artifacts embed.FS) *ishell.Cmd {
 	return &ishell.Cmd{
 		Name: "artifacts",

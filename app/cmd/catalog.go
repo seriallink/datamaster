@@ -11,6 +11,9 @@ import (
 	"github.com/abiosoft/ishell"
 )
 
+// CatalogCmd returns an interactive shell command that creates or updates AWS Glue catalog tables.
+// The user can optionally specify a data lake layer (--layer) and a comma-separated list of table names (--tables).
+// If no flags are provided, all tables in all layers (bronze, silver, gold) will be processed.
 func CatalogCmd() *ishell.Cmd {
 	return &ishell.Cmd{
 		Name: "catalog",

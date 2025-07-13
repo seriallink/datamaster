@@ -12,6 +12,9 @@ import (
 	"github.com/abiosoft/ishell"
 )
 
+// GrafanaCmd returns an interactive shell command that creates or updates Grafana dashboards.
+// The user can optionally specify a single dashboard name with the --dashboard flag.
+// If no dashboard is specified, all available dashboards embedded in the filesystem will be pushed.
 func GrafanaCmd(dashboards embed.FS) *ishell.Cmd {
 	return &ishell.Cmd{
 		Name: "grafana",

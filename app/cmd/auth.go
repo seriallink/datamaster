@@ -9,6 +9,15 @@ import (
 	"github.com/abiosoft/ishell"
 )
 
+const (
+	Option1 = "1"
+	Option2 = "2"
+)
+
+// AuthCmd returns an interactive shell command that handles AWS authentication.
+// The user is prompted to authenticate either using a named profile or direct access/secret keys.
+// After selecting the authentication method and region, the credentials are saved locally
+// and tested using the STS GetCallerIdentity call. On success, the authenticated identity is displayed.
 func AuthCmd() *ishell.Cmd {
 	return &ishell.Cmd{
 		Name: "auth",

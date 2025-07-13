@@ -10,6 +10,9 @@ import (
 	"github.com/abiosoft/ishell"
 )
 
+// WhoAmICmd returns an interactive shell command that displays the current AWS identity.
+// It uses the AWS STS GetCallerIdentity API to retrieve and print the UserId, Account, and ARN.
+// AWS authentication is required and handled by the WithAuth middleware.
 func WhoAmICmd() *ishell.Cmd {
 	return &ishell.Cmd{
 		Name: "whoami",

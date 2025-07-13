@@ -12,6 +12,10 @@ import (
 	"github.com/abiosoft/ishell"
 )
 
+// MigrationCmd returns an interactive shell command that runs database migration scripts.
+// The user can optionally specify a script name using --script to run a single migration,
+// or omit it to run all available migration scripts in order.
+// The scripts are read from the embedded filesystem.
 func MigrationCmd(migrations embed.FS) *ishell.Cmd {
 	return &ishell.Cmd{
 		Name: "migration",
