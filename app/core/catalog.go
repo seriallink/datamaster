@@ -101,19 +101,14 @@ func GetStorageLocation(layerType, tableName string) (string, error) {
 // Optionally filters by table name. Returns a slice of PgClass structs populated with PgAttributes.
 //
 // Parameters:
+//   - db: GORM database connection to the Aurora PostgreSQL instance.
 //   - schema: name of the schema to inspect.
 //   - tables: optional list of specific table names.
 //
 // Returns:
 //   - []dialect.PgClass: table metadata with column details.
 //   - error: if the query fails.
-func LoadAuroraTablesWithColumns(schema string, tables ...string) (classes []dialect.PgClass, err error) {
-
-	var db *gorm.DB
-
-	if db, err = GetConnection(); err != nil {
-		return nil, err
-	}
+func LoadAuroraTablesWithColumns(db *gorm.DB, schema string, tables ...string) (classes []dialect.PgClass, err error) {
 
 	// filter schema from pg_namespace
 	namespace := &dialect.PgNamespace{
@@ -311,17 +306,11 @@ func CastPgType(pgattribute dialect.PgAttribute, pgtype dialect.PgType, db *gorm
 //
 // Returns:
 //   - error: if any step of the synchronization process fails.
-func SyncCatalogFromDatabaseSchema(layerType string, tableList ...string) error {
-
-	// open a database connection here to avoid multiple and unnecessary connections
-	db, err := GetConnection()
-	if err != nil {
-		return err
-	}
+func SyncCatalogFromDatabaseSchema(db *gorm.DB, layerType string, tableList ...string) error {
 
 	schemaName := NameWithPrefix(LayerToSchema(layerType))
 
-	tables, err := LoadAuroraTablesWithColumns(schemaName, tableList...)
+	tables, err := LoadAuroraTablesWithColumns(db, schemaName, tableList...)
 	if err != nil {
 		return err
 	}

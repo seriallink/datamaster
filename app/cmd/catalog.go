@@ -62,14 +62,19 @@ func CatalogCmd() *ishell.Cmd {
 				return
 			}
 
+			db, err := core.GetConnection()
+			if err != nil {
+				c.Println(misc.Red(fmt.Sprintf("Error connecting to database: %v", err)))
+			}
+
 			if *layer != "" {
-				if err := core.SyncCatalogFromDatabaseSchema(*layer, tableList...); err != nil {
+				if err := core.SyncCatalogFromDatabaseSchema(db, *layer, tableList...); err != nil {
 					c.Println(misc.Red(fmt.Sprintf("Error: %v", err)))
 					return
 				}
 			} else {
 				for _, layerType := range []string{misc.LayerBronze, misc.LayerSilver, misc.LayerGold} {
-					if err := core.SyncCatalogFromDatabaseSchema(layerType); err != nil {
+					if err := core.SyncCatalogFromDatabaseSchema(db, layerType); err != nil {
 						c.Println(misc.Red(fmt.Sprintf("Error: %v", err)))
 						return
 					}
