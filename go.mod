@@ -13,6 +13,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/credentials v1.17.70
 	github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue v1.19.4
 	github.com/aws/aws-sdk-go-v2/service/cloudformation v1.61.0
+	github.com/aws/aws-sdk-go-v2/service/comprehend v1.36.6
 	github.com/aws/aws-sdk-go-v2/service/databasemigrationservice v1.53.0
 	github.com/aws/aws-sdk-go-v2/service/dynamodb v1.44.0
 	github.com/aws/aws-sdk-go-v2/service/ecr v1.45.1
@@ -29,7 +30,9 @@ require (
 	github.com/jackc/pgtype v1.14.4
 	github.com/jaswdr/faker v1.19.1
 	github.com/lib/pq v1.10.9
+	github.com/metakeule/fmtdate v1.1.2
 	github.com/parquet-go/parquet-go v0.25.1
+	github.com/seriallink/null v4.0.0+incompatible
 	github.com/stretchr/testify v1.10.0
 	go.uber.org/mock v0.5.2
 	gorm.io/driver/postgres v1.6.0

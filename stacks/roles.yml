@@ -384,6 +384,10 @@ Resources:
                 Action:
                   - cloudformation:DescribeStacks
                 Resource: "*"
+              - Effect: Allow
+                Action:
+                  - comprehend:DetectPiiEntities
+                Resource: "*"
 
   StepFunctionRole:
     Type: AWS::IAM::Role

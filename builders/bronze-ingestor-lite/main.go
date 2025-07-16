@@ -61,6 +61,11 @@ func Process(ctx context.Context, cfg aws.Config, objectKey string) error {
 		return fmt.Errorf("failed to load raw data from S3: %w", item.Finish(ctx, cfg, err))
 	}
 
+	data, err = core.MaskPIIData(cfg, ctx, data)
+	if err != nil {
+		return fmt.Errorf("failed to mask PII data: %w", item.Finish(ctx, cfg, err))
+	}
+
 	model, err = bronze.LoadModel(fmt.Sprintf("%s.%s", item.SchemaName, item.TableName))
 	if err != nil {
 		return fmt.Errorf("failed to load model: %w", item.Finish(ctx, cfg, err))

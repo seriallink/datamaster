@@ -58,3 +58,55 @@ func GrantDataLocationAccess(cfg aws.Config) error {
 	return nil
 
 }
+
+// CreateLfTag creates an AWS Lake Formation tag with the key "classification" and value "PII".
+//
+// This tag can be used to classify sensitive data, such as fields containing Personally Identifiable Information (PII),
+// for access control and governance purposes.
+//
+// Parameters:
+//   - cfg: aws.Config - The AWS SDK configuration used to initialize the Lake Formation client.
+//
+// Returns:
+//   - error: Any error encountered during tag creation, or nil if the operation was successful.
+func CreateLfTag(cfg aws.Config) error {
+	client := lakeformation.NewFromConfig(cfg)
+	_, err := client.CreateLFTag(context.TODO(), &lakeformation.CreateLFTagInput{
+		TagKey:    aws.String("classification"),
+		TagValues: []string{"PII"},
+	})
+	return err
+}
+
+// TagColumnAsPII applies the Lake Formation tag "classification=PII" to a specific column of a table.
+//
+// This is useful for marking columns that contain Personally Identifiable Information (PII) so that
+// access control and data governance rules can be applied accordingly.
+//
+// Parameters:
+//   - cfg: aws.Config - The AWS SDK configuration used to initialize the Lake Formation client.
+//   - schema: string - The name of the AWS Glue database (schema).
+//   - table: string - The name of the table within the database.
+//   - column: string - The name of the column to tag.
+//
+// Returns:
+//   - error: Any error encountered while tagging the column, or nil if successful.
+func TagColumnAsPII(cfg aws.Config, schema, table, column string) error {
+	client := lakeformation.NewFromConfig(cfg)
+	_, err := client.AddLFTagsToResource(context.TODO(), &lakeformation.AddLFTagsToResourceInput{
+		Resource: &types.Resource{
+			TableWithColumns: &types.TableWithColumnsResource{
+				DatabaseName: aws.String(schema),
+				Name:         aws.String(table),
+				ColumnNames:  []string{column},
+			},
+		},
+		LFTags: []types.LFTagPair{
+			{
+				TagKey:    aws.String("classification"),
+				TagValues: []string{"PII"},
+			},
+		},
+	})
+	return err
+}

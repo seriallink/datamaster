@@ -88,14 +88,36 @@ As tabelas da camada gold são acessíveis via Athena, com catálogo mantido no 
 
 ---
 
-## Governança com Lake Formation
+## Governança e Segurança de Dados
 
-A stack `dm-governance` foi provisionada para ativar o Lake Formation, permitindo que futuras iniciativas de segurança avancem sem reprovisionamento. Embora nenhuma política granular tenha sido aplicada neste projeto, o ambiente está pronto para:
+A governança de dados no projeto foi estruturada com foco em segurança, rastreabilidade e escalabilidade. As principais iniciativas já implementadas incluem:
 
-* Definir permissões por tabela, coluna ou linha
-* Marcar e mascarar dados PII (ex: e-mail)
-* Auditar acessos aos dados com logs integrados
-* Integrar com identidades via SSO ou IAM Identity Center
+### Lake Formation habilitado
+
+O Lake Formation foi habilitado no ambiente para centralizar o controle de acesso aos dados e aplicar políticas de segurança de forma granular e auditável. Com isso, o projeto já suporta:
+
+* Definição de permissões granulares por **banco, tabela, coluna ou linha**
+* Integração com **IAM Identity Center (SSO)** ou roles específicas por consumidor
+* Auditoria de acessos com integração nativa ao **AWS CloudTrail**
+
+### Detecção automática de PII com AWS Comprehend
+
+Durante a ingestão dos dados, o **AWS Comprehend** é utilizado para analisar dinamicamente amostras dos arquivos e identificar campos com informações sensíveis (PII). Quando detectados, esses campos tem o mascaramento aplicado automaticamente, sem necessidade de configuração manual. Esse mecanismo permite proteger dados pessoais de forma automatizada e adaptável.
+
+* Campos com alto score de PII são **mascarados automaticamente** durante o processo de ingestão
+* Isso evita exposição acidental de dados sensíveis mesmo nas camadas internas do lake
+
+### Usuário demo com acesso restrito
+
+Foi criado um **usuário IAM de demonstração** com acesso **exclusivo à camada gold** (Glue e S3), permitindo validar na prática os controles aplicados. Tentativas de acessar outras camadas como bronze ou silver resultam em erro de permissão.
+
+### Próximos passos
+
+Para ampliar a governança sobre a camada raw, está prevista a futura integração com o **Amazon Macie**, que permitirá:
+
+* Escaneamento automático de dados armazenados no S3
+* Detecção de PII em arquivos não estruturados
+* Alertas e classificação automática de sensibilidade
 
 ---
 

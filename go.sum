@@ -36,6 +36,8 @@ github.com/aws/aws-sdk-go-v2/internal/v4a v1.3.36 h1:GMYy2EOWfzdP3wfVAGXBNKY5vK4
 github.com/aws/aws-sdk-go-v2/internal/v4a v1.3.36/go.mod h1:gDhdAV6wL3PmPqBhiPbnlS447GoWs8HTTOYef9/9Inw=
 github.com/aws/aws-sdk-go-v2/service/cloudformation v1.61.0 h1:1nVq2bvAANTPAfipKBOtbP1ebqTpJrOsxNqwb6ybCG8=
 github.com/aws/aws-sdk-go-v2/service/cloudformation v1.61.0/go.mod h1:xU79X14UC0F8sEJCRTWwINzlQ4jacpEFpRESLHRHfoY=
+github.com/aws/aws-sdk-go-v2/service/comprehend v1.36.6 h1:rSAMOE0HndTsLBPnuh4YLm205D8+3W/7lwc9q6llhvE=
+github.com/aws/aws-sdk-go-v2/service/comprehend v1.36.6/go.mod h1:0bQ8f9sR/AaJBBBnHO0lc7mREP8uqWGSXY6uY7GR37s=
 github.com/aws/aws-sdk-go-v2/service/databasemigrationservice v1.53.0 h1:KPukzgWZnmdc4fZYFkA46orMsQJoeNeEh5wbSnrYCdE=
 github.com/aws/aws-sdk-go-v2/service/databasemigrationservice v1.53.0/go.mod h1:YDWzt7f6AHa4WfyJDv3GcIiyY3969MfsuSX9ANUbZ+k=
 github.com/aws/aws-sdk-go-v2/service/dynamodb v1.44.0 h1:A99gjqZDbdhjtjJVZrmVzVKO2+p3MSg35bDWtbMQVxw=
@@ -206,6 +208,8 @@ github.com/mattn/go-isatty v0.0.12/go.mod h1:cbi8OIDigv2wuxKPP5vlRcQ1OAZbq2CE4Ky
 github.com/mattn/go-isatty v0.0.16/go.mod h1:kYGgaQfpe5nmfYZH+SKPsOc2e4SrIfOl2e/yFXSvRLM=
 github.com/mattn/go-isatty v0.0.20 h1:xfD0iDuEKnDkl03q4limB+vH+GxLEtL/jb4xVJSWWEY=
 github.com/mattn/go-isatty v0.0.20/go.mod h1:W+V8PltTTMOvKvAeJH7IuucS94S2C6jfK/D7dTCTo3Y=
+github.com/metakeule/fmtdate v1.1.2 h1:n9M7H9HfAqp+6OA98wXGMdcAr6omshSNVct65Bks1lQ=
+github.com/metakeule/fmtdate v1.1.2/go.mod h1:2JyMFlKxeoGy1qS6obQukT0AL0Y4iNANQL8scbSdT4E=
 github.com/minio/asm2plan9s v0.0.0-20200509001527-cdd76441f9d8 h1:AMFGa4R4MiIpspGNG7Z948v4n35fFGB3RR3G/ry4FWs=
 github.com/minio/asm2plan9s v0.0.0-20200509001527-cdd76441f9d8/go.mod h1:mC1jAcsrzbxHt8iiaC+zU4b1ylILSosueou12R++wfY=
 github.com/minio/c2goasm v0.0.0-20190812172519-36a3d3bbc4f3 h1:+n/aFZefKZp7spd8DFdX7uMikMLXX4oubIzJF4kv/wI=
@@ -224,6 +228,8 @@ github.com/rs/xid v1.2.1/go.mod h1:+uKXf+4Djp6Md1KODXJxgGQPKngRmWyn10oCKFzNHOQ=
 github.com/rs/zerolog v1.13.0/go.mod h1:YbFCdg8HfsridGWAh22vktObvhZbQsZXe4/zB0OKkWU=
 github.com/rs/zerolog v1.15.0/go.mod h1:xYTKnLHcpfU2225ny5qZjxnj9NvkumZYjJHlAThCjNc=
 github.com/satori/go.uuid v1.2.0/go.mod h1:dA0hQrYB0VpLJoorglMZABFdXlWrHn1NEOzdhQKdks0=
+github.com/seriallink/null v4.0.0+incompatible h1:SVWLms4eJdOSg1PlD2xdrQpxFe/VCwQvSkJFRx80W7A=
+github.com/seriallink/null v4.0.0+incompatible/go.mod h1:6F5nRgxPT7hgDVoeGhI1Zp/KL5RSsFS+/zu4F76aqCY=
 github.com/shopspring/decimal v0.0.0-20180709203117-cd690d0c9e24/go.mod h1:M+9NzErvs504Cn4c5DxATwIqPbtswREoFCre64PpcG4=
 github.com/shopspring/decimal v1.2.0/go.mod h1:DKyhrW/HYNuLGql+MJL6WCR6knT2jwCFRcu2hWCYk4o=
 github.com/sirupsen/logrus v1.4.1/go.mod h1:ni0Sbl8bgC9z8RoU9G6nDWqqs/fq4eDPysMBDgk/93Q=

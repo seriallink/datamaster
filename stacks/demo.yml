@@ -1,0 +1,51 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: IAM user with restricted access to dm_gold (for demonstration purposes)
+
+Resources:
+
+  DemoUser:
+    Type: AWS::IAM::User
+    Properties:
+      UserName: demo-user
+      LoginProfile:
+        Password: DemoUserStrongPassword123!
+        PasswordResetRequired: true
+
+  DemoUserPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: dm-demo-gold-read-access
+      Users:
+        - !Ref DemoUser
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: GlueGoldAccess
+            Effect: Allow
+            Action:
+              - glue:GetDatabase
+              - glue:GetDatabases
+              - glue:GetTable
+              - glue:GetTables
+              - glue:GetPartition
+              - glue:GetPartitions
+            Resource:
+              - !Sub arn:aws:glue:${AWS::Region}:${AWS::AccountId}:catalog
+              - !Sub arn:aws:glue:${AWS::Region}:${AWS::AccountId}:database/dm_gold
+              - !Sub arn:aws:glue:${AWS::Region}:${AWS::AccountId}:table/dm_gold/*
+          - Sid: S3GoldReadAccess
+            Effect: Allow
+            Action:
+              - s3:GetObject
+              - s3:ListBucket
+            Resource:
+              - arn:aws:s3:::dm-datalake
+              - arn:aws:s3:::dm-datalake/gold/*
+
+Outputs:
+
+  DemoUserName:
+    Description: IAM user name created for the demo
+    Value: !Ref DemoUser
+    Export:
+      Name: DemoUserName
