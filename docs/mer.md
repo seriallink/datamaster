@@ -95,4 +95,4 @@ Todas as tabelas seguem um padrão de:
 
 ---
 
-[⬅ Voltar para a página inicial](../README.md)
+[Voltar para a página inicial](../README.md)

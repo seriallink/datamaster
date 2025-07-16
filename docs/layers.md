@@ -157,4 +157,4 @@ Todas as tabelas são particionadas por `review_year` e `review_month`, permitin
 
 ---
 
-[⬅ Voltar para a página inicial](../README.md)
+[Voltar para a página inicial](../README.md)
