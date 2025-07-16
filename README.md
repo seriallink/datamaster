@@ -15,6 +15,7 @@ Este projeto tem como objetivo construir uma solução completa de engenharia de
 - Organização e catalogação automatizada com `Glue` e `Iceberg`
 - Transformações otimizadas com `Lambda`, `ECS` e `EMR Serverless`
 - Orquestração de pipelines com `Step Functions` e `EventBridge`
+- Governança de dados com `Lake Formation`, controle de acesso e mascaramento automático de PII com `Comprehend`
 - Visualização por meio de dashboards analíticos e operacionais com `Grafana`
 
 ---
@@ -25,11 +26,16 @@ Este projeto tem como objetivo construir uma solução completa de engenharia de
 
 - [01. Apresentação do Case](docs/overview.md)
 - [02. Modelo de Dados](docs/mer.md)
-- [03. Visão Geral da Arquitetura](./docs/architecture.md)
-- [04. Componentização da Arquitetura por Stacks](./docs/stacks.md)
-- [05. Trade-offs e Decisões de Arquitetura](./docs/tradeoffs.md)
-- [06. Data Master CLI](docs/data-master-cli.md)
-- [07. Utilização do Data Master CLI](./docs/how-to-use.md)
-- [08. Provisionamento do Ambiente](./docs/provisioning.md)
-- [09. Observabilidade](./docs/observability.md)
-- [10. Roadmap Técnico e Melhorias Futuras](./docs/roadmap.md)
+- [03. Camadas do Data Lake (Medallion Architecture)](./docs/layers.md)
+- [04. Visão Geral da Arquitetura](./docs/architecture.md)
+- [05. Componentização da Arquitetura por Stacks](./docs/stacks.md)
+- [06. Trade-offs e Decisões de Arquitetura](./docs/tradeoffs.md)
+- [07. Data Master CLI](docs/data-master-cli.md)
+- [08. Utilização do Data Master CLI](./docs/how-to-use.md)
+- [09. Provisionamento do Ambiente](./docs/provisioning.md)
+- [10. Ingestão de Dados](./docs/ingestion.md)
+- [11. Processamento de Dados](./docs/processing.md)
+- [12. Geração de Dados Analíticos](./docs/analytics.md)
+- [13. Governança e Segurança de Dados](docs/governance.md)
+- [14. DataViz e Observabilidade](./docs/observability.md)
+- [15. Roadmap Técnico e Melhorias Futuras](./docs/roadmap.md)
