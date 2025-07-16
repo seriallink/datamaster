@@ -234,4 +234,4 @@ datamaster help deploy
 
 ---
 
-[Voltar para a página inicial](../README.md)
+[Voltar para a página inicial](../README.md#documentação)

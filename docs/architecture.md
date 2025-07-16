@@ -138,4 +138,4 @@ Este documento oferece uma visão completa da arquitetura do Data Master. Novos 
 
 ---
 
-[Voltar para a página inicial](../README.md)
+[Voltar para a página inicial](../README.md#documentação)
