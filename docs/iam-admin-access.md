@@ -13,7 +13,7 @@ Acesse o console de gerenciamento da AWS e navegue até o serviço **IAM (Identi
 
 ### 2. Clique em “Users” no menu lateral e depois em “Create users”
 
-![iam-admin-01.png](../assets/iam-admin-02.png)
+![iam-admin-02.png](../assets/iam-admin-02.png)
 
 ---
 
@@ -99,7 +99,7 @@ Para usar o novo usuário via CLI, SDKs ou outras ferramentas automatizadas, é 
 3. Vá até a seção **Security credentials**
 4. Em **Access keys**, clique em **Create access key**
 
-![iam-admin-07.png](../assets/iam-admin-07.png)
+![iam-admin-08.png](../assets/iam-admin-08.png)
 
 ---
 
@@ -128,7 +128,7 @@ Após a criação, a tela final exibirá a `Access key` e a `Secret access key`.
 
 > Se você perder a `Secret access key`, será necessário revogar esta e criar uma nova.
 
-![iam-admin-08.png](../assets/iam-admin-08.png)
+![iam-admin-10.png](../assets/iam-admin-10.png)
 
 ---
 
