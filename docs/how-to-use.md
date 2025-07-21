@@ -179,7 +179,7 @@ Scripts incluídos (em ordem de execução):
 
 ### `process`
 
-Executa o processamento de uma camada do pipeline (como silver ou analytics), orquestrado por Step Functions:
+Executa o processamento de uma camada do pipeline (como silver ou gold), orquestrado por Step Functions:
 
 ```bash
 >>> process --layer silver
