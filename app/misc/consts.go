@@ -49,6 +49,7 @@ const (
 
 // Logical names of all layers managed by the CLI.
 const (
+	LayerRaw    = "raw"
 	LayerBronze = "bronze"
 	LayerSilver = "silver"
 	LayerGold   = "gold"

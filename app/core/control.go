@@ -77,14 +77,17 @@ func NewProcessingControl(layer, key string) (*ProcessingControl, error) {
 
 }
 
-// DestinationKey returns the destination S3 key for the processed file in the target lakehouse layer.
-// It normalizes the original file name by removing known extensions and appending ".parquet".
+// DestinationKey returns the destination S3 key for the processed file in the specified lakehouse layer.
+//
+// If the target layer is "raw", the key will preserve the flat structure and original `.gz` extension.
+// For all other layers (e.g., "bronze", "silver", "gold"), the key will follow a Hive-style partitioning
+// layout based on the `created_at` timestamp, and the file will be renamed with a `.parquet` extension.
 //
 // Parameters:
-//   - targetLayer: the destination layer name (e.g., "bronze", "silver", "gold").
+//   - targetLayer: the destination layer name ("raw", "bronze", "silver", or "gold").
 //
 // Returns:
-//   - string: the normalized destination S3 key for the processed Parquet file.
+//   - string: the destination S3 object key, formatted according to the layer's storage strategy.
 func (m *ProcessingControl) DestinationKey(targetLayer string) string {
 
 	parts := strings.Split(m.ObjectKey, "/")
@@ -92,13 +95,31 @@ func (m *ProcessingControl) DestinationKey(targetLayer string) string {
 		panic(fmt.Errorf("invalid object key: %s", m.ObjectKey))
 	}
 
+	table := parts[1]
 	filename := parts[2]
 	filename = strings.TrimSuffix(filename, ".json.gz")
 	filename = strings.TrimSuffix(filename, ".csv.gz")
 	filename = strings.TrimSuffix(filename, ".gz")
 	filename = strings.TrimSuffix(filename, ".parquet")
 
-	key := filepath.Join(targetLayer, parts[1], filename+".parquet")
+	if targetLayer == misc.LayerRaw {
+		return filepath.Join(targetLayer, table, filename+".gz")
+	}
+
+	t, err := time.Parse(time.RFC3339, m.CreatedAt)
+	if err != nil {
+		panic(fmt.Errorf("invalid created_at format: %s", m.CreatedAt))
+	}
+
+	key := filepath.Join(
+		targetLayer,
+		table,
+		fmt.Sprintf("year=%04d", t.Year()),
+		fmt.Sprintf("month=%02d", int(t.Month())),
+		fmt.Sprintf("day=%02d", t.Day()),
+		filename+".parquet",
+	)
+
 	return key
 
 }
