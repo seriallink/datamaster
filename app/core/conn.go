@@ -102,7 +102,7 @@ func openConnection() error {
 			SingularTable: true,
 		},
 		Logger: logger.New(log.New(os.Stdout, "\r\n", log.LstdFlags), logger.Config{
-			LogLevel:      logger.Info,
+			LogLevel:      logger.Error,
 			Colorful:      true,
 			SlowThreshold: 100 * time.Millisecond,
 		}),

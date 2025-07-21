@@ -73,7 +73,18 @@ func RunMigration(fs embed.FS, script string) error {
 	}
 
 	if _, err = sqlDbConn.Exec(strings.TrimPrefix(string(sqlContent), "\uFEFF")); err != nil {
+		if strings.Contains(err.Error(), "already exists") {
+			fmt.Printf("Script %s has already been executed. Skipping...\n", script)
+			return nil
+		}
 		return fmt.Errorf("failed to execute script %s: %w", script, err)
+	}
+
+	if script == misc.MigrationCoreScript {
+		err = ensureCDCStarted()
+		if err != nil {
+			return fmt.Errorf("failed to start CDC: %w", err)
+		}
 	}
 
 	return nil

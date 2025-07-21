@@ -376,13 +376,7 @@ func postDeploymentHooks(cfg aws.Config, stack *Stack) error {
 		if err != nil {
 			return fmt.Errorf("failed to grant data location access: %w", err)
 		}
-	case misc.StackNameStreaming:
-		err := ensureCDCStarted()
-		if err != nil {
-			return fmt.Errorf("failed to start CDC: %w", err)
-		}
 	}
-
 	return nil
 }
 
