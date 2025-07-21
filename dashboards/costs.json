@@ -1,0 +1,61 @@
+{
+  "dashboard": {
+    "title": "Project Costs",
+    "tags": ["costs", "billing"],
+    "timezone": "browser",
+    "schemaVersion": 39,
+    "version": 0,
+    "editable": true,
+    "panels": [
+      {
+        "id": 1,
+        "type": "timeseries",
+        "title": "Estimated Costs",
+        "gridPos": { "h": 10, "w": 24, "x": 0, "y": 0 },
+        "datasource": {
+          "type": "cloudwatch",
+          "uid": "cloudwatch"
+        },
+        "targets": [
+          {
+            "datasource": {
+              "type": "cloudwatch",
+              "uid": "cloudwatch"
+            },
+            "refId": "A",
+            "label": "",
+            "namespace": "AWS/Billing",
+            "metricName": "EstimatedCharges",
+            "metricQueryType": 0,
+            "metricEditorMode": 0,
+            "dimensions": {
+              "ServiceName": "*"
+            },
+            "region": "default",
+            "statistic": "Maximum",
+            "matchExact": true,
+            "queryMode": "Metrics"
+          }
+        ],
+        "options": {
+          "legend": {
+            "calcs": [],
+            "displayMode": "list",
+            "placement": "bottom",
+            "showLegend": true
+          },
+          "tooltip": {
+            "mode": "single",
+            "sort": "none"
+          }
+        }
+      }
+    ],
+    "time": {
+      "from": "now-7d",
+      "to": "now"
+    }
+  },
+  "folderId": 0,
+  "overwrite": true
+}

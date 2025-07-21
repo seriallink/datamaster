@@ -40,6 +40,23 @@ Resources:
         - Key: Component
           Value: Storage
 
+  CostsBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "dm-costs-${AWS::AccountId}"
+      VersioningConfiguration:
+        Status: Enabled
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      Tags:
+        - Key: Project
+          Value: DataMaster
+        - Key: Component
+          Value: CostReports
+
   ArtifactsBucket:
     Type: AWS::S3::Bucket
     Properties:
@@ -91,6 +108,12 @@ Outputs:
     Value: !Ref ArtifactsBucket
     Export:
       Name: dm-artifacts-bucket
+
+  CostsBucketName:
+    Description: Name of the Cost and Usage Report (CUR) bucket
+    Value: !Ref CostsBucket
+    Export:
+      Name: dm-costs-bucket
 
   S3VPCEndpointId:
     Description: ID of the S3 VPC Endpoint
