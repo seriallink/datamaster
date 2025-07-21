@@ -104,7 +104,34 @@ All migration scripts executed successfully!
 
 ---
 
-Com a execução desses quatro passos, o ambiente estará completamente provisionado e operacional. Todas as stacks estarão criadas, o banco de dados inicializado e a replicação contínua de dados via DMS ativa.
+### 5. Criar os catálogos no Glue
+
+Com os dados replicando no Aurora e as estruturas criadas, o próximo passo é registrar todas as tabelas nos catálogos do AWS Glue para permitir consultas estruturadas nas camadas `bronze`, `silver` e `gold`.
+
+Na CLI, execute:
+
+```
+>>> catalog
+You are about to create all Glue tables for the following databases:
+- bronze
+- silver
+- gold
+Type 'go' to continue: go
+````
+
+A saída esperada mostra a criação bem-sucedida das tabelas em cada camada, e ao final a mensagem:
+
+```
+Catalog creation completed successfully.
+```
+
+> **Importante**: Esse comando garante que todas as tabelas esperadas fiquem visíveis no Glue Catalog, permitindo que ferramentas como Athena, EMR e Lake Formation possam acessá-las corretamente.
+
+> Caso queira criar apenas uma camada ou um subconjunto de tabelas, consulte a documentação do comando `help catalog` para ver as flags disponíveis.
+
+---
+
+Com a execução desses passos, o ambiente estará completamente provisionado e operacional. Todas as stacks estarão criadas, o banco de dados inicializado e a replicação contínua de dados via DMS ativa.
 
 A partir daqui, você já pode seguir com as etapas de ingestão, processamento e análise de dados conforme definido nos demais módulos do projeto.
 

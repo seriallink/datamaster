@@ -48,9 +48,9 @@ func CatalogCmd() *ishell.Cmd {
 					c.Println("-", tbl)
 				}
 			} else if *layer != "" {
-				c.Println(misc.Blue(fmt.Sprintf("You are about to sync all tables in layer: %s", *layer)))
+				c.Println(misc.Blue(fmt.Sprintf("You are about to create all tables in layer: %s", *layer)))
 			} else {
-				c.Println(misc.Blue("You are about to sync all databases:"))
+				c.Println(misc.Blue("You are about to create all Glue tables for the following databases:"))
 				c.Println("- bronze")
 				c.Println("- silver")
 				c.Println("- gold")
