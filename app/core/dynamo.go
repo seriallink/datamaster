@@ -3,7 +3,9 @@ package core
 import (
 	"context"
 	"fmt"
+	"strings"
 
+	"github.com/seriallink/datamaster/app/enum"
 	"github.com/seriallink/datamaster/app/misc"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -97,5 +99,65 @@ func PutDynamoDBItem(cfg aws.Config, ctx context.Context, item *ProcessingContro
 	}
 
 	return nil
+
+}
+
+// FetchPendingTables returns a list of unique table names that have pending items
+// for the given schema name in the dm-processing-control table.
+//
+// Parameters:
+//   - cfg: AWS configuration used to connect to DynamoDB.
+//   - schema: like "dm_silver" or "dm_gold"
+//
+// Returns:
+//   - []string: list of table names
+//   - error: in case of failure
+func FetchPendingTables(cfg aws.Config, schema string) ([]string, error) {
+
+	client := dynamodb.NewFromConfig(cfg)
+
+	output, err := (&Stack{Name: misc.StackNameControl}).GetStackOutputs(cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	exprAttrNames := map[string]string{
+		"#schema": "schema_name",
+		"#status": "status",
+	}
+	exprAttrValues := map[string]types.AttributeValue{
+		":s": &types.AttributeValueMemberS{Value: schema},
+		":p": &types.AttributeValueMemberS{Value: enum.ProcessPending.String()},
+	}
+
+	out, err := client.Query(context.TODO(), &dynamodb.QueryInput{
+		TableName:                 aws.String(output["ProcessingControlTableName"]),
+		IndexName:                 aws.String(output["SchemaStatusIndexName"]),
+		KeyConditionExpression:    aws.String("#schema = :s AND #status = :p"),
+		ExpressionAttributeNames:  exprAttrNames,
+		ExpressionAttributeValues: exprAttrValues,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to query DynamoDB: %w", err)
+	}
+
+	tableSet := make(map[string]bool)
+	for _, item := range out.Items {
+		if attr, ok := item["table_name"]; ok {
+			if sAttr, ok := attr.(*types.AttributeValueMemberS); ok {
+				table := strings.TrimSpace(sAttr.Value)
+				if table != "" {
+					tableSet[table] = true
+				}
+			}
+		}
+	}
+
+	var result []string
+	for table := range tableSet {
+		result = append(result, table)
+	}
+
+	return result, nil
 
 }

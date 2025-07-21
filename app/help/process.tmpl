@@ -1,0 +1,16 @@
+Trigger processing pipeline by layer and optional table list.
+
+Usage:
+  process --layer <name>
+      Trigger processing for all tables in the specified layer.
+
+  process --layer <name> --tables \<name1,name2,...>
+      Trigger processing for specific tables in the specified layer.
+
+Examples:
+  process --layer silver
+  process --layer silver --tables brewery,beer
+  process --layer gold --tables top_beers_by_rating
+
+Note:
+The execution is asynchronous. A Step Function will be triggered immediately to run the corresponding Spark jobs.

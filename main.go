@@ -57,6 +57,7 @@ func main() {
 	shell.AddCmd(cmd.LambdaCmd(artifacts))
 	shell.AddCmd(cmd.SeedCmd())
 	shell.AddCmd(cmd.StreamCmd())
+	shell.AddCmd(cmd.ProcessCmd())
 	shell.AddCmd(cmd.GrafanaCmd(dashboards))
 	shell.AddCmd(cmd.ExitCmd(shell))
 	shell.AddCmd(cmd.ClearCmd(shell))
