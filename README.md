@@ -17,6 +17,7 @@ Este projeto tem como objetivo construir uma solução completa de engenharia de
 - Orquestração de pipelines com `Step Functions` e `EventBridge`
 - Governança de dados com `Lake Formation`, controle de acesso e mascaramento automático de PII com `Comprehend`
 - Visualização por meio de dashboards analíticos e operacionais com `Grafana`
+- Execução `end-to-end` totalmente automatizada, da ingestão até os dashboards
 
 ---
 
@@ -30,12 +31,13 @@ Este projeto tem como objetivo construir uma solução completa de engenharia de
 - [04. Visão Geral da Arquitetura](./docs/architecture.md)
 - [05. Componentização da Arquitetura por Stacks](./docs/stacks.md)
 - [06. Trade-offs e Decisões de Arquitetura](./docs/tradeoffs.md)
-- [07. Data Master CLI](docs/data-master-cli.md)
-- [08. Utilização do Data Master CLI](./docs/how-to-use.md)
-- [09. Provisionamento do Ambiente](./docs/provisioning.md)
-- [10. Ingestão de Dados](./docs/ingestion.md)
-- [11. Processamento de Dados](./docs/processing.md)
-- [12. Geração de Dados Analíticos](./docs/analytics.md)
-- [13. Governança e Segurança de Dados](docs/governance.md)
-- [14. DataViz e Observabilidade](./docs/observability.md)
-- [15. Roadmap Técnico e Melhorias Futuras](./docs/roadmap.md)
+- [07. Pré-Requisitos](docs/pre-requirements.md)
+- [08. Instalação do Data Master CLI](./docs/installation.md)
+- [09. Utilização do Data Master CLI](./docs/how-to-use.md)
+- [10. Provisionamento do Ambiente](./docs/provisioning.md)
+- [11. Ingestão de Dados (Bronze)](./docs/ingestion.md)
+- [12. Processamento de Dados (Silver)](./docs/processing.md)
+- [13. Geração de Dados Analíticos (Gold)](./docs/analytics.md)
+- [14. Governança e Segurança de Dados](docs/governance.md)
+- [15. DataViz e Observabilidade](./docs/observability.md)
+- [16. Roadmap Técnico e Melhorias Futuras](./docs/roadmap.md)
