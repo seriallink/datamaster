@@ -30,7 +30,7 @@ Durante a sessão, o CLI oferece:
 Lista os artefatos Lambda embarcados no CLI:
 
 ```bash
-datamaster artifacts
+>>> artifacts
 ```
 
 ---
@@ -40,7 +40,7 @@ datamaster artifacts
 Autentica com a AWS:
 
 ```bash
-datamaster auth
+>>> auth
 ```
 
 O CLI guiará você para usar:
@@ -55,19 +55,19 @@ O CLI guiará você para usar:
 Cria ou atualiza tabelas no Glue Catalog com base nos schemas do Aurora:
 
 ```bash
-datamaster catalog
+>>> catalog
 ```
 
 Para uma camada específica:
 
 ```bash
-datamaster catalog --layer bronze
+>>> catalog --layer bronze
 ```
 
 Para tabelas específicas em uma camada:
 
 ```bash
-datamaster catalog --layer bronze --tables brewery,beer
+>>> catalog --layer bronze --tables brewery,beer
 ```
 
 > As tabelas serão criadas se não existirem ou atualizadas se já existirem.
@@ -79,7 +79,7 @@ datamaster catalog --layer bronze --tables brewery,beer
 Limpa a tela da sessão interativa:
 
 ```bash
-datamaster clear
+>>> clear
 ```
 
 ---
@@ -89,16 +89,16 @@ datamaster clear
 Provisiona a infraestrutura via CloudFormation:
 
 ```bash
-datamaster deploy
+>>> deploy
 ```
 
 Ou para uma stack específica:
 
 ```bash
-datamaster deploy --stack storage
+>>> deploy --stack storage
 ```
 
-Use `datamaster stacks` para listar as stacks disponíveis.
+Use `stacks` para listar as stacks disponíveis.
 
 ---
 
@@ -107,7 +107,7 @@ Use `datamaster stacks` para listar as stacks disponíveis.
 Sai da sessão interativa:
 
 ```bash
-datamaster exit
+>>> exit
 ```
 
 ---
@@ -117,13 +117,13 @@ datamaster exit
 Cria ou atualiza dashboards no Grafana:
 
 ```bash
-datamaster grafana
+>>> grafana
 ```
 
 Para uma dashboard específica:
 
 ```bash
-datamaster grafana --dashboard analytics
+>>> grafana --dashboard analytics
 ```
 
 Dashboards disponíveis:
@@ -139,17 +139,17 @@ Dashboards disponíveis:
 Deploy de funções Lambda usando artefatos embarcados:
 
 ```bash
-datamaster lambda
+>>> lambda
 ```
 
 Para uma função específica com configurações customizadas:
 
 ```bash
-datamaster lambda --name processing-controller --memory 256 --timeout 120
+>>> lambda --name processing-controller --memory 256 --timeout 120
 ```
 
 > Os artefatos são enviados automaticamente para o S3.
-> Veja todas as funções disponíveis com: `datamaster artifacts`.
+> Veja todas as funções disponíveis com: `artifacts`.
 
 ---
 
@@ -160,7 +160,7 @@ Executa scripts de migração no Aurora.
 #### Executar todos os scripts embarcados, na ordem:
 
 ```bash
-datamaster migration
+>>> migration
 ```
 
 Scripts incluídos (em ordem de execução):
@@ -172,8 +172,31 @@ Scripts incluídos (em ordem de execução):
 #### Executar um script específico:
 
 ```bash
-datamaster migration --script database/migrations/001_create_dm_core.sql
+>>> migration --script database/migrations/001_create_dm_core.sql
 ```
+
+---
+
+### `process`
+
+Executa o processamento de uma camada do pipeline (como silver ou analytics), orquestrado por Step Functions:
+
+```bash
+>>> process --layer silver
+```
+
+Para processar apenas tabelas específicas:
+
+```bash
+>>> process --layer silver --tables beer,brewery
+```
+
+Parâmetros:
+
+* `--layer` (obrigatório): camada a ser processada (`silver`, `gold`, etc.)
+* `--tables` (opcional): lista de tabelas separadas por vírgula
+
+> Esse comando substitui execuções manuais de pipelines via console. A orquestração é feita por Step Functions automatizadas.
 
 ---
 
@@ -182,13 +205,13 @@ datamaster migration --script database/migrations/001_create_dm_core.sql
 Insere datasets no Aurora (streaming) ou S3 (batch):
 
 ```bash
-datamaster seed
+>>> seed
 ```
 
 Para um dataset específico:
 
 ```bash
-datamaster seed --file beer
+>>> seed --file beer
 ```
 
 Datasets disponíveis:
@@ -203,7 +226,7 @@ Datasets disponíveis:
 Exibe todas as stacks disponíveis para o comando `deploy`:
 
 ```bash
-datamaster stacks
+>>> stacks
 ```
 
 ---
@@ -213,7 +236,7 @@ datamaster stacks
 Exibe a identidade atual da sessão AWS:
 
 ```bash
-datamaster whoami
+>>> whoami
 ```
 
 Mostra:
@@ -229,9 +252,9 @@ Mostra:
 * Use `help` com qualquer comando para ver suas opções:
 
 ```bash
-datamaster help deploy
+>>> help deploy
 ```
 
 ---
 
-[Voltar para a página inicial](../README.md#documentação)
+[Voltar para a página inicial](../README.md#documentação) | [Próximo: Provisionamento do Ambiente](provisioning.md)

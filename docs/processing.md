@@ -235,4 +235,4 @@ SELECT *
 
 ---
 
-[Voltar para a página inicial](../README.md#documentação)
+[Voltar para a página inicial](../README.md#documentação) | [Próximo: Geração de Dados Analíticos (Gold)](analytics.md)

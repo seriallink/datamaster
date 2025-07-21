@@ -137,4 +137,4 @@ A partir daqui, você já pode seguir com as etapas de ingestão, processamento 
 
 ---
 
-[Voltar para a página inicial](../README.md#documentação)
+[Voltar para a página inicial](../README.md#documentação) | [Próximo: Ingestão de Dados (Bronze)](ingestion.md)

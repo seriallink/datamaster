@@ -1,0 +1,1 @@
+https://aws.amazon.com/pt/blogs/aws-brasil/mascaramento-de-dados-e-acesso-refinado-usando-o-amazon-macie-e-aws-lake-formation/

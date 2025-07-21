@@ -30,7 +30,7 @@ Este projeto tem como objetivo construir uma solução completa de engenharia de
 - [03. Camadas do Data Lake (Medallion Architecture)](./docs/layers.md)
 - [04. Visão Geral da Arquitetura](./docs/architecture.md)
 - [05. Componentização da Arquitetura por Stacks](./docs/stacks.md)
-- [06. Trade-offs e Decisões de Arquitetura](./docs/tradeoffs.md)
+- [06. Trade-offs e Decisões de Arquitetura](docs/trade-offs.md)
 - [07. Pré-Requisitos](docs/pre-requirements.md)
 - [08. Instalação do Data Master CLI](./docs/installation.md)
 - [09. Utilização do Data Master CLI](./docs/how-to-use.md)

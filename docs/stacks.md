@@ -460,4 +460,4 @@ Provisiona o ambiente de observabilidade do projeto Data Master com Grafana gere
 
 ---
 
-[Voltar para a página inicial](../README.md#documentação)
+[Voltar para a página inicial](../README.md#documentação) | [Próximo: Trade-offs e Decisões de Arquitetura](trade-offs.md)

@@ -183,4 +183,4 @@ As escolhas entre Go e Spark, Glue e EMR, ou Iceberg e Delta foram feitas com fo
 
 ---
 
-[Voltar para a página inicial](../README.md#documentação)
+[Voltar para a página inicial](../README.md#documentação) | [Próximo: Pré-Requisitos](pre-requirements.md)

@@ -107,8 +107,8 @@ The AWS Access Key Id needs a subscription for the service (Service: Athena)
 1. Acesse o console do Athena: [https://console.aws.amazon.com/athena/](https://console.aws.amazon.com/athena/)
 2. Se for redirecionado para a tela de configuração de conta (como na imagem abaixo), clique em `Upgrade plan` e siga os passo para mudar sua conta para o plano pago.
 
-![athena-enabling-01.png](../assets/athena-checking.png)
+![athena-enabling-01.png](../assets/athena-checking.png) 
 
 ---
 
-[Voltar para a página inicial](../README.md#documentação)
+[Voltar para a página inicial](../README.md#documentação) | [Próximo: Instalação do Data Master CLI](installation.md)

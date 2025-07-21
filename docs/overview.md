@@ -19,4 +19,4 @@ Para facilitar o uso desses dados no pipeline analítico, extraí e organizei os
 
 ---
 
-[Voltar para a página inicial](../README.md#documentação)
+[Voltar para a página inicial](../README.md#documentação) | [Próximo: Modelo de Dados](mer.md)
