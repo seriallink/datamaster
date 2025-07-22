@@ -196,10 +196,6 @@ Caso queira, repita para outras tabelas para confirmar o processamento completo.
 
 ---
 
-Excelente, Marcelo. Aqui está a última etapa da verificação da **camada silver** usando o **Athena**, garantindo que os dados foram processados corretamente, enriquecidos com as datas e integrados ao Glue Catalog com formato Iceberg:
-
----
-
 ## Verificação via Athena
 
 Após o processamento da **camada silver**, os dados ficam disponíveis para consulta imediata no **Amazon Athena**, pois as tabelas são registradas no **AWS Glue Catalog** com suporte total a **Apache Iceberg**.
