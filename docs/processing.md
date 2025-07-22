@@ -7,7 +7,7 @@ A camada **silver** transforma os dados brutos da bronze em registros **normaliz
 O pipeline é totalmente automatizado e executado diariamente via **Step Function** (`dm-processing-dispatcher`), acionada por um evento agendado do **EventBridge** (`cron` diário às 6h UTC). O fluxo é dividido em duas etapas principais:
 
 1. **Processamento em Paralelo**
-   As tabelas `brewery`, `beer`, `profile` e `review` são processadas individualmente e de forma isolada por jobs Spark executados no **EMR Serverless**, com recursos otimizados (8 vCPU, 32 GB RAM). O código de transformação está empacotado em um arquivo `.zip` e executado via `spark-submit`, com argumentos dinâmicos por tabela.
+   As tabelas `brewery`, `beer`, `profile` e `review` são processadas individualmente e de forma isolada por jobs Spark executados no **EMR Serverless**. O código de transformação está empacotado em um arquivo `.zip` e executado via `spark-submit`, com argumentos dinâmicos por tabela.
 
 2. **Geração da Tabela review_flat**
    Após a execução das tabelas principais, uma nova job Spark constrói a `review_flat`, consolidando dados de `review`, `beer`, `profile` e `brewery` em um modelo unificado e analítico.
