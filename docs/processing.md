@@ -231,7 +231,7 @@ SELECT *
  WHERE partitioned_at = '20250721';
 ```
 
-* As tabelas estão prontas para evolução, sem necessidade de recriação.
+> Essa é a validação final do pipeline Bronze → Silver.
 
 ---
 
