@@ -184,10 +184,6 @@ Cada arquivo `.parquet` corresponde diretamente a um `.gz` original da camada Ra
 
 ---
 
-Perfeito, Marcelo! Aqui está a **etapa 6 da documentação** ajustada para refletir exatamente o que o usuário verá ao trocar para o workgroup `dm-athena-workgroup`, incluindo o modal de confirmação que aparece com o `Query result location`:
-
----
-
 ### 6. Verificação final via Athena
 
 Com os arquivos `.parquet` gerados e organizados em partições Hive na camada Bronze, a consulta pode ser feita diretamente pelo **Athena**, utilizando o Glue Catalog.
