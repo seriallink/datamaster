@@ -2,7 +2,7 @@
 
 A camada **silver** transforma os dados brutos da bronze em registros **normalizados, enriquecidos e prontos para análise**, utilizando o formato transacional **Iceberg**. Esse processamento é responsável por aplicar regras de negócio, compor dimensões com joins e manter um histórico consistente via `INSERT`, `UPDATE` e `DELETE`.
 
-## Visão Geral da Arquitetura
+## 1. Visão Geral da Arquitetura
 
 O pipeline é totalmente automatizado e executado diariamente via **Step Function** (`dm-processing-dispatcher`), acionada por um evento agendado do **EventBridge** (`cron` diário às 6h UTC). O fluxo é dividido em duas etapas principais:
 
@@ -16,7 +16,7 @@ O controle de execução é feito diretamente pela Step Function, com registros 
 
 ---
 
-## Frequência e Estratégia de Processamento
+## 2. Frequência e Estratégia de Processamento
 
 O pipeline da camada silver foi originalmente idealizado para ser executado em **tempo real**, refletindo continuamente as alterações recebidas da camada bronze. No entanto, após validações práticas e testes de custo, performance e robustez, optou-se por adotar uma estratégia de **processamento em lote diário**. Essa decisão foi motivada por uma série de fatores técnicos e operacionais:
 
@@ -30,7 +30,7 @@ Essa mudança estratégica privilegiou a **governança, consistência e otimiza�
 
 ---
 
-## Como verificar arquivos pendentes para processamento (bronze → silver)
+## 3. Como verificar arquivos pendentes para processamento (bronze → silver)
 
 Ao final do pipeline da camada bronze, cada arquivo Parquet gerado é registrado no **DynamoDB**, na tabela `dm-processing-control`, indicando que está **pronto para ser processado na camada silver**. Esse controle garante rastreabilidade, tentativas, enriquecimento com metadados e consistência entre as camadas.
 
@@ -65,7 +65,7 @@ Isso exibirá os arquivos que estão **aguardando processamento** para a silver,
 
 ---
 
-## Processamento Manual da Camada Silver
+## 4. Processamento Manual da Camada Silver
 
 Durante a fase de testes, nem sempre é viável esperar pelo agendamento do cron para acionar o processamento da camada **silver**. Por isso, foi criada uma funcionalidade no CLI que permite forçar essa execução manualmente:
 
@@ -82,7 +82,7 @@ Esse comando dispara a execução **manual** da Step Function responsável pelo 
 * O comando **não é síncrono**. Ele apenas inicia a execução da Step Function e **retorna imediatamente**.
 * Pode levar alguns segundos até que a execução apareça na interface do Step Functions.
 
-## Como verificar se a execução foi iniciada
+### Como verificar se a execução foi iniciada
 
 1. Acesse o serviço **Step Functions** na AWS Console.
 2. No menu lateral esquerdo, clique em **State machines**.
@@ -94,7 +94,7 @@ Esse comando dispara a execução **manual** da Step Function responsável pelo 
 
 ---
 
-## Acompanhando o processamento de cada tabela (EMR)
+## 5. Acompanhando o processamento de cada tabela (EMR)
 
 Cada etapa da execução corresponde a uma tabela sendo processada via EMR Serverless. Para verificar os detalhes:
 
@@ -112,8 +112,6 @@ Cada etapa da execução corresponde a uma tabela sendo processada via EMR Serve
    * Logs
    * Uso de recursos (CPU/memória)
 
----
-
 ### Exemplo de execução manual
 
 ```
@@ -125,7 +123,7 @@ Processing started successfully.
 
 ---
 
-## Verificando os dados na camada Silver
+## 6. Verificando os dados na camada Silver
 
 Após o processamento manual ou automático da camada **silver**, os dados são salvos no bucket de dados no formato **Iceberg**, já organizados com boas práticas de particionamento e tratamento de small files.
 
@@ -196,7 +194,7 @@ Caso queira, repita para outras tabelas para confirmar o processamento completo.
 
 ---
 
-## Verificação via Athena
+## 7. Verificação via Athena
 
 Após o processamento da **camada silver**, os dados ficam disponíveis para consulta imediata no **Amazon Athena**, pois as tabelas são registradas no **AWS Glue Catalog** com suporte total a **Apache Iceberg**.
 
