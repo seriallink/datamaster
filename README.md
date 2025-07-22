@@ -38,6 +38,6 @@ Este projeto tem como objetivo construir uma solução completa de engenharia de
 - [11. Ingestão de Dados (Bronze)](./docs/ingestion.md)
 - [12. Processamento de Dados (Silver)](./docs/processing.md)
 - [13. Geração de Dados Analíticos (Gold)](./docs/analytics.md)
-- [14. Governança e Segurança de Dados](docs/governance.md)
-- [15. DataViz e Observabilidade](./docs/observability.md)
+- [14. DataViz e Observabilidade](./docs/observability.md)
+- [15. Governança e Segurança de Dados](docs/governance.md)
 - [16. Roadmap Técnico e Melhorias Futuras](./docs/roadmap.md)
