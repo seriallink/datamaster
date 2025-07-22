@@ -152,10 +152,6 @@ O número de `executions started` deve corresponder ao número de itens criados 
 
 ---
 
-Aqui está o trecho ajustado com a nova estrutura Hive-style aplicada na camada Bronze:
-
----
-
 ### 5. Verificar os arquivos Parquet gerados (camada Bronze)
 
 Com o pipeline executado com sucesso, os arquivos `.gz` da camada Raw são processados e convertidos para **formato Parquet** no bucket `dm-datalake-<account_id>`, dentro da pasta `bronze/`.
