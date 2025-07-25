@@ -111,14 +111,6 @@ Durante a ingestão dos dados, o **AWS Comprehend** é utilizado para analisar d
 
 Foi criado um **usuário IAM de demonstração** com acesso **exclusivo à camada gold** (Glue e S3), permitindo validar na prática os controles aplicados. Tentativas de acessar outras camadas como bronze ou silver resultam em erro de permissão.
 
-### Próximos passos
-
-Para ampliar a governança sobre a camada raw, está prevista a futura integração com o **Amazon Macie**, que permitirá:
-
-* Escaneamento automático de dados armazenados no S3
-* Detecção de PII em arquivos não estruturados
-* Alertas e classificação automática de sensibilidade
-
 ---
 
 ## Observabilidade com Grafana
