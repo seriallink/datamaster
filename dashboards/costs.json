@@ -1,60 +1,181 @@
 {
   "dashboard": {
+    "id": null,
+    "uid": null,
     "title": "Project Costs",
-    "tags": ["costs", "billing"],
+    "tags": [
+      "costs",
+      "billing",
+      "aws",
+      "cur"
+    ],
     "timezone": "browser",
-    "schemaVersion": 39,
-    "version": 0,
-    "editable": true,
+    "schemaVersion": 37,
+    "version": 1,
+    "refresh": "5m",
+    "templating": {
+      "list": [
+        {
+          "name": "billing_period",
+          "label": "Billing Period",
+          "type": "query",
+          "refresh": 1,
+          "multi": false,
+          "hide": 0,
+          "datasource": {
+            "uid": "${Datasource}",
+            "type": "grafana-athena-datasource"
+          },
+          "query": {
+            "rawSQL": "SELECT DISTINCT billing_period FROM dm_costs.cur ORDER BY billing_period DESC"
+          }
+        }
+      ]
+    },
     "panels": [
       {
         "id": 1,
-        "type": "timeseries",
-        "title": "Estimated Costs",
-        "gridPos": { "h": 10, "w": 24, "x": 0, "y": 0 },
+        "title": "💰 Monthly Cost by Service",
+        "type": "barchart",
+        "gridPos": {
+          "x": 0,
+          "y": 0,
+          "w": 24,
+          "h": 8
+        },
         "datasource": {
-          "type": "cloudwatch",
-          "uid": "cloudwatch"
+          "uid": "${Datasource}",
+          "type": "grafana-athena-datasource"
         },
         "targets": [
           {
-            "datasource": {
-              "type": "cloudwatch",
-              "uid": "cloudwatch"
-            },
             "refId": "A",
-            "label": "",
-            "namespace": "AWS/Billing",
-            "metricName": "EstimatedCharges",
-            "metricQueryType": 0,
-            "metricEditorMode": 0,
-            "dimensions": {
-              "ServiceName": "*"
-            },
-            "region": "default",
-            "statistic": "Maximum",
-            "matchExact": true,
-            "queryMode": "Metrics"
+            "format": 1,
+            "rawSQL": "SELECT line_item_product_code AS \"Service\", SUM(CAST(line_item_unblended_cost AS DOUBLE)) AS \"Total Cost\" FROM dm_costs.cur WHERE billing_period = '${billing_period}' GROUP BY line_item_product_code ORDER BY \"Total Cost\" DESC LIMIT 10;",
+            "connectionArgs": {
+              "catalog": "__default",
+              "database": "dm_costs",
+              "region": "__default"
+            }
+          }
+        ]
+      },
+      {
+        "id": 2,
+        "title": "📊 Detailed Cost by Item Type",
+        "type": "table",
+        "gridPos": {
+          "x": 0,
+          "y": 8,
+          "w": 24,
+          "h": 10
+        },
+        "datasource": {
+          "uid": "${Datasource}",
+          "type": "grafana-athena-datasource"
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "format": 1,
+            "rawSQL": "SELECT line_item_line_item_type AS \"Type\", line_item_product_code AS \"Service\", line_item_usage_type AS \"Usage Type\", SUM(CAST(line_item_unblended_cost AS DOUBLE)) AS \"Cost\" FROM dm_costs.cur WHERE billing_period = '${billing_period}' GROUP BY line_item_line_item_type, line_item_product_code, line_item_usage_type ORDER BY \"Cost\" DESC",
+            "connectionArgs": {
+              "catalog": "__default",
+              "database": "dm_costs",
+              "region": "__default"
+            }
+          }
+        ]
+      },
+      {
+        "id": 3,
+        "title": "📅 Daily Cost Breakdown",
+        "type": "timeseries",
+        "gridPos": {
+          "x": 0,
+          "y": 28,
+          "w": 24,
+          "h": 10
+        },
+        "datasource": {
+          "uid": "${Datasource}",
+          "type": "grafana-athena-datasource"
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "format": 1,
+            "rawSQL": "SELECT date_trunc('day', DATE_PARSE(REPLACE(SPLIT_PART(identity_time_interval, '/', 1), 'Z', ''), '%Y-%m-%dT%H:%i:%s')) AS \"Time\", SUM(CAST(line_item_unblended_cost AS DOUBLE)) AS \"Total Cost\" FROM dm_costs.cur WHERE billing_period = '${billing_period}' GROUP BY 1 ORDER BY 1",
+            "connectionArgs": {
+              "catalog": "__default",
+              "database": "dm_costs",
+              "region": "__default"
+            }
           }
         ],
+        "fieldConfig": {
+          "defaults": {
+            "custom": {
+              "time": true
+            }
+          }
+        },
         "options": {
-          "legend": {
-            "calcs": [],
-            "displayMode": "list",
-            "placement": "bottom",
-            "showLegend": true
-          },
           "tooltip": {
-            "mode": "single",
-            "sort": "none"
+            "mode": "single"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          }
+        },
+        "timeFrom": "now-31d",
+        "timeShift": null
+      },
+      {
+        "id": 6,
+        "title": "📈 Cumulative Monthly Cost",
+        "type": "timeseries",
+        "gridPos": {
+          "x": 0,
+          "y": 38,
+          "w": 24,
+          "h": 10
+        },
+        "datasource": {
+          "uid": "${Datasource}",
+          "type": "grafana-athena-datasource"
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "format": 1,
+            "rawSQL": "SELECT DATE_TRUNC('day', DATE_PARSE(REPLACE(SPLIT_PART(identity_time_interval, '/', 1), 'Z', ''), '%Y-%m-%dT%H:%i:%s')) AS \"Time\", SUM(SUM(CAST(line_item_unblended_cost AS DOUBLE))) OVER (ORDER BY DATE_TRUNC('day', DATE_PARSE(REPLACE(SPLIT_PART(identity_time_interval, '/', 1), 'Z', ''), '%Y-%m-%dT%H:%i:%s'))) AS \"Cumulative Cost\" FROM dm_costs.cur WHERE billing_period = '${billing_period}' GROUP BY 1 ORDER BY 1",
+            "connectionArgs": {
+              "catalog": "__default",
+              "database": "dm_costs",
+              "region": "__default"
+            }
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "custom": {
+              "time": true
+            }
+          }
+        },
+        "options": {
+          "tooltip": {
+            "mode": "single"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
           }
         }
       }
-    ],
-    "time": {
-      "from": "now-7d",
-      "to": "now"
-    }
+    ]
   },
   "folderId": 0,
   "overwrite": true

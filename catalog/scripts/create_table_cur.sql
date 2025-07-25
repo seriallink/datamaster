@@ -116,4 +116,4 @@ CREATE EXTERNAL TABLE IF NOT EXISTS dm_costs.cur (
 )
 PARTITIONED BY (`BILLING_PERIOD` string)
 STORED AS PARQUET
-LOCATION 's3://dm-costs-<id_account>/dm_costs/cur/';
+LOCATION 's3://dm-costs-<id_account>/dm_costs/cur/data/';

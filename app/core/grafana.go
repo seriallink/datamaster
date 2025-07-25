@@ -80,11 +80,11 @@ func PushDashboard(name string, fs embed.FS) error {
 	}
 
 	switch name {
-	case "analytics":
+	case "analytics", "costs":
 		if gds, err = FindOrCreateAthenaDatasource(cfg); err != nil {
 			return fmt.Errorf("failed to ensure Athena datasource: %w", err)
 		}
-	case "health", "costs":
+	case "health":
 		if gds, err = FindOrCreateCloudWatchDatasource(cfg); err != nil {
 			return fmt.Errorf("failed to ensure Athena datasource: %w", err)
 		}

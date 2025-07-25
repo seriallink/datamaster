@@ -136,19 +136,18 @@ Após o primeiro ciclo de geração (que pode levar até 24 horas), você verá 
 No script, o campo `LOCATION` estará com o valor:
 
 ```sql
-LOCATION 's3://dm-costs-<id_account>/dm_costs/cur/';
+LOCATION 's3://dm-costs-<id_account>/dm_costs/cur/data/';
 ```
 
 **Substitua `<id_account>` pelo número real da sua conta AWS antes de executar.**
 
 ---
 
-Após criar a tabela, execute:
+Após criar a tabela, adicione a partição correspondente ao report do mês que foi gerado. Por exemplo, para o mês de julho de 2025:
 
 ```sql
-MSCK REPAIR TABLE dm_costs.cur;
+ALTER TABLE dm_costs.cur ADD PARTITION (BILLING_PERIOD='2025-07')
+LOCATION 's3://dm-costs-<id_account>/dm_costs/cur/data/BILLING_PERIOD=2025-07/';
 ```
-
-Esse comando detecta automaticamente as partições `BILLING_PERIOD` existentes no S3 e registra no Glue Catalog.
 
 ---

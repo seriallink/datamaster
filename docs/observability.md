@@ -315,4 +315,64 @@ Para seguir corretamente todas essas etapas, utilize o tutorial:
 
 ---
 
+### Estrutura da Dashboard
+
+A dashboard é composta por **quatro painéis principais**, todos com filtro por `billing_period` (partição do CUR).
+
+---
+
+### 1. Monthly Cost by Service
+
+Gráfico de barras horizontais com os **10 serviços AWS com maior custo no mês selecionado**.
+
+* **Fonte de dados**: `dm_costs.cur`
+* **Agrupamento**: `line_item_product_code`
+* **Métrica**: soma de `line_item_unblended_cost`
+* **Objetivo**: identificar os principais consumidores de orçamento da conta AWS.
+
+---
+
+### 2. Detailed Cost by Item Type
+
+Tabela que detalha os custos por **tipo de linha**, serviço e tipo de uso.
+
+* **Fonte de dados**: `dm_costs.cur`
+* **Agrupamentos**:
+
+    * `line_item_line_item_type` (ex: Usage, Tax, Discount)
+    * `line_item_product_code`
+    * `line_item_usage_type`
+* **Objetivo**: analisar a composição detalhada dos gastos e identificar custos ocultos.
+
+---
+
+### 3. Daily Cost Breakdown
+
+Gráfico de linha com os **custos diários ao longo do mês**, agrupados por data.
+
+* **Fonte de dados**: `dm_costs.cur`
+* **Campo temporal**: início do intervalo `identity_time_interval`
+* **Objetivo**: identificar variações anômalas e picos de consumo em dias específicos.
+
+---
+
+### 4. Cumulative Monthly Cost
+
+Gráfico de linha que mostra o **acúmulo diário do custo total no mês**, em curva crescente.
+
+* **Fonte de dados**: `dm_costs.cur`
+* **Campo temporal**: truncado por dia
+* **Métrica**: soma acumulada de `line_item_unblended_cost`
+* **Objetivo**: acompanhar a evolução total dos gastos e prever o valor de fechamento do mês.
+
+---
+
+### Filtro por período (`billing_period`)
+
+Todos os painéis da dashboard **Project Costs** são filtráveis por partição `billing_period`, usando o campo selecionável no topo do dashboard.
+
+> Esse filtro corresponde diretamente à partição da tabela CUR no Glue/Athena (`BILLING_PERIOD`), o que garante alta performance nas consultas.
+
+---
+
 [Voltar para a página inicial](../README.md#documentação) | [Próximo: Governança e Segurança de Dados](governance.md)
