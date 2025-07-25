@@ -141,7 +141,6 @@ func DeployAllStacks(templates, artifacts, assets embed.FS) error {
 		{Name: misc.StackNameProcessing},
 		{Name: misc.StackNameAnalytics},
 		{Name: misc.StackNameObservability},
-		{Name: misc.StackNameCosts},
 	}
 
 	for _, stack := range stacks {

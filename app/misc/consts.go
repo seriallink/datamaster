@@ -25,7 +25,6 @@ const (
 	StackNameProcessing    = "processing"
 	StackNameAnalytics     = "analytics"
 	StackNameObservability = "observability"
-	StackNameCosts         = "costs"
 )
 
 const (
