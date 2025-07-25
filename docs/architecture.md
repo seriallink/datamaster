@@ -113,16 +113,36 @@ Foi criado um **usuário IAM de demonstração** com acesso **exclusivo à camad
 
 ---
 
-## Observabilidade com Grafana
+## DataViz e Observabilidade com Grafana AWS Managed Workspace
 
-A stack `dm-observability` configura um workspace do **Grafana AWS Managed**, com acesso via token temporário e integração com Athena. As dashboards construídas consomem as tabelas da camada gold diretamente, permitindo visões interativas sobre:
+A etapa de **DataViz e Observabilidade** integra o pilar analítico e o monitoramento operacional da arquitetura, utilizando o **Grafana AWS Managed Workspace** como camada de visualização central. Essa solução foi escolhida por oferecer integração nativa com **Athena**, **CloudWatch** e **métricas de billing da AWS**, viabilizando uma visão completa dos dados, operações e custos do lake house.
 
-* Cervejas e estilos mais bem avaliados
-* Cervejarias com melhor desempenho
-* Estados com maior volume de reviews
-* Perfis de usuários ativos
+### Arquitetura Geral
 
-Todos os painéis suportam filtro dinâmico por `review_year` e `review_month`, permitindo navegação temporal e comparações entre períodos.
+A stack `dm-observability` provisiona automaticamente o workspace do Grafana e configura os principais *datasources* (Athena e CloudWatch). A criação das dashboards é feita via CLI, utilizando arquivos versionados no repositório do projeto.
+
+O fluxo de dados e visualizações segue três eixos principais:
+
+1. **Dashboards Analíticos**
+   Consomem as tabelas Iceberg da camada **gold**, extraídas via **Athena**. Representam a camada de insights de negócio, incluindo rankings, mapas, métricas agregadas e tendências.
+
+2. **Dashboards Operacionais**
+   Baseados em métricas do **CloudWatch**, monitoram o estado e desempenho dos componentes do pipeline (funções Lambda, Step Functions, EMR Serverless). São fundamentais para observabilidade contínua e investigação de falhas.
+
+3. **Dashboards Financeiros**
+   Utilizam o **Cost and Usage Report (CUR)** exportado em formato **Parquet**, consultado via **Athena**, permitindo visualizar o custo por serviço, componente e período. Esse fluxo requer configuração manual inicial, mas se integra ao pipeline de forma contínua após ativação.
+
+### Considerações Arquiteturais
+
+* A **workspace do Grafana** é criada via CloudFormation, mas **a autenticação via IAM Identity Center (SSO)** e a **instalação do plugin Amazon Athena** exigem etapas manuais no console da AWS, devido a restrições da plataforma.
+
+* A criação dos *datasources* e dashboards é **automatizada via CLI**, permitindo reprodutibilidade e versionamento da camada de visualização.
+
+* O uso de **partições `review_year` e `review_month` nas tabelas gold** permite que os dashboards analíticos se beneficiem de **partition pruning** no Athena, otimizando consultas e reduzindo custos.
+
+* A visualização de **métricas operacionais** segue um modelo desacoplado, em que cada componente (ETLs, pipelines, jobs) envia métricas individualmente ao CloudWatch. Isso viabiliza um painel consolidado sem dependência de agregadores externos.
+
+* A integração com o **Cost and Usage Report (CUR)** representa um ponto de maior manualidade, mas é crucial para o monitoramento financeiro do ambiente — permitindo que decisões arquiteturais sejam guiadas por custo/benefício observável.
 
 ---
 
