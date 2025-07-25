@@ -203,6 +203,7 @@ Cria os databases no Glue Catalog correspondentes às camadas da arquitetura Med
   * `dm_bronze`: Representa os dados brutos organizados por tabela e particionados.
   * `dm_silver`: Dados tratados, validados e enriquecidos.
   * `dm_gold`: Tabelas analíticas, agregadas para consumo final.
+  * `dm_costs`: Database para armazenar os dados de custos do projeto.
 
 ---
 
@@ -225,6 +226,7 @@ Aplica controles de governança de dados utilizando o AWS Lake Formation, inclui
     * `dm_bronze`
     * `dm_silver`
     * `dm_gold`
+    * `dm_costs`
 
 ---
 

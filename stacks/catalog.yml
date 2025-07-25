@@ -31,6 +31,13 @@ Resources:
       DatabaseInput:
         Name: dm_gold
 
+  CostsCatalog:
+    Type: AWS::Glue::Database
+    Properties:
+      CatalogId: !Ref AWS::AccountId
+      DatabaseInput:
+        Name: dm_costs
+
 Outputs:
 
   StageDatabaseName:
@@ -56,3 +63,9 @@ Outputs:
     Value: !Ref GoldCatalog
     Export:
       Name: dm-gold-db
+
+  CostsDatabaseName:
+    Description: Glue database for costs reports
+    Value: !Ref CostsCatalog
+    Export:
+      Name: dm-costs-db
