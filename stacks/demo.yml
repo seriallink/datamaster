@@ -3,12 +3,17 @@ Description: IAM user with restricted access to dm_gold (for demonstration purpo
 
 Resources:
 
+  DemoBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub dm-demo-${AWS::AccountId}
+
   DemoUser:
     Type: AWS::IAM::User
     Properties:
-      UserName: demo-user
+      UserName: dm-demo-user
       LoginProfile:
-        Password: DemoUserStrongPassword123!
+        Password: DemoUser123!
         PasswordResetRequired: true
 
   DemoUserPolicy:
@@ -20,6 +25,21 @@ Resources:
       PolicyDocument:
         Version: "2012-10-17"
         Statement:
+          - Sid: AthenaConsoleAccess
+            Effect: Allow
+            Action:
+              - athena:GetWorkGroup
+              - athena:ListWorkGroups
+              - athena:GetDataCatalog
+              - athena:StartQueryExecution
+              - athena:GetQueryExecution
+              - athena:GetQueryResults
+              - athena:ListEngineVersions
+              - athena:ListTagsForResource
+            Resource:
+              - !Sub arn:aws:athena:${AWS::Region}:${AWS::AccountId}:workgroup/primary
+              - !Sub arn:aws:athena:${AWS::Region}:${AWS::AccountId}:workgroup/dm-athena-workgroup
+              - !Sub arn:aws:athena:${AWS::Region}:${AWS::AccountId}:datacatalog/AwsDataCatalog
           - Sid: GlueGoldAccess
             Effect: Allow
             Action:
@@ -41,8 +61,46 @@ Resources:
             Resource:
               - arn:aws:s3:::dm-datalake
               - arn:aws:s3:::dm-datalake/gold/*
+          - Sid: AthenaQueryResults
+            Effect: Allow
+            Action:
+              - s3:GetBucketLocation
+              - s3:GetObject
+              - s3:ListBucket
+              - s3:PutObject
+            Resource:
+              - !Sub arn:aws:s3:::dm-demo-${AWS::AccountId}
+              - !Sub arn:aws:s3:::dm-demo-${AWS::AccountId}/*
+          - Sid: ListBucketsForAthena
+            Effect: Allow
+            Action:
+              - s3:ListAllMyBuckets
+            Resource: "*"
+          - Sid: LakeFormationDataAccess
+            Effect: Allow
+            Action:
+              - lakeformation:GetDataAccess
+            Resource: "*"
+
+  GrantLakeFormationAccess:
+    Type: AWS::LakeFormation::Permissions
+    Properties:
+      DataLakePrincipal:
+        DataLakePrincipalIdentifier: !GetAtt DemoUser.Arn
+      Permissions:
+        - SELECT
+      Resource:
+        TableResource:
+          DatabaseName: dm_gold
+          TableWildcard: { }
 
 Outputs:
+
+  DemoBucketName:
+    Description: Name of the S3 bucket created for demo results
+    Value: !Ref DemoBucket
+    Export:
+      Name: DemoBucketName
 
   DemoUserName:
     Description: IAM user name created for the demo

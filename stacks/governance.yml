@@ -56,3 +56,14 @@ Resources:
           Name: !ImportValue dm-gold-db
       Permissions:
         - ALL
+
+  GrantLakeFormationOnCosts:
+    Type: AWS::LakeFormation::Permissions
+    Properties:
+      DataLakePrincipal:
+        DataLakePrincipalIdentifier: !ImportValue dm-lakeformation-role-arn
+      Resource:
+        DatabaseResource:
+          Name: !ImportValue dm-costs-db
+      Permissions:
+        - ALL
