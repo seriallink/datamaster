@@ -1,6 +1,10 @@
-# Modelo de Entidade-Relacionamento (MER)
+## Modelo de Entidade-Relacionamento (MER)
 
 Antes de apresentar a arquitetura do projeto, é fundamental entender a **estrutura lógica dos dados** utilizados. Para isso, foram criados três schemas distintos que representam as camadas do data lake: `dm_core`, `dm_view` e `dm_mart`. Cada um deles foi utilizado para estruturar e validar os modelos relacionais correspondentes às camadas **bronze**, **silver** e **gold**.
+
+O **modelo de entidade-relacionamento (MER)** foi desenvolvido utilizando a ferramenta **Toad Data Modeler**, que permitiu o desenho visual, a organização dos relacionamentos e a documentação dos elementos do modelo lógico. O arquivo fonte do MER está disponível em:
+
+> [Link para o arquivo Toad Data Modeler](../database/mer/data-master.txp)
 
 Esses schemas foram criados diretamente no banco relacional e serviram como base para o catálogo do AWS Glue. Embora nem todos sejam populados com dados, eles tiveram papel essencial no desenho, validação e implementação do pipeline de dados.
 
