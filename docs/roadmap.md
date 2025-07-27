@@ -182,4 +182,4 @@ Esse movimento amplia o alcance do projeto, estimula contribuições e cria um c
 
 ---
 
-[Voltar para a página inicial](../README.md#documentação)
+[Voltar para a página inicial](../README.md#documentação) | [Próximo: Considerações Finais](considerations.md)

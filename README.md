@@ -41,3 +41,4 @@ Este projeto tem como objetivo construir uma solução completa de engenharia de
 - [14. DataViz e Observabilidade](./docs/observability.md)
 - [15. Governança e Segurança de Dados](docs/governance.md)
 - [16. Roadmap Técnico e Melhorias Futuras](./docs/roadmap.md)
+- [17. Considerações Finais](docs/considerations.md)
