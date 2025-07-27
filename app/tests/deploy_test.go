@@ -13,14 +13,10 @@ import (
 var templates embed.FS
 
 func TestDeployStack(t *testing.T) {
-
 	MustPersistTestConfig()
-
 	stack := &core.Stack{
 		Name: "test",
 	}
-
 	err := core.DeployStack(stack, templates, templates, templates)
 	require.NoError(t, err)
-
 }
