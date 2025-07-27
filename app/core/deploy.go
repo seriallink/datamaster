@@ -169,7 +169,7 @@ func DeployAllStacks(templates, artifacts, assets embed.FS) error {
 func DeployStack(stack *Stack, templates, artifacts, assets embed.FS) error {
 
 	cfg := GetAWSConfig()
-	cfClient := cloudformation.NewFromConfig(cfg)
+	client := cloudformation.NewFromConfig(cfg)
 	fullStackName := stack.FullStackName()
 
 	templateBody, err := stack.GetTemplateBody(templates)
@@ -181,11 +181,11 @@ func DeployStack(stack *Stack, templates, artifacts, assets embed.FS) error {
 		return err
 	}
 
-	if err = createOrUpdateStack(stack, cfClient, string(templateBody)); err != nil {
+	if err = createOrUpdateStack(stack, client, string(templateBody)); err != nil {
 		return err
 	}
 
-	if err = waitForCompletion(fullStackName, cfClient); err != nil {
+	if err = waitForCompletion(fullStackName, client); err != nil {
 		return err
 	}
 

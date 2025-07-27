@@ -1,0 +1,22 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Minimal test stack for Data Master CLI validation
+
+Resources:
+
+  TestBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "dm-test-${AWS::AccountId}"
+      Tags:
+        - Key: Project
+          Value: DataMaster
+        - Key: Component
+          Value: Test
+
+Outputs:
+  
+  TestBucketName:
+    Description: Test bucket name for integration tests
+    Value: !Ref TestBucket
+    Export:
+      Name: dm-test-bucket
