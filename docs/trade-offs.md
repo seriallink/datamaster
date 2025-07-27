@@ -5,7 +5,9 @@ Nesta seção, explico as principais decisões técnicas e os trade-offs avaliad
 ---
 
 ## 1. CloudFormation vs Terraform
+
 ### Decisão: **CloudFormation**
+
 #### Por que optei por CloudFormation?
 - **Integração nativa com AWS**: facilita o provisionamento e acesso a recursos.
 - **Zero custo adicional**: não requer serviços externos ou execução em pipelines.
@@ -22,7 +24,9 @@ Nesta seção, explico as principais decisões técnicas e os trade-offs avaliad
 ---
 
 ## 2. Aurora Serverless v2 vs RDS provisionado
+
 ### Decisão: **Aurora Serverless v2**
+
 #### Por que optei por Aurora Serverless?
 - Escala sob demanda, ideal para workloads intermitentes.
 - Custo por segundo, otimizado para uso esporádico.
@@ -38,8 +42,31 @@ Nesta seção, explico as principais decisões técnicas e os trade-offs avaliad
 
 ---
 
-## 3. CLI Catalog Sync vs Glue Crawlers
+## 3. DynamoDB vs MongoDB
+
+### Decisão: **DynamoDB**
+
+#### Por que optei por DynamoDB?
+* **Totalmente gerenciado pela AWS**, com escalabilidade automática e billing por demanda.
+* **Integração nativa com EventBridge**, permitindo arquitetura event-driven sem dependências externas.
+* **Latência extremamente baixa** em queries por chave primária.
+* **Suporte direto em SDKs AWS** para controle e rastreamento de objetos processados.
+
+#### Alternativa Considerada: **MongoDB**
+- **Prós**:
+  * Modelo de documentos flexível e expressivo.
+  * Consultas mais avançadas que o DynamoDB em estruturas aninhadas.
+- **Contras**:
+  * **Não possui integração direta com EventBridge** (exige solução intermediária ou polling).
+  * A versão **gerenciada na AWS é limitada ao MongoDB Atlas**, que **não é nativa nem 100% integrada** ao ecossistema AWS.
+  * **Maior esforço operacional** para setup de triggers, monitoramento e permissionamento granular.
+
+---
+
+## 4. CLI Catalog Sync vs Glue Crawlers
+
 ### Decisão: **CLI Catalog Sync**
+
 #### Por que optei por não usar Crawlers?
 - Total controle via código (sem inferência).
 - Alinhado à filosofia de versionamento determinístico.
@@ -55,8 +82,10 @@ Nesta seção, explico as principais decisões técnicas e os trade-offs avaliad
 
 ---
 
-## 4. Go vs Spark (Camada Bronze)
+## 5. Go vs Spark (Camada Bronze)
+
 ### Decisão: **Go (parquet-go)**
+
 #### Por que optei por Go?
 - **Alto desempenho com baixo overhead**, ideal para Lambda e ECS.
 - **Cold start mínimo**, útil em ambientes serverless.
@@ -73,8 +102,10 @@ Nesta seção, explico as principais decisões técnicas e os trade-offs avaliad
 
 ---
 
-## 5. EMR Serverless vs Glue Jobs (Silver e Gold)
+## 6. EMR Serverless vs Glue Jobs (Silver e Gold)
+
 ### Decisão: **EMR Serverless**
+
 #### Por que optei por EMR Serverless?
 - **Controle granular sobre recursos Spark** (memória, paralelismo).
 - **Boa performance em joins e transformações complexas**.
@@ -89,8 +120,10 @@ Nesta seção, explico as principais decisões técnicas e os trade-offs avaliad
 
 ---
 
-## 6. Iceberg vs Delta Lake
+## 7. Iceberg vs Delta Lake
+
 ### Decisão: **Apache Iceberg**
+
 #### Por que optei por Iceberg?
 - Integração nativa com Glue Catalog e Athena.
 - Metadados transacionais, com versionamento leve.
@@ -105,8 +138,10 @@ Nesta seção, explico as principais decisões técnicas e os trade-offs avaliad
 
 ---
 
-## 7. Kinesis vs Apache Kafka
+## 8. Kinesis vs Apache Kafka
+
 ### Decisão: **Kinesis**
+
 #### Por que optei por Kinesis?
 - Totalmente gerenciado (serverless).
 - Custo baseado em throughput.
@@ -122,8 +157,10 @@ Nesta seção, explico as principais decisões técnicas e os trade-offs avaliad
 
 ---
 
-## 8. Step Functions vs Apache Airflow
+## 9. Step Functions vs Apache Airflow
+
 ### Decisão: **Step Functions**
+
 #### Por que optei por Step Functions?
 - Orquestração serverless e com billing granular.
 - Integração nativa com serviços AWS.
@@ -138,8 +175,10 @@ Nesta seção, explico as principais decisões técnicas e os trade-offs avaliad
 
 ---
 
-## 9. S3 + Athena vs Redshift
+## 10. S3 + Athena vs Redshift
+
 ### Decisão: **S3 + Athena**
+
 #### Por que optei por S3 + Athena?
 - Custo zero de provisionamento.
 - Escalabilidade praticamente ilimitada.
@@ -154,8 +193,10 @@ Nesta seção, explico as principais decisões técnicas e os trade-offs avaliad
 
 ---
 
-## 10. Managed Grafana vs QuickSight
+## 11. Managed Grafana vs QuickSight
+
 ### Decisão: **Managed Grafana**
+
 #### Por que optei por Grafana?
 - Suporte a Athena, CloudWatch, logs e métricas.
 - Flexibilidade na construção de dashboards técnicos.
