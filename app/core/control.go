@@ -269,6 +269,38 @@ func (m *ProcessingControl) RegisterNextLayerControl(ctx context.Context, cfg aw
 
 }
 
+// Delete removes the current ProcessingControl item from the DynamoDB table.
+//
+// It uses the control_id field as the primary key for the DeleteItem operation.
+// The table name is resolved dynamically from the stack output "ProcessingControlTableName".
+//
+// Parameters:
+//   - ctx: the context for the AWS request.
+//   - cfg: the AWS configuration used to connect to DynamoDB.
+//
+// Returns:
+//   - error: an error if the table name cannot be resolved or the item fails to be deleted.
+func (m *ProcessingControl) Delete(ctx context.Context, cfg aws.Config) error {
+	client := dynamodb.NewFromConfig(cfg)
+
+	tableName, err := (&Stack{Name: misc.StackNameControl}).GetStackOutput(cfg, "ProcessingControlTableName")
+	if err != nil {
+		return fmt.Errorf("failed to get ProcessingControlTableName: %w", err)
+	}
+
+	_, err = client.DeleteItem(ctx, &dynamodb.DeleteItemInput{
+		TableName: aws.String(tableName),
+		Key: map[string]types.AttributeValue{
+			"control_id": &types.AttributeValueMemberS{Value: m.ControlID},
+		},
+	})
+	if err != nil {
+		return fmt.Errorf("failed to delete item: %w", err)
+	}
+
+	return nil
+}
+
 // GetMaxAttempts returns the maximum number of processing attempts allowed.
 // It reads the MAX_ATTEMPTS environment variable and falls back to a default value
 // if the variable is unset, invalid, or less than or equal to zero.
