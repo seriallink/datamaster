@@ -107,7 +107,7 @@ func PublishDockerImages(cfg aws.Config, artifacts embed.FS, images ...string) (
 		}
 
 		if len(imageURIs) == 0 {
-			if err := loginToECRWithSDK(cfg); err != nil {
+			if err := LoginToECRWithSDK(cfg); err != nil {
 				return nil, fmt.Errorf("failed to authenticate with ECR via SDK: %w", err)
 			}
 		}
@@ -131,7 +131,7 @@ func PublishDockerImages(cfg aws.Config, artifacts embed.FS, images ...string) (
 
 }
 
-// loginToECRWithSDK authenticates the Docker CLI with AWS ECR using credentials retrieved via the AWS SDK.
+// LoginToECRWithSDK authenticates the Docker CLI with AWS ECR using credentials retrieved via the AWS SDK.
 // It fetches the ECR authorization token, decodes it, and performs a `docker login` using `--password-stdin`.
 //
 // Parameters:
@@ -139,7 +139,7 @@ func PublishDockerImages(cfg aws.Config, artifacts embed.FS, images ...string) (
 //
 // Returns:
 //   - error: an error if the token retrieval, decoding, or Docker login fails.
-func loginToECRWithSDK(cfg aws.Config) error {
+func LoginToECRWithSDK(cfg aws.Config) error {
 
 	client := ecr.NewFromConfig(cfg)
 
