@@ -47,7 +47,7 @@ def main():
         datalake_path = f"s3://{get_stack_output('dm-storage', 'DataLakeBucketName')}"
 
         spark = (
-            SparkSession.builder.appName(f"datamaster-etl-{args.layer}")
+            SparkSession.builder.appName(f"dm-jobs-{args.layer}")
             .config("spark.sql.extensions", "org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions")
             .config("spark.sql.catalog.glue_catalog", "org.apache.iceberg.spark.SparkCatalog")
             .config("spark.sql.catalog.glue_catalog.catalog-impl", "org.apache.iceberg.aws.glue.GlueCatalog")
