@@ -16,6 +16,8 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/databasemigrationservice v1.53.0
 	github.com/aws/aws-sdk-go-v2/service/dynamodb v1.44.0
 	github.com/aws/aws-sdk-go-v2/service/ecr v1.45.1
+	github.com/aws/aws-sdk-go-v2/service/ecs v1.61.0
+	github.com/aws/aws-sdk-go-v2/service/emrserverless v1.33.0
 	github.com/aws/aws-sdk-go-v2/service/glue v1.117.0
 	github.com/aws/aws-sdk-go-v2/service/grafana v1.27.4
 	github.com/aws/aws-sdk-go-v2/service/iam v1.43.0
@@ -34,7 +36,6 @@ require (
 	github.com/parquet-go/parquet-go v0.25.1
 	github.com/seriallink/null v4.0.0+incompatible
 	github.com/stretchr/testify v1.10.0
-	go.uber.org/mock v0.5.2
 	gorm.io/driver/postgres v1.6.0
 	gorm.io/gorm v1.30.0
 )
@@ -49,8 +50,6 @@ require (
 	github.com/aws/aws-sdk-go-v2/internal/ini v1.8.3 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/v4a v1.3.36 // indirect
 	github.com/aws/aws-sdk-go-v2/service/dynamodbstreams v1.25.6 // indirect
-	github.com/aws/aws-sdk-go-v2/service/ecs v1.61.0 // indirect
-	github.com/aws/aws-sdk-go-v2/service/emrserverless v1.33.0 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.12.4 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.7.4 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/endpoint-discovery v1.10.17 // indirect
