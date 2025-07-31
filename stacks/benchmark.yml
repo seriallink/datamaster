@@ -1,0 +1,158 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Benchmark stack for comparing Go (ECS) vs PySpark (EMR Serverless and Glue)
+
+Parameters:
+
+  BenchmarkGoImageUri:
+    Type: String
+    Description: Docker image URI for the benchmark container
+
+Resources:
+
+  BenchmarkBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub 'dm-benchmark-${AWS::AccountId}'
+
+  BenchmarkCatalog:
+    Type: AWS::Glue::Database
+    Properties:
+      CatalogId: !Ref AWS::AccountId
+      DatabaseInput:
+        Name: dm_benchmark
+        LocationUri: !Sub "s3://dm-benchmark-${AWS::AccountId}/benchmark/"
+
+  BenchmarkTaskLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /ecs/dm-benchmark-task
+      RetentionInDays: 7
+
+  BenchmarkTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    DependsOn: BenchmarkTaskLogGroup
+    Properties:
+      Family: dm-benchmark-task
+      Cpu: "2048"
+      Memory: "4096"
+      RequiresCompatibilities: [ FARGATE ]
+      NetworkMode: awsvpc
+      ExecutionRoleArn: !ImportValue dm-task-execution-role-arn
+      TaskRoleArn: !ImportValue dm-worker-role-arn
+      ContainerDefinitions:
+        - Name: dm-benchmark-go-image
+          Image: !Ref BenchmarkGoImageUri
+          Essential: true
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: /ecs/dm-benchmark-task
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: ecs
+          Environment:
+            - Name: BENCHMARK_BUCKET
+              Value: !Sub 'dm-benchmark-${AWS::AccountId}'
+
+  BenchmarkEcsTaskExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: dm-benchmark-ecs-task-execution
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+
+  BenchmarkCluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: dm-benchmark-cluster
+
+  BenchmarkService:
+    Type: AWS::ECS::Service
+    DependsOn:
+      - BenchmarkTaskDefinition
+    Properties:
+      ServiceName: dm-benchmark-service
+      Cluster: !Ref BenchmarkCluster
+      LaunchType: FARGATE
+      DesiredCount: 0  # invokes tasks on demand
+      TaskDefinition: !Ref BenchmarkTaskDefinition
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: DISABLED
+          SecurityGroups:
+            - !ImportValue dm-processing-sg
+          Subnets:
+            - !ImportValue dm-public-subnet-az1-id
+            - !ImportValue dm-public-subnet-az2-id
+      DeploymentConfiguration:
+        MaximumPercent: 100
+        MinimumHealthyPercent: 0
+
+  BenchmarkGlueJob:
+    Type: AWS::Glue::Job
+    Properties:
+      Name: dm-benchmark-glue
+      Role: !ImportValue dm-worker-role-arn
+      Command:
+        Name: glueetl
+        ScriptLocation: !Sub "s3://${BenchmarkBucket}/scripts/glue.py"
+        PythonVersion: "3"
+      DefaultArguments:
+        "--TempDir": !Sub "s3://${BenchmarkBucket}/tmp/"
+        "--job-language": "python"
+        "--enable-continuous-log-filter": "true"
+        "--BENCHMARK_BUCKET": !Sub "dm-benchmark-${AWS::AccountId}"
+        "--BENCHMARK_INPUT": "input/review.csv.gz"
+        "--BENCHMARK_OUTPUT": "output/review-python.parquet"
+        "--BENCHMARK_RESULT": "results/benchmark-python.json"
+      GlueVersion: "4.0"
+      ExecutionProperty:
+        MaxConcurrentRuns: 1
+      MaxRetries: 0
+      Timeout: 30
+      NumberOfWorkers: 2
+      WorkerType: G.1X
+
+Outputs:
+
+  BenchmarkBucketName:
+    Description: Name of the S3 bucket used for benchmarking
+    Value: !Ref BenchmarkBucket
+    Export:
+      Name: dm-benchmark-bucket
+
+  BenchmarkCatalogName:
+    Description: Glue database for benchmarking
+    Value: !Ref BenchmarkCatalog
+    Export:
+      Name: dm-benchmark-catalog
+
+  BenchmarkClusterName:
+    Description: Name of the ECS cluster used for benchmarking
+    Value: !Ref BenchmarkCluster
+    Export:
+      Name: dm-benchmark-cluster-name
+
+  BenchmarkTaskDefinitionName:
+    Description: ECS Task Definition Family for Go benchmark
+    Value: !Ref BenchmarkTaskDefinition
+    Export:
+      Name: dm-benchmark-task-definition
+
+  BenchmarkServiceName:
+    Description: Name of the ECS service responsible for benchmarking
+    Value: !Ref BenchmarkService
+    Export:
+      Name: dm-benchmark-service-name
+
+  BenchmarkGlueJobName:
+    Description: Glue Job used for PySpark benchmark
+    Value: !Ref BenchmarkGlueJob
+    Export:
+      Name: dm-benchmark-glue-job-name

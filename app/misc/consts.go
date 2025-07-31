@@ -15,6 +15,7 @@ const (
 	StackNameSecurity      = "security"
 	StackNameDatabase      = "database"
 	StackNameStorage       = "storage"
+	StackNameRepositories  = "repositories"
 	StackNameCatalog       = "catalog"
 	StackNameGovernance    = "governance"
 	StackNameConsumption   = "consumption"
@@ -25,6 +26,7 @@ const (
 	StackNameProcessing    = "processing"
 	StackNameAnalytics     = "analytics"
 	StackNameObservability = "observability"
+	StackNameBenchmark     = "benchmark"
 )
 
 const (

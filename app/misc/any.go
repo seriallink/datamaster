@@ -16,3 +16,23 @@ func NotIn(value any, list ...any) bool {
 	}
 	return true
 }
+
+// Ternary returns one of two values based on a boolean condition.
+//
+// This function mimics the ternary (conditional) operator found in other languages,
+// returning `x` if the condition is true, or `y` otherwise. It accepts any type
+// as input and returns an interface{} (`any`), so the caller is responsible for type assertion if needed.
+//
+// Parameters:
+//   - condition: boolean expression to evaluate.
+//   - x: value returned if the condition is true.
+//   - y: value returned if the condition is false.
+//
+// Returns:
+//   - any: `x` if condition is true; otherwise `y`.
+func Ternary(condition bool, x, y any) any {
+	if condition {
+		return x
+	}
+	return y
+}

@@ -1,0 +1,19 @@
+Run benchmark using ECS (Go) or Glue (PySpark)
+
+Usage:
+  benchmark --run <ecs|glue>
+
+Description:
+  Executes a data ingestion benchmark using one of the supported backends:
+
+    --run <ecs|glue>
+
+Examples:
+  benchmark --run ecs     # Executes the Go benchmark via ECS
+  benchmark --run glue    # Executes the PySpark benchmark via AWS Glue
+
+Note:
+  Benchmark results (duration, file paths, etc.) will be written to S3 and print to stdout.
+
+Flags:
+  --run     Required: specify one of ecs or glue

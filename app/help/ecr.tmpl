@@ -1,0 +1,20 @@
+Publish Docker images to Amazon ECR using embedded artifacts.
+
+Usage:
+  ecr
+      Publish all embedded Docker images to ECR.
+
+  ecr --name <image>
+      Publish a specific Docker image to ECR.
+
+Flags:
+  --name       Docker image name (omit to publish all embedded images)
+
+Examples:
+  ecr --name bronze-ingestor-mass
+  ecr --name benchmark-go
+  ecr
+
+Note:
+  TAR artifacts are embedded in the CLI and loaded during execution.
+  To see a list of available Docker image artifacts, run: artifacts

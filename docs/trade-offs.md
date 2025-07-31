@@ -94,11 +94,22 @@ Nesta seção, explico as principais decisões técnicas e os trade-offs avaliad
 
 #### Alternativa Considerada: **Spark (Glue)**
 - **Prós**:
-  - Suporte nativo no Glue.
-  - Robusto para cargas em lote.
+  - Suporte nativo no Glue (infraestrutura gerenciada).
+  - Robusto para pipelines complexos e transformações estruturadas.
 - **Contras**:
+  - Tempo de execução significativamente maior.
   - Overhead desnecessário para arquivos pequenos.
   - Latência de cold start elevada.
+
+### Justificativa baseada em benchmark
+
+Para a etapa de ingestão da **camada bronze**, optei pela implementação em **Go puro** após a realização de um **benchmark reproduzível** comparando Go + ECS com Spark (via AWS Glue). 
+
+O resultado foi expressivo: o Go entregou **uma escrita quase 10x mais rápida**, com **uso de memória extremamente baixo** (menos de 160 MB), enquanto o Glue Job apresentou latência elevada de inicialização e tempo total significativamente maior.
+
+Além disso, o mesmo código em Go pode ser reaproveitado em **funções Lambda** para arquivos menores (até \~100 mil linhas), eliminando o cold start do ECS e tornando a solução ainda mais versátil e econômica.
+
+> Para detalhes completos, veja o benchmark documentado em [Benchmark de Ingestão – Go vs PySpark](benchmark.md).
 
 ---
 

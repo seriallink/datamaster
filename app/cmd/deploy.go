@@ -17,7 +17,7 @@ import (
 // DeployCmd returns an interactive shell command that deploys infrastructure stacks using embedded CloudFormation templates.
 // The user can deploy a specific stack via the --stack flag, optionally passing parameters with --params (key=value pairs).
 // If no stack is specified, all stacks will be deployed.
-func DeployCmd(templates, artifacts, assets embed.FS) *ishell.Cmd {
+func DeployCmd(templates, artifacts, scripts embed.FS) *ishell.Cmd {
 	return &ishell.Cmd{
 		Name: "deploy",
 		Help: "Deploy infrastructure",
@@ -62,7 +62,7 @@ func DeployCmd(templates, artifacts, assets embed.FS) *ishell.Cmd {
 					return
 				}
 
-				if err := core.DeployStack(&stack, templates, artifacts, assets); err != nil {
+				if err := core.DeployStack(&stack, templates, artifacts, scripts); err != nil {
 					c.Println(misc.Red(fmt.Sprintf("Deployment failed: %v", err)))
 					return
 				}
@@ -78,7 +78,7 @@ func DeployCmd(templates, artifacts, assets embed.FS) *ishell.Cmd {
 				return
 			}
 
-			if err := core.DeployAllStacks(templates, artifacts, assets); err != nil {
+			if err := core.DeployAllStacks(templates, artifacts, scripts); err != nil {
 				c.Println(misc.Red(fmt.Sprintf("Deployment failed: %v", err)))
 				return
 			}

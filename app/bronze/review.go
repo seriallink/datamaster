@@ -48,7 +48,7 @@ func (m *Review) FromCSV(line []string, idx map[string]int) (any, error) {
 	reviewPalate, _ := strconv.ParseFloat(get("review_palate"), 64)
 	reviewTaste, _ := strconv.ParseFloat(get("review_taste"), 64)
 
-	return Review{
+	return &Review{
 		ReviewID:         reviewID,
 		BreweryID:        breweryID,
 		BeerID:           beerID,

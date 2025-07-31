@@ -356,6 +356,7 @@ Resources:
               Service:
                 - lambda.amazonaws.com
                 - ecs-tasks.amazonaws.com
+                - glue.amazonaws.com
             Action: sts:AssumeRole
       Policies:
         - PolicyName: dm-worker-policy
@@ -379,6 +380,8 @@ Resources:
                 Action:
                   - s3:GetObject
                   - s3:PutObject
+                  - s3:DeleteObject
+                  - s3:ListBucket
                 Resource: "*"
               - Effect: Allow
                 Action:
@@ -494,8 +497,9 @@ Resources:
                   - glue:GetTable
                   - glue:GetTables
                   - glue:CreateTable
-                  - glue:BatchCreatePartition
                   - glue:UpdateTable
+                  - glue:DeleteTable
+                  - glue:BatchCreatePartition
                   - glue:GetPartition
                   - glue:GetPartitions
                 Resource: "*"
