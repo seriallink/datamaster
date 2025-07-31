@@ -11,13 +11,12 @@ import (
 	"github.com/abiosoft/ishell"
 )
 
-// ArtifactsCmd returns an interactive shell command that lists all embedded Lambda artifacts.
-// It reads the embedded filesystem under the predefined artifact path and prints the names of
-// all .zip files (without the extension) to the shell. If no artifacts are found, it prints an appropriate message.
+// ArtifactsCmd returns an interactive shell command that lists all embedded artifacts (.zip for Lambda, .tar for Docker).
+// It reads the embedded filesystem under the predefined artifact path and prints the artifact names with their type.
 func ArtifactsCmd(artifacts embed.FS) *ishell.Cmd {
 	return &ishell.Cmd{
 		Name: "artifacts",
-		Help: "List embedded Lambda artifacts.",
+		Help: "List embedded Lambda and Docker artifacts.",
 		Func: func(c *ishell.Context) {
 
 			entries, err := artifacts.ReadDir(misc.ArtifactsPath)
@@ -26,26 +25,35 @@ func ArtifactsCmd(artifacts embed.FS) *ishell.Cmd {
 				return
 			}
 
-			var names []string
+			var artifactsList []string
+
 			for _, entry := range entries {
-				if !entry.IsDir() && strings.HasSuffix(entry.Name(), ".zip") {
+				if entry.IsDir() {
+					continue
+				}
+
+				switch {
+				case strings.HasSuffix(entry.Name(), ".zip"):
 					name := strings.TrimSuffix(entry.Name(), ".zip")
-					names = append(names, name)
+					artifactsList = append(artifactsList, fmt.Sprintf("%s (lambda)", name))
+
+				case strings.HasSuffix(entry.Name(), ".tar"):
+					name := strings.TrimSuffix(entry.Name(), ".tar")
+					artifactsList = append(artifactsList, fmt.Sprintf("%s (docker)", name))
 				}
 			}
 
-			sort.Strings(names)
+			sort.Strings(artifactsList)
 
-			if len(names) == 0 {
+			if len(artifactsList) == 0 {
 				c.Println(misc.Red("No embedded artifacts found."))
 				return
 			}
 
-			c.Println("Available Lambda artifacts:")
-			for _, name := range names {
-				c.Printf("  %s\n", name)
+			c.Println("Available artifacts:")
+			for _, item := range artifactsList {
+				c.Printf("  %s\n", item)
 			}
-
 		},
 	}
 }
