@@ -264,8 +264,8 @@ func preDeploymentHooks(cfg aws.Config, stack *Stack, artifacts, scripts embed.F
 
 	case misc.StackNameProcessing:
 
-		// Get the S3 bucket name from the stack outputs.
-		bucket, err := stack.GetStackOutput(cfg, "ArtifactsBucketName")
+		// Get the S3 bucket name from the storage stack outputs.
+		bucket, err := (&Stack{Name: misc.StackNameStorage}).GetStackOutput(cfg, "ArtifactsBucketName")
 		if err != nil {
 			return fmt.Errorf("failed to get ArtifactsBucketName: %w", err)
 		}
