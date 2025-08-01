@@ -90,7 +90,7 @@ Durante a execução do benchmark com **AWS Glue Job (Spark/PySpark)**, **não f
 
 ## 6. Reprodução
 
-O benchmark pode ser reproduzido facilmente através da CLI, que provisiona toda a infraestrutura necessária no ambiente AWS de forma automatizada. Para mais detalhes sobre os recursos criados, consulte a documentação sobre as [stacks](stacks.md).
+O benchmark pode ser reproduzido facilmente através da CLI, que provisiona toda a infraestrutura necessária no ambiente AWS de forma automatizada. Para mais detalhes sobre os recursos criados, consulte a documentação sobre as [stacks](stacks.md#dm-benchmark).
 
 ```bash
 >>> deploy --stack benchmark
@@ -117,7 +117,9 @@ s3://dm-benchmark-<account_id>/
 Incluem:
 
 * Arquivo Parquet gerado
-* JSON com todas as métricas coletadas por execução
+* Arquivo JSON com todas as métricas coletadas por execução
+
+> **Importante!** O deploy da stack benchmark deve ser feito somente após a criação das stacks anteriores, pois ela depende de recursos já existentes.
 
 ---
 

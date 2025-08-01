@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: Benchmark stack for comparing Go (ECS) vs PySpark (EMR Serverless and Glue)
+Description: Benchmark stack for comparing Go (ECS) vs PySpark (Glue)
 
 Parameters:
 
