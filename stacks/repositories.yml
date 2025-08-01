@@ -9,89 +9,89 @@ Parameters:
 
 Resources:
 
-#  BronzeRepositoryPolicy:
-#    Type: AWS::ECR::Repository
-#    Properties:
-#      RepositoryName: dm-bronze-ingestor-mass
-#      RepositoryPolicyText:
-#        !Sub
-#        - |
-#          {
-#            "Version": "2012-10-17",
-#            "Statement": [
-#              {
-#                "Sid": "AllowPull",
-#                "Effect": "Allow",
-#                "Principal": {
-#                  "AWS": "${DeployerArn}"
-#                },
-#                "Action": [
-#                  "ecr:BatchCheckLayerAvailability",
-#                  "ecr:CompleteLayerUpload",
-#                  "ecr:InitiateLayerUpload",
-#                  "ecr:PutImage",
-#                  "ecr:UploadLayerPart"
-#                ]
-#              }
-#            ]
-#          }
-#        - DeployerArn: !Ref DeployerArn
-#
-#  SilverRepositoryPolicy:
-#    Type: AWS::ECR::Repository
-#    Properties:
-#      RepositoryName: dm-silver-processor-mass
-#      RepositoryPolicyText:
-#        !Sub
-#        - |
-#          {
-#            "Version": "2012-10-17",
-#            "Statement": [
-#              {
-#                "Sid": "AllowPull",
-#                "Effect": "Allow",
-#                "Principal": {
-#                  "AWS": "${DeployerArn}"
-#                },
-#                "Action": [
-#                  "ecr:BatchCheckLayerAvailability",
-#                  "ecr:CompleteLayerUpload",
-#                  "ecr:InitiateLayerUpload",
-#                  "ecr:PutImage",
-#                  "ecr:UploadLayerPart"
-#                ]
-#              }
-#            ]
-#          }
-#        - DeployerArn: !Ref DeployerArn
-#
-#  GoldRepositoryPolicy:
-#    Type: AWS::ECR::Repository
-#    Properties:
-#      RepositoryName: dm-gold-analytics-mass
-#      RepositoryPolicyText:
-#        !Sub
-#        - |
-#          {
-#            "Version": "2012-10-17",
-#            "Statement": [
-#              {
-#                "Sid": "AllowPull",
-#                "Effect": "Allow",
-#                "Principal": {
-#                  "AWS": "${DeployerArn}"
-#                },
-#                "Action": [
-#                  "ecr:BatchCheckLayerAvailability",
-#                  "ecr:CompleteLayerUpload",
-#                  "ecr:InitiateLayerUpload",
-#                  "ecr:PutImage",
-#                  "ecr:UploadLayerPart"
-#                ]
-#              }
-#            ]
-#          }
-#        - DeployerArn: !Ref DeployerArn
+  BronzeRepositoryPolicy:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: dm-bronze-ingestor-mass
+      RepositoryPolicyText:
+        !Sub
+        - |
+          {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Sid": "AllowPull",
+                "Effect": "Allow",
+                "Principal": {
+                  "AWS": "${DeployerArn}"
+                },
+                "Action": [
+                  "ecr:BatchCheckLayerAvailability",
+                  "ecr:CompleteLayerUpload",
+                  "ecr:InitiateLayerUpload",
+                  "ecr:PutImage",
+                  "ecr:UploadLayerPart"
+                ]
+              }
+            ]
+          }
+        - DeployerArn: !Ref DeployerArn
+
+  SilverRepositoryPolicy:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: dm-silver-processor-mass
+      RepositoryPolicyText:
+        !Sub
+        - |
+          {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Sid": "AllowPull",
+                "Effect": "Allow",
+                "Principal": {
+                  "AWS": "${DeployerArn}"
+                },
+                "Action": [
+                  "ecr:BatchCheckLayerAvailability",
+                  "ecr:CompleteLayerUpload",
+                  "ecr:InitiateLayerUpload",
+                  "ecr:PutImage",
+                  "ecr:UploadLayerPart"
+                ]
+              }
+            ]
+          }
+        - DeployerArn: !Ref DeployerArn
+
+  GoldRepositoryPolicy:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: dm-gold-analytics-mass
+      RepositoryPolicyText:
+        !Sub
+        - |
+          {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Sid": "AllowPull",
+                "Effect": "Allow",
+                "Principal": {
+                  "AWS": "${DeployerArn}"
+                },
+                "Action": [
+                  "ecr:BatchCheckLayerAvailability",
+                  "ecr:CompleteLayerUpload",
+                  "ecr:InitiateLayerUpload",
+                  "ecr:PutImage",
+                  "ecr:UploadLayerPart"
+                ]
+              }
+            ]
+          }
+        - DeployerArn: !Ref DeployerArn
 
   BenchmarkRepositoryPolicy:
     Type: AWS::ECR::Repository
