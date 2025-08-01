@@ -12,6 +12,7 @@ Abaixo estão descritas todas as stacks utilizadas no projeto:
 * [dm-roles](#dm-roles)
 * [dm-security](#dm-security)
 * [dm-storage](#dm-storage)
+* [dm-repositories](#dm-repositories)
 * [dm-database](#dm-database)
 * [dm-catalog](#dm-catalog)
 * [dm-governance](#dm-governance)
@@ -23,36 +24,38 @@ Abaixo estão descritas todas as stacks utilizadas no projeto:
 * [dm-processing](#dm-processing)
 * [dm-analytics](#dm-analytics)
 * [dm-observability](#dm-observability)
+* [dm-benchmark](#dm-benchmark)
+* [dm-demo](#dm-demo)
 
 ---
 
 ## dm-network
 
 **Responsabilidade:**
-Provisiona a infraestrutura de rede base do projeto, incluindo VPC, subnets públicas e privadas, internet gateway e route table.
+Provisiona a infraestrutura de rede base do projeto, incluindo VPC, subnets públicas e privadas, Internet Gateway e tabela de rotas.
 
 **Principais recursos:**
 
 * **VPC:**
-  Faixa `10.0.0.0/16`, com DNS habilitado.
+  Faixa `10.0.0.0/16`, com suporte a DNS hostnames e resolução habilitado.
 
 * **Internet Gateway:**
-  Gateway de saída para recursos em subnets públicas.
+  Responsável pela saída de recursos em subnets públicas para a internet.
 
 * **Subnets Públicas:**
 
-    * `10.0.1.0/24` (AZ1)
-    * `10.0.2.0/24` (AZ2)
-      Com IP público automático.
+  * `10.0.1.0/24` (us-east-1a)
+  * `10.0.2.0/24` (us-east-1b)
+    Ambas com atribuição automática de IP público.
 
 * **Subnets Privadas:**
 
-    * `10.0.11.0/24` (us-east-1a)
-    * `10.0.12.0/24` (us-east-1b)
-      Sem IP público.
+  * `10.0.11.0/24` (us-east-1a)
+  * `10.0.12.0/24` (us-east-1b)
+    Sem atribuição de IP público.
 
-* **Route Table:**
-  Rota padrão (0.0.0.0/0) apontando para o Internet Gateway, associada às subnets públicas.
+* **Tabela de Rotas:**
+  Rota padrão (`0.0.0.0/0`) apontando para o Internet Gateway, associada às subnets públicas.
 
 ---
 
@@ -64,99 +67,143 @@ Define todas as IAM Roles necessárias para operação dos serviços do projeto,
 **Principais recursos:**
 
 * **DMSVpcRole:**
-  Permite ao DMS gerenciar VPC e assumir outras roles.
+  Permite ao DMS gerenciar recursos de rede (VPC, ENIs) e assumir outras roles.
 
 * **PipeExecutionRole:**
-  Utilizado por EventBridge Pipes para ler de Kinesis/DynamoDB e escrever no Firehose ou iniciar Step Functions.
+  Utilizada por EventBridge Pipes para ler de Kinesis ou DynamoDB e escrever no Firehose ou acionar Step Functions.
 
 * **KinesisAccessRole:**
-  Permite ao DMS enviar dados para o Kinesis.
+  Permite ao DMS enviar dados para streams Kinesis.
 
 * **FirehoseAccessRole:**
-  Usada por Firehose para leitura/escrita em S3, Glue e invocação de funções Lambda.
+  Usada pelo Firehose para leitura e gravação em S3, acesso ao Glue Catalog e invocação de funções Lambda.
 
 * **LambdaExecutionRole:**
-  Role padrão das funções Lambda, com acesso a Firehose e S3.
+  Role padrão das funções Lambda, com permissões para acessar o Firehose e buckets do S3.
 
 * **GlueServiceRole:**
-  Role para execução de crawlers e jobs Glue, com acesso total ao Glue e ao Secrets Manager.
+  Permite a execução de crawlers e jobs do Glue, com acesso ao Glue Catalog e ao Secrets Manager.
 
 * **LakeFormationAccessRole:**
-  Acesso à leitura/gravação no S3 via Lake Formation.
+  Concede acesso controlado via Lake Formation para leitura e escrita em S3.
 
 * **FirehoseRouterFunctionRole:**
-  Lambda intermediária de roteamento para Firehose.
+  Usada pela função Lambda intermediária de roteamento de eventos para diferentes fluxos no Firehose.
 
 * **ProcessingControllerFunctionRole:**
-  Usada pela Lambda que registra o controle de processamento no DynamoDB.
+  Lambda responsável por registrar controles de processamento no DynamoDB.
 
 * **ProcessingControllerEventRole:**
   Permite ao EventBridge invocar a função `dm-processing-controller`.
 
 * **WorkerRole:**
-  Role utilizada por Lambdas e ECS tasks responsáveis pelo processamento dos dados.
+  Compartilhada por Lambdas e ECS tasks responsáveis pelo processamento de dados nas camadas bronze, silver e gold.
 
 * **StepFunctionRole:**
-  Executa jobs no Glue, EMR Serverless, Lambda e ECS, com permissão para criar regras EventBridge.
+  Executa jobs no Glue, EMR Serverless, Lambda e ECS, com permissão para gerenciar regras do EventBridge.
 
 * **TaskExecutionRole:**
-  Role padrão do ECS Fargate para executar containers e acessar logs.
+  Role padrão para execução de containers no ECS Fargate, com acesso a logs e imagens no ECR.
 
 * **EmrServerlessExecutionRole:**
-  Usada pelos jobs do EMR Serverless com acesso ao Glue, S3, DynamoDB e logs.
+  Role usada pelos jobs do EMR Serverless com acesso ao Glue, S3, DynamoDB e CloudWatch Logs.
 
 * **GrafanaAccessRole:**
-  Role assumida pelo Grafana gerenciado para consultar Athena, Glue, CloudWatch e S3.
+  Assumida pelo Grafana gerenciado para consultar Athena, Glue Catalog, CloudWatch e S3.
 
 ---
 
 ## dm-security
 
 **Responsabilidade:**
-Provisiona os recursos relacionados à segurança de rede, controle de acesso a segredos e repositórios privados para containers Docker utilizados no pipeline de processamento.
+Provisiona os recursos relacionados à segurança de rede e controle de acesso a segredos utilizados no pipeline de processamento.
 
 **Principais recursos:**
 
 * **Security Groups:**
 
-    * `DBAccessSecurityGroup`: Permite acesso à porta 5432 (PostgreSQL) para o Aurora.
-    * `GlueSecurityGroup`: Usado pelos Glue Jobs com tráfego interno liberado.
-    * `DMSVpcSecurityGroup`: Associado à instância de replicação do DMS.
-    * `ProcessingSecurityGroup`: Associado às tasks ECS Fargate do pipeline.
+  * `DBAccessSecurityGroup`: Permite acesso à porta 5432 (PostgreSQL) para o Aurora.
+  * `GlueSecurityGroup`: Usado pelos Glue Jobs com tráfego interno liberado.
+  * `DMSVpcSecurityGroup`: Associado à instância de replicação do DMS.
+  * `ProcessingSecurityGroup`: Associado às ECS tasks (Fargate) do pipeline de dados.
 
 * **Ingress Rules:**
 
-    * Permissão explícita para que o DMS acesse o Aurora.
-    * Tráfego interno liberado entre workers Spark no Glue.
+  * Permissão explícita para que o DMS acesse o Aurora PostgreSQL.
+  * Liberação de tráfego interno entre workers Spark do Glue.
 
 * **Secrets Manager:**
 
-    * `DBSecret`: Contém as credenciais do Aurora PostgreSQL.
-    * `DBSecretResourcePolicy`: Garante acesso controlado ao deployer via ARN.
-
-* **ECR Repositories:**
-
-    * Repositórios com política de acesso baseada no ARN do deployer, permitindo push de imagens Docker.
+  * `DBSecret`: Contém as credenciais do banco Aurora PostgreSQL.
+  * `DBSecretResourcePolicy`: Restringe o acesso ao secret ao ARN do deployer.
 
 ---
 
 ## dm-storage
 
 **Responsabilidade:**
-Provisiona os buckets S3 utilizados no projeto para ingestão, armazenamento estruturado e observabilidade, além do endpoint privado de acesso ao S3 via VPC.
+Provisiona os buckets S3 utilizados para ingestão de dados, armazenamento estruturado por camadas, artefatos de execução e dados de observabilidade. Também cria o endpoint privado para acesso ao S3 via VPC.
 
 **Principais recursos:**
 
-* **Buckets S3:**
+### Buckets S3:
 
-    * `dm-stage`: Armazena arquivos de entrada (`raw`), tanto por streaming (`firehose`) quanto por batch.
-    * `dm-datalake`: Armazena os dados organizados em camadas (`bronze`, `silver`, `gold`). Possui versionamento e bloqueio de acesso público.
-    * `dm-observer`: Armazena arquivos relacionados à observabilidade (ex: logs, metadados).
-    * `dm-artifacts`: Armazena zips e executáveis utilizados por funções Lambda.
+* **`dm-stage`**
+  Armazena arquivos da camada `raw/`, tanto recebidos por `streaming` quanto por ingestão `batch/`.
+  Utilizado como ponto de entrada de dados no data lake.
 
-* **VPC Endpoint para S3:**
+* **`dm-datalake`**
+  Armazena os dados organizados em camadas (`bronze/`, `silver/`, `gold/`).
+  Possui versionamento ativado e bloqueio completo de acesso público.
 
-    * `dm-s3-endpoint`: Cria um endpoint do tipo gateway para permitir acesso privado ao S3 a partir da VPC.
+* **`dm-artifacts`**
+  Armazena zips, binários e outros artefatos utilizados por funções Lambda e containers ECS.
+  Serve como repositório intermediário para deploy automatizado.
+
+* **`dm-observer`**
+  Armazena arquivos relacionados à observabilidade, como logs, relatórios e dumps temporários.
+
+* **`dm-costs`**
+  Armazena os dados exportados pelo AWS Cost and Usage Report (CUR), com partições por `BILLING_PERIOD`.
+  Usado para análise de custos no Athena.
+
+### VPC Endpoint:
+
+* **`dm-s3-endpoint`**
+  Endpoint do tipo *Gateway* que permite acesso aos buckets S3 a partir da VPC sem passar pela internet pública.
+
+---
+
+## dm-repositories
+
+**Responsabilidade:**
+Provisiona os repositórios privados do Amazon ECR utilizados para armazenar as imagens Docker responsáveis pelas cargas e transformações das camadas bronze, silver, gold e benchmark do projeto.
+
+**Principais recursos:**
+
+### Repositórios ECR:
+
+* **`dm-bronze-ingestor-mass`**
+  Armazena a imagem utilizada nas tasks ECS para ingestão em massa da camada *bronze* a partir de arquivos `.csv.gz`.
+
+* **`dm-silver-processor-mass`**
+  Contém a imagem com o processamento da camada *silver*, utilizando DuckDB para transformações eficientes.
+
+* **`dm-gold-analytics-mass`**
+  Repositório da imagem responsável pela geração das tabelas analíticas da camada *gold*, com joins e agregações.
+
+* **`dm-benchmark-go`**
+  Armazena a imagem usada nos testes de benchmark de performance com Go puro, focando em ingestão e escrita em Parquet.
+
+### Controle de acesso:
+
+Todos os repositórios aplicam uma `RepositoryPolicyText` que concede permissões de push para o ARN informado via parâmetro `DeployerArn`, com ações explícitas:
+
+* `ecr:BatchCheckLayerAvailability`
+* `ecr:CompleteLayerUpload`
+* `ecr:InitiateLayerUpload`
+* `ecr:PutImage`
+* `ecr:UploadLayerPart`
 
 ---
 
@@ -459,6 +506,79 @@ Provisiona o ambiente de observabilidade do projeto Data Master com Grafana gere
 
     * **Athena** (consulta aos dados do Lakehouse)
     * **CloudWatch** (monitoramento de logs e métricas)
+
+---
+
+## dm-benchmark
+
+**Responsabilidade:**
+Provisiona toda a infraestrutura necessária para executar benchmarks comparando performance entre containers Go (via ECS Fargate) e jobs PySpark (via Glue). A stack inclui armazenamento, catálogo de dados, execução em ECS e Glue, além de logs e outputs.
+
+**Principais recursos:**
+
+* **Bucket S3:**
+
+  * `dm-benchmark-<account-id>`: Armazena arquivos de entrada (`input/`), saída (`output/`), resultados (`results/`) e scripts (`scripts/`) utilizados nos benchmarks.
+
+* **Glue Catalog:**
+
+  * `dm_benchmark`: Glue Database que representa o catálogo lógico para benchmarks, apontando para os dados armazenados no bucket `dm-benchmark`.
+
+* **ECS:**
+
+  * `dm-benchmark-cluster`: Cluster Fargate usado para execução sob demanda dos testes em Go.
+  * `dm-benchmark-task`: Task Definition com 2 vCPU e 4 GB de memória, baseada na imagem Docker fornecida via parâmetro.
+  * `dm-benchmark-service`: Serviço ECS com `DesiredCount: 0`, configurado para execução sob demanda dos benchmarks.
+
+* **IAM Roles:**
+
+  * `dm-benchmark-ecs-task-execution`: Role para execução da task ECS com permissões gerenciadas padrão (`AmazonECSTaskExecutionRolePolicy`).
+
+* **CloudWatch Logs:**
+
+  * `/ecs/dm-benchmark-task`: Grupo de logs com retenção de 7 dias, utilizado para registrar a saída dos benchmarks em Go.
+
+* **Glue Job:**
+
+  * `dm-benchmark-glue`: Job PySpark (Glue 4.0) com 2 workers (G.1X), configurado para comparar performance com base nos mesmos arquivos `.csv.gz`.
+    Utiliza variáveis de ambiente para receber os parâmetros `BENCHMARK_BUCKET`, `BENCHMARK_INPUT`, `BENCHMARK_OUTPUT` e `BENCHMARK_RESULT`.
+
+---
+
+## dm-demo
+
+**Responsabilidade:**
+Provisiona um ambiente de demonstração com um usuário IAM restrito, que pode consultar os dados da camada *gold* via Athena. Também cria um bucket dedicado para armazenar os resultados das queries.
+
+**Principais recursos:**
+
+* **IAM User:**
+
+  * `dm-demo-user`: Usuário IAM com permissão de leitura sobre o catálogo `dm_gold`, acesso ao Athena e ao bucket `dm-datalake`, e permissão de escrita em um bucket exclusivo para resultados de queries.
+
+* **Bucket S3:**
+
+  * `dm-demo-<account-id>`: Bucket exclusivo para armazenar os resultados das queries executadas via Athena pelo usuário `dm-demo-user`.
+
+* **Permissões Athena:**
+
+  * Execução de queries nos workgroups `primary` e `dm-athena-workgroup`.
+  * Leitura de resultados e metadados do catálogo de dados (`AwsDataCatalog`).
+  * Escrita dos resultados no bucket `dm-demo`.
+
+* **Permissões Glue:**
+
+  * Acesso de leitura ao Glue Catalog (`dm_gold`), incluindo databases, tabelas e partições.
+
+* **Permissões S3:**
+
+  * Leitura dos dados em `dm-datalake/gold/*`.
+  * Escrita e leitura no bucket `dm-demo-<account-id>`.
+  * Permissão genérica `ListAllMyBuckets` para compatibilidade com o console do Athena.
+
+* **Permissão Lake Formation:**
+
+  * Permissão `SELECT` concedida via `AWS::LakeFormation::Permissions` sobre todas as tabelas do database `dm_gold`.
 
 ---
 
