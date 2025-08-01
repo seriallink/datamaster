@@ -118,16 +118,19 @@ Além disso, o mesmo código em Go pode ser reaproveitado em **funções Lambda*
 ### Decisão: **EMR Serverless**
 
 #### Por que optei por EMR Serverless?
-- **Controle granular sobre recursos Spark** (memória, paralelismo).
-- **Boa performance em joins e transformações complexas**.
+* **Maior flexibilidade para organizar o código em etapas reutilizáveis**, com suporte mais natural a projetos modulares em Spark.
+* **Execução mais estável e previsível em cargas com joins e transformações complexas**, principalmente após o tuning adequado de configurações.
+* **Menor acoplamento com abstrações específicas da AWS**, permitindo maior portabilidade futura se necessário.
 
 #### Alternativa Inicial: **Glue Jobs**
-- **Prós**:
-  - Provisionamento simplificado.
-  - Integração direta com AWS nativa.
-- **Contras**:
-  - Difícil de depurar: logs incompletos ou ausentes em falhas silenciosas.
-  - Limitado para modularização e reaproveitamento de código entre etapas.
+* **Prós**:
+
+  * Provisionamento simplificado com escalabilidade automática.
+  * Forte integração com o ecossistema da AWS (IAM, Glue Catalog, Lake Formation, etc).
+* **Contras**:
+  * **Menor flexibilidade para organização modular do código**, dificultando o reuso entre jobs.
+  * **Depuração mais trabalhosa** em falhas silenciosas ou erros de runtime; os logs podem ser incompletos se não forem forçados via `flush`.
+  * **Menor controle sobre o ambiente de execução** — embora seja possível ajustar alguns parâmetros Spark, o nível de customização é inferior ao do EMR Serverless.
 
 ---
 
