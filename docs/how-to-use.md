@@ -2,7 +2,7 @@
 
 O **Data Master CLI** é a ferramenta principal para operar todos os componentes do projeto, incluindo provisionamento de infraestrutura, deploy de funções Lambda, gerenciamento de catálogo no Glue, geração de dashboards e simulação de dados.
 
-> A **sequência recomendada de execução para provisionamento** será apresentada na próxima seção da documentação.
+> A **sequência recomendada de execução para provisionamento** será apresentada na [próxima seção](provisioning.md) da documentação.
 
 ---
 
