@@ -27,7 +27,7 @@ Durante a sessão, o CLI oferece:
 
 ### `artifacts`
 
-Lista os artefatos Lambda embarcados no CLI:
+Lista os artefatos Lambda (functions) e Docker (images) embarcados no CLI:
 
 ```bash
 >>> artifacts
