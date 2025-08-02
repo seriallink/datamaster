@@ -118,28 +118,33 @@ All migration scripts executed successfully!
 
 ### 5. Criar os catálogos no Glue
 
-Com os dados replicando no Aurora e as estruturas criadas, o próximo passo é registrar todas as tabelas nos catálogos do AWS Glue para permitir consultas estruturadas nas camadas `bronze`, `silver` e `gold`.
+Com a replicação habilitada no **Aurora** e as estruturas de banco criadas, o próximo passo é registrar todas as tabelas no **Glue Catalog**. Esse passo é essencial para permitir consultas estruturadas e integradas nas camadas `bronze`, `silver` e `gold` por ferramentas como **Athena, EMR e Lake Formation**.
 
 Na CLI, execute:
 
 ```
 >>> catalog
+```
+
+Confirme a execução digitando `go` quando solicitado:
+
+```
 You are about to create all Glue tables for the following databases:
 - bronze
 - silver
 - gold
 Type 'go' to continue: go
-````
+```
 
-A saída esperada mostra a criação bem-sucedida das tabelas em cada camada, e ao final a mensagem:
+A saída esperada mostra a criação bem-sucedida das tabelas em cada camada, encerrando com a mensagem:
 
 ```
 Catalog creation completed successfully.
 ```
 
-> **Importante**: Esse comando garante que todas as tabelas esperadas fiquem visíveis no Glue Catalog, permitindo que ferramentas como Athena, EMR e Lake Formation possam acessá-las corretamente.
+> Esse comando garante que todas as tabelas do projeto estejam corretamente registradas e organizadas no Glue Catalog, com nome, tipo e estrutura compatíveis com o Athena e os engines de processamento.
 
-> Caso queira criar apenas uma camada ou um subconjunto de tabelas, consulte a documentação do comando `help catalog` para ver as flags disponíveis.
+> Caso queira criar apenas uma camada ou um subconjunto de tabelas, consulte a documentação do comando `help catalog` para ver as flags disponíveis (`--layer` e `--tables`).
 
 ---
 

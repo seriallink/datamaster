@@ -68,17 +68,20 @@ Nesta seção, explico as principais decisões técnicas e os trade-offs avaliad
 ### Decisão: **CLI Catalog Sync**
 
 #### Por que optei por não usar Crawlers?
-- Total controle via código (sem inferência).
-- Alinhado à filosofia de versionamento determinístico.
-- Mapeamento automático de schema → database via CLI.
+- **Controle total e determinístico sobre o schema** — sem inferência automática.
+- **Mapeamento explícito** entre tipos do PostgreSQL e os tipos do Glue.
+- **Atualizações previsíveis e versionáveis**, alinhadas à filosofia de contratos entre camadas.
+- Evita problemas comuns de crawlers, como ordenação aleatória de colunas, tipos inconsistentes ou sobrescritas indesejadas.
 
 #### Alternativa Considerada: **Glue Crawlers**
 - **Prós**:
   - Úteis quando o schema muda frequentemente.
   - Descoberta automática de dados no S3.
+  - No-code para usuários menos técnicos.
 - **Contras**:
-  - Pouco controle e versionamento.
-  - Execução dependente de agendamento e permissões extras.
+  - Falta de controle sobre o versionamento e ordenação do schema.
+  - Inferência sujeita a erro, especialmente em casos com colunas nulas ou dados heterogêneos.
+  - Dependência de agendamentos, permissões adicionais e múltiplas execuções para refletir mudanças.
 
 ---
 
