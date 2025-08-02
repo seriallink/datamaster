@@ -57,7 +57,7 @@ Este passo a passo mostra como configurar a exportação de relatórios de custo
 
 * Frequência: **Daily**
 * Formato: **Parquet**
-* Versão de arquivo: **Create new data export file**
+* Versão de arquivo: **Overwrite existing data export file**
 
 ---
 
