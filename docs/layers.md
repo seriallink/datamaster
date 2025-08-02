@@ -117,7 +117,7 @@ A camada **gold** é voltada para **consumo direto por dashboards, relatórios e
 
 ### Formato: Iceberg
 
-* Mantém todos os benefícios da camada silver (versionamento, deletes, evolution).
+* Mantém todos os benefícios da camada silver (`merge`, `evolution`, `ACID`).
 * Otimizado para leitura via Athena, Grafana, etc.
 
 ### Exemplo de Tabelas Gold
