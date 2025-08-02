@@ -92,7 +92,7 @@ A camada **silver** representa os dados **validados, normalizados e enriquecidos
 
 ### Estratégias de Small Files
 
-* A opção `optimize_small_files` foi habilitada explicitamente no Glue Catalog, permitindo que o próprio Iceberg otimize a escrita com base em arquivos menores.
+* A opção `optimize_small_files` foi habilitada explicitamente no Glue Catalog, permitindo que o processamento de dados do Iceberg otimiza a escrita consolidando arquivos menores.
 * Outras técnicas adicionais podem ser empregadas futuramente, como jobs periódicos de compactação (RewriteDataFiles).
 
 ### Enriquecimentos aplicados
