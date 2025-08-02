@@ -70,7 +70,7 @@ Se todas as stacks forem criadas com sucesso, você verá uma mensagem de confir
 All stacks deployed successfully!
 ```
 
-> **Para entender o propósito de cada stack, consulte o [stacks.md](./stacks.md).**
+> **Para entender o propósito de cada stack, consulte a seção [Componentização da Arquitetura por Stacks](./stacks.md).**
 
 > **Importante**: Certifique-se de que o Docker Desktop esteja iniciado antes de executar esse comando. Algumas imagens precisam ser construídas e enviadas para o Amazon ECR durante esse processo.
 
