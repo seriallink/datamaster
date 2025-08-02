@@ -217,7 +217,7 @@ Para processar apenas tabelas específicas:
 
 Parâmetros:
 
-* `--layer` (obrigatório): camada a ser processada (`silver`, `gold`, etc.)
+* `--layer` (obrigatório): camada a ser processada (`silver` ou `gold`)
 * `--tables` (opcional): lista de tabelas separadas por vírgula
 
 > Esse comando substitui execuções manuais de pipelines via console. A orquestração é feita por Step Functions automatizadas.
