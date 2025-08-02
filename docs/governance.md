@@ -77,7 +77,7 @@ Para validar a aplicação das permissões, foi criado um **usuário IAM de demo
 2. Esse comando cria automaticamente:
 
 * O **usuário IAM**: `dm-demo-user`
-* A **senha inicial**: `DemoUser123!` (será exigido redefinir no primeiro login)
+* A **senha inicial**: `DemoUser123!`
 * Um **bucket de resultados do Athena**: `dm-demo-<account_id>`
 
 ---

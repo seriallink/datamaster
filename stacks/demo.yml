@@ -14,7 +14,7 @@ Resources:
       UserName: dm-demo-user
       LoginProfile:
         Password: DemoUser123!
-        PasswordResetRequired: true
+        PasswordResetRequired: false
 
   DemoUserPolicy:
     Type: AWS::IAM::Policy
