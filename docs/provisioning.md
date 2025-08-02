@@ -37,7 +37,12 @@ Select authentication method:
 2. Use Access/Secret Keys
 ```
 
-Escolha a opção `1` para autenticação via profile e informe o nome do profile (ou deixe em branco para usar o profile `default`). Em seguida, informe a região da AWS (por padrão: `us-east-1`).
+Você pode escolher:
+
+* **Opção 1 (Profile):** informe o nome do AWS Profile (ou deixe em branco para usar o `default`).
+* **Opção 2 (Access/Secret):** insira sua AWS Access Key e Secret Key manualmente.
+
+Em ambos os casos, também será solicitado o nome da **região AWS** (padrão: `us-east-1`).
 
 Exemplo de resposta esperada após autenticação bem-sucedida:
 
