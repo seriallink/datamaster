@@ -141,4 +141,4 @@ A comparação entre as abordagens trouxe resultados expressivos:
 * Usando **Go**, há **controle total sobre os recursos de infraestrutura e execução**, permitindo decisões precisas sobre paralelismo, alocação de memória e estratégias de escrita. Embora exija desenvolvimento próprio, **o código pode ser continuamente otimizado e evoluído**, sem limitações impostas por engines como Spark ou ambientes gerenciados.
 * Já o **Glue Job** sofreu com latência maior de inicialização e maior custo computacional, apesar de oferecer um ambiente gerenciado e simplificado.
 
-> **Conclusão:** Para cenários de ingestão massiva na **camada bronze**, com estrutura bem definida e sem dependência de transformações complexas, a abordagem com Go puro — escrevendo diretamente em Parquet — é altamente recomendada por sua **eficiência, simplicidade e custo-benefício**.
+> **Conclusão:** Para cenários de ingestão massiva na **camada bronze**, com estrutura bem definida e sem dependência de transformações complexas, a abordagem com Go puro — escrevendo diretamente em Parquet — se mostra uma solução extremamente viável, com **excelente desempenho, simplicidade e custo-benefício**.
