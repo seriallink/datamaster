@@ -27,10 +27,10 @@ Foram medidos:
 
 ## 3. Implementações Testadas
 
-| Abordagem               | Detalhes Técnicos                                                                  |
-| ----------------------- | ---------------------------------------------------------------------------------- |
-| **Go em ECS (Fargate)** | `parquet-go`, concorrência, escrita direta em Parquet                              |
-| **PySpark no Glue Job** | Spark 3.x, escrita via `.write.parquet()`                                          |
+| Abordagem               | Detalhes Técnicos                                     |
+| ----------------------- | ----------------------------------------------------- |
+| **Go em ECS (Fargate)** | `parquet-go`, concorrência, escrita direta em Parquet |
+| **PySpark no Glue Job** | Spark 3.x, escrita via `.write.parquet()`             |
 
 ---
 
@@ -44,7 +44,7 @@ Foram medidos:
 
 ### PySpark (Glue Job)
 
-* **Worker G.1X** _(menor instância do Glue)_
+* **Worker G.1X** *(menor instância do Glue)*
 * 4 vCPUs, 16 GB RAM, 94 GB disco
 * Ambiente gerenciado, alta latência inicial
 
@@ -57,11 +57,11 @@ Foram medidos:
 ```text
 === Benchmark Result ===
 Implementation      : go
-Orchestration Time  : 53.7s
-Task Duration       : 4.54s
-CSV Read Time       : 121.7ms
-Parquet Write Time  : 3.79s
-Memory Used (MB)    : 157.83
+Orchestration Time  : 1m14.08s
+Task Duration       : 2.91s
+CSV Read Time       : 107ms
+Parquet Write Time  : 2.45s
+Memory Used (MB)    : 141.30
 ```
 
 ### PySpark (Glue Job)
@@ -69,10 +69,10 @@ Memory Used (MB)    : 157.83
 ```text
 === Benchmark Result ===
 Implementation      : python
-Orchestration Time  : 1m29.7s
-Task Duration       : 37.57s
-CSV Read Time       : 8.07s
-Parquet Write Time  : 25.79s
+Orchestration Time  : 1m51.77s
+Task Duration       : 50.66s
+CSV Read Time       : 7.45s
+Parquet Write Time  : 39.95s
 Memory Used (MB)    : [não disponível – ver observações]
 ```
 
@@ -129,14 +129,14 @@ A comparação entre as abordagens trouxe resultados expressivos:
 
 | Comparativo        | Go (ECS)      | PySpark (Glue Job)     |
 | ------------------ | ------------- | ---------------------- |
-| Orquestração total | **\~53s**     | \~**1m29s**            |
-| Duração da task    | **\~4.5s**    | \~**37.5s**            |
-| Leitura CSV        | **121ms**     | \~**8s**               |
-| Escrita Parquet    | **\~3.8s**    | \~**25.8s**            |
-| Memória usada      | **157 MB**    | Indisponível           |
+| Orquestração total | **1m14s**     | **1m52s**              |
+| Duração da task    | **2.9s**      | **50.7s**              |
+| Leitura CSV        | **107ms**     | **7.5s**               |
+| Escrita Parquet    | **2.4s**      | **39.9s**              |
+| Memória usada      | **141 MB**    | Indisponível           |
 | Infraestrutura     | 2 vCPU / 4 GB | 4 vCPU / 16 GB (1 DPU) |
 
-* O **Go com ECS** apresentou desempenho **quase 10x superior** na etapa de escrita e **uso de memória extremamente baixa**.
+* O **Go com ECS** apresentou desempenho **quase 17x superior** na etapa de escrita e **uso de memória extremamente baixo**.
 * O mesmo código em Go pode ser reutilizado em funções **AWS Lambda** para cenários com menor volume de dados (até \~100 mil linhas), eliminando o tempo de provisionamento do ECS e tornando a solução ainda mais atrativa para cargas pequenas ou frequentes.
 * Usando **Go**, há **controle total sobre os recursos de infraestrutura e execução**, permitindo decisões precisas sobre paralelismo, alocação de memória e estratégias de escrita. Embora exija desenvolvimento próprio, **o código pode ser continuamente otimizado e evoluído**, sem limitações impostas por engines como Spark ou ambientes gerenciados.
 * Já o **Glue Job** sofreu com latência maior de inicialização e maior custo computacional, apesar de oferecer um ambiente gerenciado e simplificado.
