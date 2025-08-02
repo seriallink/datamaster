@@ -81,6 +81,8 @@ All stacks deployed successfully!
 
 > **Importante:** Todo o ambiente será provisionado neste passo. O tempo total pode ultrapassar 1 hora facilmente, principalmente devido à criação de recursos como **Aurora, Kinesis, e Clusters**. A conexão local tem impacto mínimo nesse processo.
 
+> Além das mensagens exibidas durante a execução, o **acompanhamento detalhado de cada stack** pode ser feito diretamente pelo console da AWS, na seção **CloudFormation → Stacks**.
+
 ---
 
 ### 4. Executar os scripts de migração no Aurora
