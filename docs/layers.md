@@ -119,16 +119,7 @@ A camada **gold** é voltada para **consumo direto por dashboards, relatórios e
 
 * Mantém todos os benefícios da camada silver (`merge`, `evolution`, `ACID`).
 * Otimizado para leitura via Athena, Grafana, etc.
-
-### Exemplo de Tabelas Gold
-
-* `top_beers_by_rating`
-* `top_breweries_by_rating`
-* `top_styles_by_popularity`
-* `state_by_review_volume`
-* `top_drinkers`
-
-Todas as tabelas são particionadas por `review_year` e `review_month`, permitindo **filtros dinâmicos em painéis analíticos**.
+* Todas as tabelas são particionadas por `review_year` e `review_month`, permitindo **filtros dinâmicos em painéis analíticos**.
 
 ### Ferramentas
 
