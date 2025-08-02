@@ -22,6 +22,11 @@ O primeiro passo para validar o pipeline de ingestão é popular o banco de dado
 
 ```
 >>> seed
+```
+
+Confirme a execução respondendo com `go` quando solicitado:
+
+```
 You are about to seed all available datasets from GitHub.
 Type 'go' to continue: go
 ```
@@ -31,20 +36,70 @@ Esse comando realiza duas ações principais:
 * **Insere registros nas tabelas `brewery`, `beer` e `profile`** diretamente no Aurora, permitindo o teste do fluxo de **streaming CDC** via DMS → Kinesis → Firehose.
 * **Envia um arquivo `.gz` para o S3** na estrutura da camada raw da tabela `review`, simulando o fluxo de **ingestão batch**.
 
-Exemplo de saída:
+Ao finalizar, você verá a mensagem:
 
 ```
-→ Seeding 'brewery'...
-→ Seeding 'beer'...
-→ Seeding 'profile'...
-→ Seeding 'review'...
-Uploaded batch file to s3://dm-stage-<account-id>/raw/review/dm-batch-process-1-<datetime>-<uuid>.gz
 Seeding completed successfully.
 ```
 
 ---
 
-### 2. Verificar arquivos na camada Raw (S3)
+#### Sugestão de execução
+
+Como a arquitetura é **event-driven** e o pipeline de ingestão foi projetado para alta performance, a maior parte das etapas é executada em poucos segundos. No entanto, **a escrita dos arquivos pelo Firehose pode levar até 1 minuto**, devido à configuração de **buffering por tempo ou tamanho**.
+
+Para facilitar o monitoramento e a validação visual, recomenda-se executar os seeds **individualmente**, na ordem abaixo, aguardando a conclusão de cada etapa antes de prosseguir para a próxima:
+
+```
+>>> seed --file brewery
+```
+
+```
+>>> seed --file beer
+```
+
+```
+>>> seed --file profile
+```
+
+```
+>>> seed --file review
+```
+
+---
+
+### 2. Verificar replicação via DMS (Table Statistics)
+
+Antes de verificar os arquivos na camada Raw, é recomendável conferir se os dados foram **efetivamente replicados** pelo DMS a partir do Aurora.
+
+O AWS DMS oferece uma aba chamada **Table statistics**, que mostra estatísticas de replicação em tempo real por tabela.
+
+#### Passos para validar:
+
+1. Acesse o serviço **Database Migration Service (DMS)** no console da AWS.
+2. No menu lateral, clique em **Tasks**.
+3. Selecione a task chamada `dm-cdc-task`.
+4. Vá até a aba **Table statistics**.
+
+#### O que observar:
+
+Para cada tabela replicada (`brewery`, `beer`, `profile`), você verá colunas como:
+
+| Campo              | Descrição                               |
+|--------------------|-----------------------------------------|
+| **Schema name**    | Nome do schema de destino               |
+| **Table name**     | Nome da tabela replicada                |
+| **Load state**     | Estado da carga (ex: `Table completed`) |
+| **Total rows**     | Total de linhas processadas             |
+| **Inserts**        | Número de registros inseridos           |
+
+> **Dica:** compare o número de **Total rows** com a quantidade de **Inserts**. Se os valores estiverem exatos, a replicação foi concluída com sucesso.
+
+> Essa verificação é útil principalmente nos primeiros testes ou se houver dúvida sobre o funcionamento do DMS. Em ambientes produtivos, isso pode ser automatizado ou monitorado por logs.
+
+---
+
+### 3. Verificar arquivos na camada Raw (S3)
 
 Após a execução do `seed`, os dados são enviados para a **camada Raw**, no bucket `dm-stage-<account_id>`, organizados por tabela:
 
@@ -73,7 +128,7 @@ Cada pasta contém arquivos `.gz` com os dados brutos, sem tratamento. A criaç�
 
 ---
 
-### 3. Verificar os controles criados no DynamoDB
+### 4. Verificar os controles criados no DynamoDB
 
 Após a chegada de um novo arquivo `.gz` na camada Raw, um **evento de notificação** do S3 é automaticamente disparado. Esse evento está configurado no bucket `dm-stage-<account_id>` para objetos que atendem ao filtro:
 
@@ -119,7 +174,7 @@ Cada item na tabela possui os seguintes campos:
 
 ---
 
-### 4. Início automático do processamento (DynamoDB Stream + Step Functions)
+### 5. Início automático do processamento (DynamoDB Stream + Step Functions)
 
 A tabela `dm-processing-control` está configurada com **DynamoDB Streams** ativado, no modo **"New image"**. Isso significa que **cada novo item de controle criado dispara um evento**, que é usado para acionar automaticamente o pipeline de ingestão da camada Bronze.
 
@@ -152,7 +207,7 @@ O número de `executions started` deve corresponder ao número de itens criados 
 
 ---
 
-### 5. Verificar os arquivos Parquet gerados (camada Bronze)
+### 6. Verificar os arquivos Parquet gerados (camada Bronze)
 
 Com o pipeline executado com sucesso, os arquivos `.gz` da camada Raw são processados e convertidos para **formato Parquet** no bucket `dm-datalake-<account_id>`, dentro da pasta `bronze/`.
 
@@ -184,7 +239,7 @@ Cada arquivo `.parquet` corresponde diretamente a um `.gz` original da camada Ra
 
 ---
 
-### 6. Verificação final via Athena
+### 7. Verificação final via Athena
 
 Com os arquivos `.parquet` gerados e organizados em partições Hive na camada Bronze, a consulta pode ser feita diretamente pelo **Athena**, utilizando o Glue Catalog.
 
