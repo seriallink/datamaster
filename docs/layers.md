@@ -68,7 +68,7 @@ A camada **bronze** realiza a primeira transformação dos dados: converte arqui
     * Ideal para workloads event-driven e streaming-friendly.
 * **Sem Iceberg nesta camada**:
     * Iceberg é desnecessário para dados brutos e descartáveis.
-    * Não há necessidade de `time travel`, `merge`, versionamento.
+    * Não há necessidade de `time travel` ou `merge`.
     * Mantém a camada leve e rápida.
 
 ---
