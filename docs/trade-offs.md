@@ -184,7 +184,7 @@ Além disso, o mesmo código em Go pode ser reaproveitado em **funções Lambda*
 - **Prós**:
   - Extremamente flexível e poderoso.
 - **Contras**:
-  - Requer ambiente dedicado ou MWAA.
+  - Requer ambiente dedicado ou MWAA (Amazon Managed Workflows for Apache Airflow).
   - Integração com AWS exige operadores adicionais.
 
 ---
