@@ -572,7 +572,7 @@ Provisiona um ambiente de demonstração com um usuário IAM restrito, que pode 
 
 * **Permissões S3:**
 
-  * Leitura dos dados em `dm-datalake/gold/*`.
+  * Leitura dos dados em `dm-datalake-<account-id>/gold/*`.
   * Escrita e leitura no bucket `dm-demo-<account-id>`.
   * Permissão genérica `ListAllMyBuckets` para compatibilidade com o console do Athena.
 
