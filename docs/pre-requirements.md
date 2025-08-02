@@ -45,7 +45,7 @@ docker version
 
 Você precisa de uma conta **ativa e com acesso completo aos serviços da AWS**.
 
-Embora o projeto aproveite praticamente todos os serviços incluídos no Free Tier, o **Amazon Athena não faz parte do Free Tier**.
+Embora quase todos os serviços utilizados no projeto estejam contemplados no Free Tier da AWS, o **Amazon Athena não faz parte do Free Tier**.
 
 #### Como criar sua conta corretamente:
 
