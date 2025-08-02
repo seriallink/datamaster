@@ -74,7 +74,7 @@ All stacks deployed successfully!
 
 > **Importante**: Certifique-se de que o Docker Desktop esteja iniciado antes de executar esse comando. Algumas imagens precisam ser construídas e enviadas para o Amazon ECR durante esse processo.
 
-> **Atenção**: Todo o ambiente será provisionado neste passo, o que pode levar **mais de 1 hora**, dependendo da sua conexão e do provisionamento da AWS. Você pode acompanhar o progresso pelas mensagens exibidas na CLI, ou com mais detalhes diretamente na [console do AWS CloudFormation](https://console.aws.amazon.com/cloudformation).
+> **Atenção:** Todo o ambiente será provisionado neste passo. O tempo total pode ultrapassar 1 hora facilmente, principalmente devido à criação de recursos como **Aurora, Kinesis, e Clusters**. A conexão local tem impacto mínimo nesse processo.
 
 ---
 
