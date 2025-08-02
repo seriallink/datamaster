@@ -234,7 +234,7 @@ Todas as decisões foram tomadas com base no escopo e objetivos do projeto, prio
 - **Aproveitamento de recursos nativos AWS**
 - **Separação clara de responsabilidades por camada**
 
-As escolhas entre Go e Spark, Glue e EMR, ou Iceberg e Delta foram feitas com foco em **ajuste fino por etapa**, e não com uma abordagem one-size-fits-all.
+> Cada escolha foi feita com foco em **ajuste fino por etapa**, e não com uma abordagem one-size-fits-all.
 
 ---
 
