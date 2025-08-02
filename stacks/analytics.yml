@@ -79,15 +79,15 @@ Resources:
                         "ExecutionRoleArn": "${ExecutionRole}",
                         "JobDriver": {
                           "SparkSubmit": {
-                            "EntryPoint": "s3://${ArtifactsBucket}/etl/main.py",
-                            "SparkSubmitParameters": "--py-files s3://${ArtifactsBucket}/etl/bundle.zip",
+                            "EntryPoint": "s3://${ArtifactsBucket}/scripts/main.py",
+                            "SparkSubmitParameters": "--py-files s3://${ArtifactsBucket}/scripts/bundle.zip",
                             "EntryPointArguments.$": "States.Array('--layer', 'gold', '--table', $.table)"
                           }
                         },
                         "ConfigurationOverrides": {
                           "MonitoringConfiguration": {
                             "S3MonitoringConfiguration": {
-                              "LogUri": "s3://${ObserverBucket}/etl/logs/"
+                              "LogUri": "s3://${ObserverBucket}/scripts/logs/"
                             }
                           }
                         }
