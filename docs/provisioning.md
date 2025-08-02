@@ -69,7 +69,7 @@ Type 'go' to continue: go
 
 Esse comando cria todos os recursos necessários do projeto usando os templates do CloudFormation de forma automatizada.
 
-Se todas as stacks forem criadas com sucesso, você verá uma mensagem de confirmação como esta:
+Se todas as stacks forem criadas com sucesso, no final você verá uma mensagem de confirmação como esta:
 
 ```
 All stacks deployed successfully!
@@ -79,7 +79,7 @@ All stacks deployed successfully!
 
 > **Atenção**: Certifique-se de que o Docker Desktop esteja iniciado antes de executar esse comando. Algumas imagens precisam ser construídas e enviadas para o Amazon ECR durante esse processo.
 
-> **Importante:** Todo o ambiente será provisionado neste passo. O tempo total pode ultrapassar 1 hora facilmente, principalmente devido à criação de recursos como **Aurora, Kinesis, e Clusters**. A conexão local tem impacto mínimo nesse processo.
+> **Importante:** Todo o ambiente será provisionado neste passo. O tempo total leva aproximadamente 1 hora, principalmente devido à criação de recursos como **Aurora, Kinesis, DynamoDB, e Clusters (DMS, ECS, EMR)**. A conexão local tem impacto mínimo nesse processo.
 
 > Além das mensagens exibidas durante a execução, o **acompanhamento detalhado de cada stack** pode ser feito diretamente pelo console da AWS, na seção **CloudFormation → Stacks**.
 
@@ -87,26 +87,26 @@ All stacks deployed successfully!
 
 ### 4. Executar os scripts de migração no Aurora
 
-Após o provisionamento das stacks, o próximo passo é executar os scripts SQL no Aurora, que criam os schemas e tabelas necessários nas camadas `core`, `views` e `marts`.
+Após o provisionamento das stacks, o próximo passo é executar os scripts SQL no **Aurora**, que criam os schemas `dm_core`, `dm_view` e `dm_mart`. Esses schemas representam, respectivamente, as camadas **bronze**, **silver** e **gold** do data lake.
+
+Embora apenas o schema `dm_core` seja efetivamente populado com dados reais (para fins de ingestão via DMS ou seed), os demais (`dm_view` e `dm_mart`) foram criados como **base para a modelagem conceitual** das camadas superiores, servindo como referência direta para a estrutura das tabelas nas camadas silver e gold.
 
 Na CLI, execute:
 
 ```
 >>> migration
-You are about to run all migration scripts in order.
-Type 'go' to continue: go
 ````
 
-A saída esperada deve seguir esse padrão:
+Confirme a execução digitando `go` quando solicitado:
 
 ```
-Running database/migrations/001_create_dm_core.sql script...
-CDC replication is starting — this may take several minutes on the first run...
-You can monitor progress via AWS Console > DMS > arn:aws:dms:us-east-1:<account_id>:task:<task_id>
-Current task status: running
-Replication task is already running.
-Running database/migrations/002_create_dm_view.sql script...
-Running database/migrations/003_create_dm_mart.sql script...
+You are about to run all migration scripts in order.
+Type 'go' to continue: go
+```
+
+Ao final da execução bem-sucedida de todos os scripts, você verá uma mensagem como esta:
+
+```
 All migration scripts executed successfully!
 ```
 
