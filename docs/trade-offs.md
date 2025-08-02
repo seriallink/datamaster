@@ -108,7 +108,7 @@ Nesta seção, explico as principais decisões técnicas e os trade-offs avaliad
 
 Para a etapa de ingestão da **camada bronze**, optei pela implementação em **Go puro** após a realização de um **benchmark reproduzível** comparando Go + ECS com Spark (via AWS Glue). 
 
-O resultado foi expressivo: o Go entregou **uma escrita quase 10x mais rápida**, com **uso de memória extremamente baixo** (menos de 160 MB), enquanto o Glue Job apresentou latência elevada de inicialização e tempo total significativamente maior.
+O resultado foi expressivo: o Go entregou **uma escrita quase 17x mais rápida**, com **uso de memória extremamente baixo** (pouco mais de 140 MB), enquanto o Glue Job apresentou latência elevada de inicialização e tempo total significativamente maior.
 
 Além disso, o mesmo código em Go pode ser reaproveitado em **funções Lambda** para arquivos menores (até \~100 mil linhas), eliminando o cold start do ECS e tornando a solução ainda mais versátil e econômica.
 
