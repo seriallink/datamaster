@@ -267,6 +267,7 @@ Diversos pontos foram identificados como oportunidades reais de evolução:
 * **Compactação ativa de arquivos Iceberg**: redução de small files via `RewriteDataFiles` automatizado.
 * **Políticas de retenção em S3**: expurgo automático em raw e bronze com regras de ciclo de vida.
 * **Parametrização de recursos nas stacks**: permitir ajustes dinâmicos por ambiente e controle de custo/performance.
+* **Versionamento de schema na bronze**: separação por prefixos (`v1/`, `v2/`) para garantir schema evolution sem perder compatibilidade com Athena e Glue sem impacto em performance.
 * **Governança reforçada na camada raw**: integração com Amazon Macie para detectar PII não estruturado.
 * **Validação de qualidade de dados**: regras de integridade e consistência com Deequ ou lógicas customizadas.
 * **Catalogação e linhagem de dados**: adoção futura de OpenMetadata ou DataHub para rastreabilidade fim a fim.

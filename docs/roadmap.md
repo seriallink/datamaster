@@ -63,6 +63,21 @@ Essa melhoria facilita o controle de custos, o ajuste fino de performance e a au
 
 ---
 
+### Versionamento de dados para suportar schema evolution na bronze
+
+Na camada **bronze**, onde os dados são gravados no formato **Parquet** sem o uso de tabelas Iceberg, a **evolução de schema não é automática** e pode causar inconsistências entre arquivos antigos e novos, especialmente ao consultar via **Athena** ou ferramentas que se baseiam no schema registrado no Glue Catalog.
+
+Uma abordagem robusta e simples é aplicar **versionamento explícito de schema**, organizando os dados por prefixo de versão (ex: `bronze/table/v1/`, `bronze/table/v2/`). Essa estratégia apresenta diversas vantagens:
+
+* **Evita incompatibilidades entre arquivos Parquet com schemas diferentes**
+* **Garante compatibilidade com o Glue Catalog e com consultas via Athena**
+* **Facilita testes e validações de novas versões de schema antes de promover ao uso oficial**
+* **Permite rollback simples em caso de erro**
+
+> **Futuro possível:** incorporar suporte a múltiplas versões de schema no CLI, com comandos para criar nova versão, validar consistência e promover a nova versão como principal.
+
+---
+
 ## Governança e Segurança de Dados
 
 ### Governança e detecção de dados sensíveis na camada Raw
