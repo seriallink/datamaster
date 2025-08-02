@@ -119,7 +119,7 @@ Incluem:
 * Arquivo Parquet gerado
 * Arquivo JSON com todas as métricas coletadas por execução
 
-> **Importante!** O deploy da stack benchmark deve ser feito somente após a criação das stacks anteriores, pois ela depende de recursos já existentes.
+> **Importante!** O deploy da stack benchmark deve ser feito somente após a criação das demais stacks, pois ela depende de recursos já existentes.
 
 ---
 
@@ -136,7 +136,7 @@ A comparação entre as abordagens trouxe resultados expressivos:
 | Memória usada      | **157 MB**    | Indisponível           |
 | Infraestrutura     | 2 vCPU / 4 GB | 4 vCPU / 16 GB (1 DPU) |
 
-* O **Go com ECS** apresentou desempenho **quase 10x superior** na etapa de escrita e **uso de memória drasticamente menor**.
+* O **Go com ECS** apresentou desempenho **quase 10x superior** na etapa de escrita e **uso de memória extremamente baixa**.
 * O mesmo código em Go pode ser reutilizado em funções **AWS Lambda** para cenários com menor volume de dados (até \~100 mil linhas), eliminando o tempo de provisionamento do ECS e tornando a solução ainda mais atrativa para cargas pequenas ou frequentes.
 * Usando **Go**, há **controle total sobre os recursos de infraestrutura e execução**, permitindo decisões precisas sobre paralelismo, alocação de memória e estratégias de escrita. Embora exija desenvolvimento próprio, **o código pode ser continuamente otimizado e evoluído**, sem limitações impostas por engines como Spark ou ambientes gerenciados.
 * Já o **Glue Job** sofreu com latência maior de inicialização e maior custo computacional, apesar de oferecer um ambiente gerenciado e simplificado.
