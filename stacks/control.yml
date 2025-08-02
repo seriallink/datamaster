@@ -19,8 +19,6 @@ Resources:
           AttributeType: S
         - AttributeName: status
           AttributeType: S
-        - AttributeName: checksum
-          AttributeType: S
       KeySchema:
         - AttributeName: control_id
           KeyType: HASH
@@ -39,11 +37,11 @@ Resources:
               KeyType: RANGE
           Projection:
             ProjectionType: ALL
-        - IndexName: dm-gsi-table-checksum
+        - IndexName: dm-gsi-schema-table
           KeySchema:
-            - AttributeName: table_name
+            - AttributeName: schema_name
               KeyType: HASH
-            - AttributeName: checksum
+            - AttributeName: table_name
               KeyType: RANGE
           Projection:
             ProjectionType: ALL
@@ -81,8 +79,8 @@ Outputs:
     Export:
       Name: dm-schema-status-index-name
 
-  TableChecksumIndexName:
-    Description: Name of the GSI used to prevent duplicated seed uploads based on table and checksum
-    Value: dm-gsi-table-checksum
+  SchemaTableIndexName:
+    Description: Name of the GSI used to query processing control by schema and table
+    Value: dm-gsi-schema-table
     Export:
-      Name: dm-table-checksum-index-name
+      Name: dm-schema-table-index-name

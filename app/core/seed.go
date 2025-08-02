@@ -76,7 +76,9 @@ func SeedFile(name string) error {
 }
 
 // SeedFromReader seeds a dataset into Aurora or uploads it to S3, depending on the table name.
-// It checks for duplicates using a checksum stored in DynamoDB and skips the operation if the seed already exists.
+//
+// It checks for duplicates by querying the ProcessingControl table using the schema ("dm_bronze")
+// and table name. If an entry already exists, the operation is skipped.
 //
 // Parameters:
 //   - data: Compressed CSV content in bytes (gzip).
@@ -88,21 +90,19 @@ func SeedFromReader(data []byte, name string) error {
 
 	cfg := GetAWSConfig()
 	dynamo := dynamodb.NewFromConfig(cfg)
-	checksum := computeChecksum(data)
 
 	outputs, err := (&Stack{Name: misc.StackNameControl}).GetStackOutputs(cfg)
 	if err != nil {
 		return fmt.Errorf("failed to get Processing stack outputs: %w", err)
 	}
 
-	// Check for duplication before proceeding
 	out, err := dynamo.Query(context.TODO(), &dynamodb.QueryInput{
 		TableName:              aws.String(outputs["ProcessingControlTableName"]),
-		IndexName:              aws.String(outputs["TableChecksumIndexName"]),
-		KeyConditionExpression: aws.String("table_name = :t AND checksum = :c"),
+		IndexName:              aws.String(outputs["SchemaTableIndexName"]),
+		KeyConditionExpression: aws.String("schema_name = :s AND table_name = :t"),
 		ExpressionAttributeValues: map[string]types.AttributeValue{
+			":s": &types.AttributeValueMemberS{Value: "dm_bronze"},
 			":t": &types.AttributeValueMemberS{Value: name},
-			":c": &types.AttributeValueMemberS{Value: checksum},
 		},
 		Limit: aws.Int32(1),
 	})
@@ -110,7 +110,7 @@ func SeedFromReader(data []byte, name string) error {
 		return fmt.Errorf("failed to query DynamoDB: %w", err)
 	}
 	if len(out.Items) > 0 {
-		fmt.Printf("Seed already exists for table='%s' and checksum='%s', skipping.\n", name, checksum)
+		fmt.Printf(misc.Yellow("Seed already exists for schema='dm_bronze' and table='%s', skipping.\n", name))
 		return nil
 	}
 
