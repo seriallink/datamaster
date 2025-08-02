@@ -203,7 +203,7 @@ Além disso, o mesmo código em Go pode ser reaproveitado em **funções Lambda*
   - Performance superior em BI intensivo.
 - **Contras**:
   - Clusters requerem tuning e manutenção.
-  - Custo fixo mesmo com pouco uso.
+  - Custo fixo elevado mesmo com pouco uso.
 
 ---
 
