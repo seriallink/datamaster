@@ -102,6 +102,30 @@ Use `stacks` para listar as stacks disponíveis.
 
 ---
 
+### `ecr`
+
+Publica todas as imagens Docker embarcadas no CLI para o Amazon ECR:
+
+```bash
+>>> ecr
+```
+
+Para publicar uma imagem específica:
+
+```bash
+>>> ecr --name bronze-ingestor-mass
+>>> ecr --name benchmark-go
+```
+
+Parâmetros:
+
+* `--name` (opcional): nome da imagem Docker (se omitido, publica todas as imagens embarcadas)
+
+> As imagens são carregadas a partir de arquivos TAR embutidos no CLI.
+> Para listar os artefatos disponíveis, use: `artifacts`.
+
+---
+
 ### `exit`
 
 Sai da sessão interativa:
