@@ -136,10 +136,10 @@ Após o primeiro ciclo de geração (que pode levar até 24 horas), você verá 
 No script, o campo `LOCATION` estará com o valor:
 
 ```sql
-LOCATION 's3://dm-costs-<id_account>/dm_costs/cur/data/';
+LOCATION 's3://dm-costs-<account_id>/dm_costs/cur/data/';
 ```
 
-**Substitua `<id_account>` pelo número real da sua conta AWS antes de executar.**
+**Substitua `<account_id>` pelo número real da sua conta AWS antes de executar.**
 
 ---
 
@@ -147,7 +147,7 @@ Após criar a tabela, adicione a partição correspondente ao report do mês que
 
 ```sql
 ALTER TABLE dm_costs.cur ADD PARTITION (BILLING_PERIOD='2025-07')
-LOCATION 's3://dm-costs-<id_account>/dm_costs/cur/data/BILLING_PERIOD=2025-07/';
+LOCATION 's3://dm-costs-<account_id>/dm_costs/cur/data/BILLING_PERIOD=2025-07/';
 ```
 
 ---
