@@ -83,7 +83,7 @@ A camada **silver** representa os dados **validados, normalizados e enriquecidos
 
 * Permite operações `INSERT`, `UPDATE`, `DELETE`.
 * Suporte a `schema evolution`, `time travel` e propriedades `ACID`.
-* Particionado por `review_year`, `review_month`, etc.
+- Particionado por `partitioned_at` (formato `yyyy-MM-dd`), facilitando o controle de cargas incrementais e otimização de queries.
 
 ### Ferramenta: Spark (PySpark)
 
