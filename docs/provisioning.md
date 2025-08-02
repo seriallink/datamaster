@@ -2,7 +2,7 @@
 
 Quase todo o provisionamento do ambiente é feito via CLI, garantindo reprodutibilidade e padronização da infraestrutura. No entanto, ainda existem alguns poucos passos manuais necessários — geralmente relacionados a permissões específicas — como a configuração da autenticação no Grafana e a habilitação das métricas de Billing para visualização de custos.
 
-Apesar de o processo estar altamente automatizado, ele envolve múltiplos serviços e etapas que devem ser seguidas com atenção e na ordem descrita abaixo para garantir o funcionamento correto do ambiente.
+Apesar do processo estar altamente automatizado, ele envolve múltiplos serviços e etapas que devem ser seguidas com atenção e na ordem descrita abaixo para garantir o funcionamento correto do ambiente.
 
 ## Etapas de Provisionamento
 
