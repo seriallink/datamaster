@@ -144,9 +144,9 @@ Catalog creation completed successfully.
 
 > Esse comando garante que todas as tabelas do projeto estejam corretamente registradas e organizadas no Glue Catalog, com nome, tipo e estrutura compatíveis com o Athena e os engines de processamento.
 
-> Caso queira criar apenas uma camada ou um subconjunto de tabelas, consulte a documentação do comando `help catalog` para ver as flags disponíveis (`--layer` e `--tables`).
-
 ---
+
+### Conclusão do Provisionamento
 
 Com a execução desses passos, o ambiente estará completamente provisionado e operacional. Todas as stacks estarão criadas, o banco de dados inicializado e a replicação contínua de dados via DMS ativa.
 
