@@ -142,7 +142,7 @@ A camada **gold** é voltada para **consumo direto por dashboards, relatórios e
 ## Considerações Finais
 
 * Cada camada foi projetada com **foco na função que exerce**, evitando overengineering.
-* A separação clara entre bronze → silver → gold permite modularidade, reprocessamento isolado e governança granular.
+* A separação clara entre raw → bronze → silver → gold permite modularidade, reprocessamento isolado e governança granular.
 * A decisão de **usar Go na bronze** e **Spark nas camadas analíticas** equilibra **performance, custo e robustez**.
 * Iceberg foi adotado apenas nas camadas onde seus benefícios realmente se justificam.
 
