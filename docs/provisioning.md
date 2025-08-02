@@ -58,9 +58,14 @@ Com a autenticação feita, o próximo passo é executar o deploy de todas as st
 
 ```
 >>> deploy
+````
+
+Confirme a execução digitando `go` quando solicitado:
+
+```
 You are about to deploy all stacks.
 Type 'go' to continue: go
-````
+```
 
 Esse comando cria todos os recursos necessários do projeto usando os templates do CloudFormation de forma automatizada.
 
@@ -70,11 +75,11 @@ Se todas as stacks forem criadas com sucesso, você verá uma mensagem de confir
 All stacks deployed successfully!
 ```
 
-> **Para entender o propósito de cada stack, consulte a seção [Componentização da Arquitetura por Stacks](./stacks.md).**
+> Para entender o propósito de cada stack, consulte a seção **[Componentização da Arquitetura por Stacks](./stacks.md).**
 
-> **Importante**: Certifique-se de que o Docker Desktop esteja iniciado antes de executar esse comando. Algumas imagens precisam ser construídas e enviadas para o Amazon ECR durante esse processo.
+> **Atenção**: Certifique-se de que o Docker Desktop esteja iniciado antes de executar esse comando. Algumas imagens precisam ser construídas e enviadas para o Amazon ECR durante esse processo.
 
-> **Atenção:** Todo o ambiente será provisionado neste passo. O tempo total pode ultrapassar 1 hora facilmente, principalmente devido à criação de recursos como **Aurora, Kinesis, e Clusters**. A conexão local tem impacto mínimo nesse processo.
+> **Importante:** Todo o ambiente será provisionado neste passo. O tempo total pode ultrapassar 1 hora facilmente, principalmente devido à criação de recursos como **Aurora, Kinesis, e Clusters**. A conexão local tem impacto mínimo nesse processo.
 
 ---
 
