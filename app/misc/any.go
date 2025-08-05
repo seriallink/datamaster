@@ -1,5 +1,22 @@
 package misc
 
+// In checks whether a given value exists within a list of values.
+//
+// Parameters:
+//   - value: the target value to search for.
+//   - list: a variadic list of values to search within.
+//
+// Returns:
+//   - bool: true if the value is found in the list; false otherwise.
+func In(value any, list ...any) bool {
+	for _, element := range list {
+		if value == element {
+			return true
+		}
+	}
+	return false
+}
+
 // NotIn checks if a value is not present in the provided list.
 //
 // Parameters:
