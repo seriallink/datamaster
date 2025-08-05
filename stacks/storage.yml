@@ -86,7 +86,7 @@ Resources:
 Outputs:
 
   StageBucketName:
-    Description: Name of the Stage (Parquet Landing) bucket
+    Description: Name of the Stage bucket
     Value: !Ref StageBucket
     Export:
       Name: dm-stage-bucket
