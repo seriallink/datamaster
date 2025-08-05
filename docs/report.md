@@ -28,7 +28,7 @@ Esse caráter experimental e iterativo fortalece a solução como um **case téc
 | **2. Ingestão de Dados**                   | Streaming (DMS → Kinesis → Firehose) e batch (.gz), ambos com controle via DynamoDB e processamento em Go (Lambda ou ECS). |
 | **3. Armazenamento de Dados**              | Armazenamento em S3 com particionamento por camada; uso de Parquet e Iceberg.                                              |
 | **4. Observabilidade**                     | Dashboards no Grafana com métricas de saúde, falhas, tentativas e custo (via CUR).                                         |
-| **5. Segurança de Dados**                  | Controle de acesso via IAM e Lake Formation com políticas granulares, suporte a SSO e auditoria via CloudTrail.            |
+| **5. Segurança de Dados**                  | Controle de acesso via IAM e Lake Formation, suporte a SSO, criptografia em repouso com KMS e auditoria via CloudTrail.    |
 | **6. Mascaramento de Dados**               | Campos PII são detectados com uso de Comprehend e anonimizados já na Camada Bronze.                                        |
 | **7. Arquitetura de Dados**                | Arquitetura em camadas (raw → bronze → silver → gold) com controle incremental via DynamoDB.                               |
 | **8. Escalabilidade**                      | Serverless com auto-scaling nativo (Lambda, Glue, EMR); processamentos paralelos por tabela (Step Functions).              |
@@ -233,26 +233,32 @@ A observabilidade foi implementada com foco em **análise, operação e custo**:
 * Toda a criação dos dashboards é **automatizada via CLI**, com templates versionados
 * A solução suporta filtros por tempo (via partições) e pode ser expandida com novos painéis sem intervenção manual
 
+---
+
 ### 3.7 Governança e LGPD
 
 A governança foi tratada desde o início como um pilar do projeto:
 
 * **Lake Formation** controla acesso por tabela, coluna e usuário
 * **CloudTrail** audita acessos a dados
+* **Criptografia em repouso** com KMS aplicada na camada `raw`, com rotação e controle de acesso restrito
 * **Mascaramento automático** de campos sensíveis via AWS Comprehend (PII detection), com aplicação de hashing
+
+---
 
 ### 3.8 Benchmarking e Otimizações
 
-Uma parte importante do projeto foi dedicada à **experimentação controlada**:
+Uma parte importante do projeto foi dedicada à **experimentação controlada de desempenho**, com foco na etapa de **ingestão da camada bronze**.
 
-* Foram comparadas 3 abordagens de ingestão e escrita em Parquet:
+* Foram comparadas 3 abordagens para leitura de arquivos `.csv.gz` e escrita em **formato Parquet**:
 
-  1. Go puro em ECS
-  2. Glue Job
-  3. EMR Serverless
-* A abordagem com Go demonstrou desempenho até **10x superior** com menor uso de memória, justificando sua adoção nas camadas mais críticas de ingestão
+  1. **Go puro em ECS**
+  2. **Glue Job (PySpark)**
+  3. **EMR Serverless (PySpark)**
 
-Esses testes foram documentados, reprodutíveis e integrados ao próprio projeto como uma stack dedicada (`dm-benchmark`).
+* A abordagem com **Go puro em ECS** apresentou desempenho até **17x superior**, com uso baixíssimo de memória, justificando sua adoção como engine principal para ingestão de dados na camada bronze.
+
+Todos os testes foram **documentados, reproduzíveis** e integrados ao projeto como uma stack dedicada (`dm-benchmark`), permitindo validação contínua e futura evolução.
 
 ---
 

@@ -127,8 +127,8 @@ func DeployAllStacks(templates, artifacts, scripts embed.FS) error {
 
 	stacks := []Stack{
 		{Name: misc.StackNameNetwork},
-		{Name: misc.StackNameRoles},
 		{Name: misc.StackNameSecurity},
+		{Name: misc.StackNameRoles},
 		{Name: misc.StackNameStorage},
 		{Name: misc.StackNameRepositories},
 		{Name: misc.StackNameDatabase},

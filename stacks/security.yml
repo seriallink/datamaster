@@ -116,6 +116,26 @@ Resources:
         - Key: Component
           Value: Network
 
+  RawKmsKey:
+    Type: AWS::KMS::Key
+    Properties:
+      EnableKeyRotation: true
+      Description: KMS Key for encrypting raw layer data
+      KeyPolicy:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Sub arn:aws:iam::${AWS::AccountId}:root
+            Action: "kms:*"
+            Resource: "*"
+
+  RawKmsAlias:
+    Type: AWS::KMS::Alias
+    Properties:
+      AliasName: alias/dm-raw-kms-key
+      TargetKeyId: !Ref RawKmsKey
+
 Outputs:
 
   SecurityGroupId:
@@ -147,3 +167,15 @@ Outputs:
     Value: !Ref ProcessingSecurityGroup
     Export:
       Name: dm-processing-sg
+
+  RawKmsKeyId:
+    Description: KMS Key ID for encrypting raw layer data
+    Value: !Ref RawKmsKey
+    Export:
+      Name: dm-raw-kms-key-id
+
+  RawKmsKeyArn:
+    Description: KMS Key ARN for encrypting raw layer data
+    Value: !GetAtt RawKmsKey.Arn
+    Export:
+      Name: dm-raw-kms-key-arn

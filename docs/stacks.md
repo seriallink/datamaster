@@ -9,8 +9,8 @@ Abaixo estão descritas todas as stacks utilizadas no projeto:
 ## Sumário
 
 * [dm-network](#dm-network)
-* [dm-roles](#dm-roles)
 * [dm-security](#dm-security)
+* [dm-roles](#dm-roles)
 * [dm-storage](#dm-storage)
 * [dm-repositories](#dm-repositories)
 * [dm-database](#dm-database)
@@ -56,6 +56,38 @@ Provisiona a infraestrutura de rede base do projeto, incluindo VPC, subnets púb
 
 * **Tabela de Rotas:**
   Rota padrão (`0.0.0.0/0`) apontando para o Internet Gateway, associada às subnets públicas.
+
+---
+
+## dm-security
+
+**Responsabilidade:**
+Provisiona os recursos relacionados à **segurança de rede**, **criptografia em repouso** e **controle de acesso a segredos** utilizados no pipeline de processamento de dados.
+
+**Principais recursos:**
+
+### **Security Groups:**
+
+* **DBAccessSecurityGroup**: Permite acesso à porta 5432 (PostgreSQL) para o Aurora.
+* **GlueSecurityGroup**: Usado pelos Glue Jobs com tráfego interno liberado.
+* **DMSVpcSecurityGroup**: Associado à instância de replicação do DMS.
+* **ProcessingSecurityGroup**: Associado às ECS tasks (Fargate) do pipeline de dados.
+
+### **Ingress Rules:**
+
+* Permissão explícita para que o DMS acesse o Aurora PostgreSQL.
+* Liberação de tráfego interno entre workers Spark do Glue.
+
+### **Secrets Manager:**
+
+* **DBSecret**: Contém as credenciais do banco Aurora PostgreSQL.
+* **DBSecretResourcePolicy**: Restringe o acesso ao secret ao ARN do deployer.
+
+### **KMS Key para criptografia de dados**
+
+* **RawKmsKey**: Chave KMS usada para criptografar os buckets `dm-raw` e `dm-stage`, garantindo proteção dos dados em repouso via **SSE-KMS**.
+* **RawKmsAlias**: Alias `alias/dm-raw-kms-key` criado para facilitar a identificação e o uso da chave.
+* **Key Policy**: Define acesso granular apenas às roles que realmente precisam usar a chave, como `dm-worker-role` e `dm-firehose-role`.
 
 ---
 
@@ -113,32 +145,6 @@ Define todas as IAM Roles necessárias para operação dos serviços do projeto,
 
 ---
 
-## dm-security
-
-**Responsabilidade:**
-Provisiona os recursos relacionados à segurança de rede e controle de acesso a segredos utilizados no pipeline de processamento.
-
-**Principais recursos:**
-
-* **Security Groups:**
-
-  * `DBAccessSecurityGroup`: Permite acesso à porta 5432 (PostgreSQL) para o Aurora.
-  * `GlueSecurityGroup`: Usado pelos Glue Jobs com tráfego interno liberado.
-  * `DMSVpcSecurityGroup`: Associado à instância de replicação do DMS.
-  * `ProcessingSecurityGroup`: Associado às ECS tasks (Fargate) do pipeline de dados.
-
-* **Ingress Rules:**
-
-  * Permissão explícita para que o DMS acesse o Aurora PostgreSQL.
-  * Liberação de tráfego interno entre workers Spark do Glue.
-
-* **Secrets Manager:**
-
-  * `DBSecret`: Contém as credenciais do banco Aurora PostgreSQL.
-  * `DBSecretResourcePolicy`: Restringe o acesso ao secret ao ARN do deployer.
-
----
-
 ## dm-storage
 
 **Responsabilidade:**
@@ -149,8 +155,8 @@ Provisiona os buckets S3 utilizados para ingestão de dados, armazenamento estru
 ### Buckets S3:
 
 * **`dm-stage`**
-  Armazena arquivos da camada `raw/`, tanto recebidos por `streaming` quanto por ingestão `batch/`.
-  Utilizado como ponto de entrada de dados no data lake.
+  Armazena arquivos da camada `raw/`, recebidos via ingestão **streaming** (ex: Firehose) ou **batch** (ex: cargas de CSV).
+  É o **ponto de entrada dos dados no data lake**, com **criptografia em repouso habilitada via SSE-KMS** utilizando a chave `alias/dm-raw-kms-key`.
 
 * **`dm-datalake`**
   Armazena os dados organizados em camadas (`bronze/`, `silver/`, `gold/`).

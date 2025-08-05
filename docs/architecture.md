@@ -100,9 +100,17 @@ O Lake Formation foi habilitado no ambiente para centralizar o controle de acess
 * Integração com **IAM Identity Center (SSO)** ou roles específicas por consumidor
 * Auditoria de acessos com integração nativa ao **AWS CloudTrail**
 
+### Criptografia em repouso com KMS
+
+O bucket `dm-stage`, onde os dados são inicialmente armazenados na camada `raw`, possui **criptografia SSE-KMS ativada**. A chave KMS é gerenciada pelo projeto e tem permissões restritas às roles que participam do pipeline.
+
+* Os dados são automaticamente **criptografados em repouso** no S3
+* Acesso à chave é concedido apenas a roles autorizadas
+* A chave é rotacionada automaticamente e auditável via **CloudTrail**
+
 ### Detecção automática de PII com AWS Comprehend
 
-Durante a ingestão dos dados, o **AWS Comprehend** é utilizado para analisar dinamicamente amostras dos arquivos e identificar campos com informações sensíveis (PII). Quando detectados, esses campos tem o mascaramento aplicado automaticamente, sem necessidade de configuração manual. Esse mecanismo permite proteger dados pessoais de forma automatizada e adaptável.
+Durante a ingestão dos dados, o **AWS Comprehend** é utilizado para analisar dinamicamente amostras dos arquivos e identificar campos com informações sensíveis (PII). Quando detectados, esses campos têm o mascaramento aplicado automaticamente, sem necessidade de configuração manual. Esse mecanismo permite proteger dados pessoais de forma automatizada e adaptável.
 
 * Campos com alto score de PII são **mascarados automaticamente** durante o processo de ingestão
 * Isso evita exposição acidental de dados sensíveis mesmo nas camadas internas do lake
@@ -110,6 +118,10 @@ Durante a ingestão dos dados, o **AWS Comprehend** é utilizado para analisar d
 ### Usuário demo com acesso restrito
 
 Foi criado um **usuário IAM de demonstração** com acesso **exclusivo à camada gold** (Glue e S3), permitindo validar na prática os controles aplicados. Tentativas de acessar outras camadas como bronze ou silver resultam em erro de permissão.
+
+---
+
+Se quiser, posso gerar um diff formatado ou aplicar isso direto no `README.md` ou `docs/overview.md`, conforme sua estrutura. Deseja?
 
 ---
 

@@ -31,6 +31,42 @@ Para auditar ações de acesso e controle aplicadas pelo Lake Formation:
 
 ---
 
+## Criptografia em repouso com AWS KMS
+
+Para garantir a **proteção dos dados armazenados** no data lake, o bucket `dm-stage` — que armazena os arquivos sob o prefixo `raw/` — foi configurado com **SSE-KMS (Server-Side Encryption with AWS Key Management Service)**. Essa medida assegura que todos os dados recebidos via ingestão (tanto streaming quanto batch) estão criptografados em repouso.
+
+A stack `dm-security` provisiona:
+
+* A chave `RawKmsKey`, com rotação automática ativada
+* Um alias amigável: `alias/dm-raw-kms-key`
+* Exportação do ARN da chave para uso em outras stacks (como `storage` e `roles`)
+* Permissões específicas para as roles do projeto:
+
+   * `dm-worker-role`: leitura e descriptografia
+   * `dm-firehose-role`: gravação com criptografia
+   * Outras roles são bloqueadas por padrão, exceto se explicitamente autorizadas
+
+A validação é feita automaticamente — qualquer tentativa de acesso aos objetos criptografados sem permissão de uso da chave KMS resulta em erro de permissão (`KMS.AccessDeniedException`).
+
+### Como validar a criptografia
+
+1. No **console do S3**, acesse o bucket `dm-stage` e navegue até um objeto sob o prefixo `raw/`
+
+2. Vá até a seção **Properties**
+
+3. Verifique o campo **Encryption**:
+
+   * Deve estar como `AWS-KMS`
+   * Exibirá a chave utilizada: `alias/dm-raw-kms-key`
+
+4. (Opcional) No **CloudTrail**, filtre por `Event source = kms.amazonaws.com` e verifique eventos como:
+
+   * `Decrypt`, `Encrypt` ou `GenerateDataKey`
+
+> Essa configuração garante que todos os dados sensíveis que ingressam no data lake estão protegidos por criptografia forte, com controle e auditoria centralizados.
+
+---
+
 ## Detecção automática de PII com AWS Comprehend
 
 Durante o processo de ingestão na camada **bronze**, o projeto utiliza o **AWS Comprehend** para detectar dinamicamente **informações pessoais identificáveis (PII)**. Essa análise é aplicada a amostras dos arquivos e serve como mecanismo de proteção automatizado.

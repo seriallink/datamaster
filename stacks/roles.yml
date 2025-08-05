@@ -151,6 +151,11 @@ Resources:
                   - glue:GetTableVersions
                   - lambda:InvokeFunction
                 Resource: "*"
+              - Effect: Allow
+                Action:
+                  - kms:Encrypt
+                  - kms:GenerateDataKey
+                Resource: !ImportValue dm-raw-kms-key-arn
       Tags:
         - Key: Project
           Value: DataMaster
@@ -391,6 +396,12 @@ Resources:
                 Action:
                   - comprehend:DetectPiiEntities
                 Resource: "*"
+              - Effect: Allow
+                Action:
+                  - kms:Decrypt
+                  - kms:Encrypt
+                  - kms:GenerateDataKey
+                Resource: !ImportValue dm-raw-kms-key-arn
 
   StepFunctionRole:
     Type: AWS::IAM::Role
