@@ -192,6 +192,7 @@ Scripts incluídos (em ordem de execução):
 * `001_create_dm_core.sql`
 * `002_create_dm_view.sql`
 * `003_create_dm_mart.sql`
+* `004_create_plugins.sql`
 
 #### Executar um script específico:
 

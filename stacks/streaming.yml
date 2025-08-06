@@ -121,7 +121,7 @@ Resources:
     Type: AWS::DMS::ReplicationInstance
     Properties:
       ReplicationInstanceIdentifier: dm-cdc-instance
-      ReplicationInstanceClass: dms.t3.micro
+      ReplicationInstanceClass: dms.t3.small
       AllocatedStorage: 100
       VpcSecurityGroupIds:
         - !ImportValue dm-dms-vpc-sg-id

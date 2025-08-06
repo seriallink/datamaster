@@ -26,10 +26,12 @@ Resources:
   DBClusterParameterGroup:
     Type: AWS::RDS::DBClusterParameterGroup
     Properties:
-      Description: Cluster parameter group with CDC enabled
+      Description: Cluster parameter group with CDC and pglogical enabled
       Family: aurora-postgresql16
       Parameters:
         rds.logical_replication: 1
+        shared_preload_libraries: pg_stat_statements,pglogical
+        logical_decoding_work_mem: 131072  # 128 MB in kB
       Tags:
         - Key: Project
           Value: DataMaster
