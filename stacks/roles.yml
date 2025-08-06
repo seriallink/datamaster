@@ -326,6 +326,11 @@ Resources:
                   - s3:GetObject
                   - s3:ListBucket
                 Resource: "*"
+              - Effect: Allow
+                Action:
+                  - kms:Decrypt
+                  - kms:DescribeKey
+                Resource: !ImportValue dm-raw-kms-key-arn
 
   ProcessingControllerEventRole:
     Type: AWS::IAM::Role
