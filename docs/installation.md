@@ -14,11 +14,28 @@ O **Data Master CLI** é o ponto de entrada para toda a experiência deste proje
 
 Com os [requisitos atendidos](pre-requirements.md), siga os passos abaixo para instalar o CLI localmente:
 
-### 1. Clone o repositório
+---
+
+### 1. Clone o repositório dentro do seu `GOPATH`
+
+Para garantir que os imports funcionem corretamente no projeto Go, clone o repositório dentro da estrutura esperada pelo `GOPATH`:
 
 ```bash
+cd $GOPATH/src/github.com/seriallink
 git clone https://github.com/seriallink/datamaster.git
 cd datamaster
+```
+
+**Dica:** Se não souber onde está seu `GOPATH`, execute:
+
+```bash
+ go env
+```
+
+E procure pela linha:
+
+```bash
+GOPATH="/caminho/para/seu/gopath"
 ```
 
 ---
