@@ -1,3 +1,13 @@
+// Lambda function responsible for transforming and routing Firehose records
+// to the appropriate bronze table based on embedded metadata.
+//
+// For each incoming record, it extracts metadata (schema, table, operation),
+// flattens the payload, injects the operation type, and returns the transformed JSON
+// with dynamic partition keys for downstream S3 storage.
+//
+// Malformed or incomplete records are dropped and logged.
+// This function enables dynamic, metadata-driven routing of records
+// in a streaming ingestion pipeline.
 package main
 
 import (

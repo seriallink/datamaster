@@ -1,3 +1,17 @@
+// Lightweight Lambda function responsible for transforming a raw JSON file into a Parquet dataset
+// and storing it in the bronze layer of the data lake.
+//
+// Triggered by a Step Function or another orchestrator, it performs the following steps:
+//   - Retrieves processing metadata from DynamoDB
+//   - Downloads the raw file from S3
+//   - Applies PII masking using AWS Comprehend
+//   - Maps the payload to a typed schema
+//   - Writes the result to Parquet format
+//   - Uploads the output to the bronze path in the data lake
+//   - Registers the next processing step (silver) in DynamoDB
+//
+// This function is designed for small to medium workloads and serves as
+// the event-driven ingestion entry point for the bronze layer.
 package main
 
 import (

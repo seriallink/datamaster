@@ -1,3 +1,16 @@
+// Lambda function responsible for initializing the bronze ingestion pipeline
+// by registering metadata about new raw files in the ProcessingControl table.
+//
+// Triggered by S3 Event Notifications, it performs the following actions:
+//   - Decompresses the uploaded .csv.gz or .json.gz file
+//   - Counts the number of records (CSV or line-delimited JSON)
+//   - Computes a SHA-256 checksum of the uncompressed content
+//   - Estimates the file's compute target (Lambda or ECS)
+//   - Stores a new ProcessingControl entry in DynamoDB, including record count,
+//     format, checksum, file size, and destination layer
+//
+// This function ensures that all incoming files are tracked, validated, and
+// prepared for downstream ingestion into the bronze layer.
 package main
 
 import (

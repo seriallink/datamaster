@@ -1,3 +1,16 @@
+// ECS worker responsible for transforming large raw files into Parquet datasets
+// and storing them in the bronze layer of the data lake.
+//
+// Designed for high-volume ingestion, it is triggered with an object key and executes the following steps:
+//   - Fetches processing metadata from DynamoDB
+//   - Downloads and decompresses the raw .csv.gz or .json.gz file from S3
+//   - Applies schema-based transformation using a strongly typed model
+//   - Writes the records to Parquet format using stream-based processing
+//   - Uploads the output to the bronze layer in the data lake
+//   - Registers the control entry for the next processing layer (silver)
+//
+// This implementation complements the Lambda-based bronze ingestor and is recommended
+// for datasets exceeding 100,000 records or with larger payloads.
 package main
 
 import (

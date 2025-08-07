@@ -1,3 +1,24 @@
+// This worker implements the ECS benchmark task for high-performance CSV-to-Parquet conversion in Go.
+//
+// This benchmark is designed to evaluate the ingestion speed, memory usage, and overall efficiency of
+// a Go-based pipeline compared to alternatives like AWS Glue or EMR Serverless.
+//
+// Key features:
+//   - Reads compressed CSV (.csv.gz) files from S3
+//   - Parses records into strongly typed structs (bronze.Review) using concurrent workers
+//   - Writes Parquet output using the parquet-go library with Snappy compression and batching
+//   - Uploads the final Parquet file and a detailed benchmark result (.json) back to S3
+//
+// The benchmark is triggered as an ECS Fargate task and controlled via environment variables:
+//
+//   - BENCHMARK_BUCKET: S3 bucket used for input and output
+//   - BENCHMARK_INPUT: Path to the input CSV file (.csv.gz)
+//   - BENCHMARK_OUTPUT: Path to write the Parquet file
+//   - BENCHMARK_RESULT: Path to write the benchmark summary in JSON format
+//
+// The benchmark output includes CSV read time, Parquet write time, total task duration, and memory usage.
+//
+// This code serves both as a performance reference and a validation tool for the ingestion layer.
 package main
 
 import (

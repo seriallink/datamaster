@@ -11,7 +11,7 @@ COPY . .
 ENV CGO_ENABLED=0 GOOS=linux GOARCH=amd64
 
 # Build the target binary from the root module
-RUN go build -o /benchmark-go ./builders/benchmark-go
+RUN go build -o /bronze-ingestor-mass ./workers/bronze-ingestor-mass
 
 # Stage 2: Runtime
 FROM alpine:latest
@@ -20,7 +20,7 @@ FROM alpine:latest
 WORKDIR /app
 
 # Copy the binary from the builder stage
-COPY --from=builder /benchmark-go .
+COPY --from=builder /bronze-ingestor-mass .
 
 # Set entrypoint
-ENTRYPOINT ["./benchmark-go"]
+ENTRYPOINT ["./bronze-ingestor-mass"]
