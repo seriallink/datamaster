@@ -6,8 +6,6 @@ import (
 	"embed"
 	"encoding/json"
 	"fmt"
-	emrtypes "github.com/aws/aws-sdk-go-v2/service/emrserverless/types"
-	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"io"
 	"net/http"
 	"strings"
@@ -19,7 +17,9 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/ecs"
 	"github.com/aws/aws-sdk-go-v2/service/ecs/types"
 	"github.com/aws/aws-sdk-go-v2/service/emrserverless"
+	emrtypes "github.com/aws/aws-sdk-go-v2/service/emrserverless/types"
 	"github.com/aws/aws-sdk-go-v2/service/glue"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 )
 
 // BenchmarkResult holds detailed timing and resource usage information for a single benchmark run.
