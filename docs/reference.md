@@ -87,9 +87,6 @@ Você encontrará:
 > A documentação cobre tanto a camada de **infraestrutura e orquestração** (CLI, core, catalog) quanto os **processadores e utilitários** de ingestão, transformação e benchmark.
 
 ---
-Perfeito. Aqui está o tutorial completo atualizado, agora com o passo para instalar as dependências **antes de executar o `pydoc`**, garantindo que todos os módulos possam ser importados corretamente:
-
----
 
 ## Visualização da Documentação Python com `pydoc`
 
@@ -136,10 +133,6 @@ python -m pydoc -p 6061
 ```
 
 > Use `6061` para evitar conflito com o GoDoc, que roda na porta `6060`.
-
-Claro! Aqui está a seção **5** com a descrição rápida de cada pacote, mantendo o estilo enxuto e direto:
-
----
 
 ### 5. Acesse a documentação no navegador
 
