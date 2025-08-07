@@ -8,6 +8,23 @@ func init() {
 	Register(&Review{})
 }
 
+// Review represents the schema of the review dataset in the bronze layer.
+//
+// This model is stored in Parquet format and captures detailed beer review data,
+// including various rating aspects and relationships to beer, brewery, and user profile.
+//
+// Fields:
+//   - ReviewID: Unique identifier for the review.
+//   - BreweryID: ID of the associated brewery.
+//   - BeerID: ID of the reviewed beer.
+//   - ProfileID: ID of the user who submitted the review.
+//   - ReviewOverall: Overall rating given by the user.
+//   - ReviewAroma: Aroma score given by the user.
+//   - ReviewAppearance: Appearance score given by the user.
+//   - ReviewPalate: Palate score given by the user.
+//   - ReviewTaste: Taste score given by the user.
+//   - ReviewTime: Timestamp (Unix) of when the review was submitted.
+//   - Operation: CDC operation type (insert, update, delete).
 type Review struct {
 	ReviewID         int64   `json:"review_id"         parquet:"review_id"`
 	BreweryID        int64   `json:"brewery_id"        parquet:"brewery_id"`
@@ -18,7 +35,7 @@ type Review struct {
 	ReviewAppearance float64 `json:"review_appearance" parquet:"review_appearance,optional"`
 	ReviewPalate     float64 `json:"review_palate"     parquet:"review_palate,optional"`
 	ReviewTaste      float64 `json:"review_taste"      parquet:"review_taste,optional"`
-	ReviewTime       int64   `json:"review_time"       parquet:"review_time,optional"` // Unix timestamp
+	ReviewTime       int64   `json:"review_time"       parquet:"review_time,optional"`
 	Operation        string  `json:"operation"         parquet:"operation,dict"`
 }
 

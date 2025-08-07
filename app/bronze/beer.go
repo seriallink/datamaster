@@ -6,6 +6,18 @@ func init() {
 	Register(&Beer{})
 }
 
+// Beer represents the schema of the beer dataset in the bronze layer.
+//
+// This model is used for writing data in Parquet format and includes metadata
+// required for downstream processing such as operation type.
+//
+// Fields:
+//   - BeerID: Unique identifier for the beer.
+//   - BreweryID: Reference to the brewery that produced the beer.
+//   - BeerName: Name of the beer.
+//   - BeerStyle: Style/category of the beer (e.g., IPA, Stout).
+//   - BeerAbv: Alcohol by volume (ABV) percentage. Optional field.
+//   - Operation: Type of change (insert, update, delete) used for CDC processing.
 type Beer struct {
 	BeerID    int64   `json:"beer_id"    parquet:"beer_id"`
 	BreweryID int64   `json:"brewery_id" parquet:"brewery_id"`

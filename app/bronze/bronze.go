@@ -1,21 +1,18 @@
-// Package model defines the core ORM entities used throughout the data pipeline.
+// Package bronze defines the strongly typed data models used for the bronze layer
+// of the Data Master pipeline.
 //
-// These structs represent the source tables (e.g., beer, brewery, profile, review),
-// and are used in both ingestion (raw → bronze) and transformation layers (bronze → silver → gold).
+// Each model represents a specific raw dataset (e.g., beer, brewery, profile, review)
+// and is mapped to a corresponding Parquet schema via struct tags.
 //
-// Each model is registered dynamically and includes explicit GORM annotations for integration
-// with Aurora PostgreSQL. These models serve as the canonical schema definitions for structured data.
+// The package also provides a dynamic model registry that allows runtime loading
+// and instantiation of models based on the fully qualified table name.
 //
-// Notes:
-//   - The `TableName()` method is implemented to enforce schema-qualified naming.
-//   - Some models (like Review) also include test data generators to support seeding and benchmarking.
-//
-// This package complements the bronze and dialect layers by enabling schema alignment and data validation.
-package model
+// All models implement the Model interface, which supports schema-aware
+// conversions from CSV and JSON inputs into typed Go structs.
+package bronze
 
 import (
 	"fmt"
-	"reflect"
 	"sync"
 )
 
@@ -23,6 +20,7 @@ var models sync.Map
 
 type Model interface {
 	TableName() string
+	FromCSV([]string, map[string]int) (any, error)
 }
 
 // Register stores a model implementation in the global registry for later access.
@@ -79,31 +77,5 @@ func LoadModel(fullyQualifiedTableName string) (Model, error) {
 
 	// model not found
 	return md.(Model), nil
-
-}
-
-// LoadInstance returns a new instance of a registered model.
-//
-// It first retrieves the model by its fully qualified table name (in the format "schema.table")
-// using LoadModel. Then, it creates a new instance of that model using reflection.
-//
-// Parameters:
-//   - fullyQualifiedTableName: The unique identifier of the model in the format "schema.table".
-//
-// Returns:
-//   - Model: A new instance of the registered model.
-//   - error: An error if the model is not found or cannot be instantiated.
-func LoadInstance(fullyQualifiedTableName string) (Model, error) {
-
-	// load model
-	md, err := LoadModel(fullyQualifiedTableName)
-
-	// the model could not be loaded
-	if err != nil {
-		return nil, err
-	}
-
-	// return a new instance of the model
-	return reflect.New(reflect.TypeOf(md).Elem()).Interface().(Model), nil
 
 }

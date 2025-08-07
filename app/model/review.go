@@ -2,14 +2,27 @@ package model
 
 import (
 	"time"
-
-	"github.com/jaswdr/faker"
 )
 
 func init() {
 	Register(&Review{})
 }
 
+// Review represents a user-submitted review of a beer in the raw dataset.
+//
+// This struct captures both the subjective evaluation and metadata related to
+// when and by whom the review was submitted.
+//
+// Fields:
+//   - ReviewID: Unique identifier for the review (primary key).
+//   - BeerID: Foreign key referencing the reviewed beer.
+//   - ProfileID: Identifier of the user who submitted the review.
+//   - ReviewOverall: Overall rating given to the beer.
+//   - ReviewAroma: Rating for the aroma of the beer.
+//   - ReviewAppearance: Rating for the appearance of the beer.
+//   - ReviewPalate: Rating for the palate/mouthfeel of the beer.
+//   - ReviewTaste: Rating for the taste of the beer.
+//   - ReviewTime: Timestamp indicating when the review was created.
 type Review struct {
 	ReviewID         int64     `json:"review_id"         gorm:"column:review_id;primaryKey"`
 	BeerID           int64     `json:"beer_id"           gorm:"column:beer_id"`
@@ -24,18 +37,4 @@ type Review struct {
 
 func (Review) TableName() string {
 	return "dm_core.review"
-}
-
-func FakeReview(f faker.Faker, beerID int64, profileID string) Review {
-	return Review{
-		ReviewID:         f.Int64Between(1_000_000_000, 9_000_000_000),
-		BeerID:           beerID,
-		ProfileID:        profileID,
-		ReviewOverall:    f.Float64(1, 1, 5),
-		ReviewAroma:      f.Float64(1, 1, 5),
-		ReviewAppearance: f.Float64(1, 1, 5),
-		ReviewPalate:     f.Float64(1, 1, 5),
-		ReviewTaste:      f.Float64(1, 1, 5),
-		ReviewTime:       f.Time().TimeBetween(time.Now().AddDate(-3, 0, 0), time.Now()),
-	}
 }

@@ -2,6 +2,14 @@ package dialect
 
 import "github.com/jackc/pgtype"
 
+// PgType represents a data type definition in PostgreSQL, as defined in the pg_type system catalog.
+//
+// It includes metadata for scalar types, composite types, enum types, arrays, and domains.
+// Each entry provides details about storage, alignment, input/output functions,
+// category, and constraints associated with the type.
+//
+// This model is used to resolve column types during catalog introspection
+// and to generate accurate type mappings for Glue table creation and schema evolution.
 type PgType struct {
 	Oid            pgtype.OID          `json:"oid"                     gorm:"column:oid;type:oid;primary_key"`
 	TypName        pgtype.Name         `json:"typname"                 gorm:"column:typname;type:name"`

@@ -1,3 +1,19 @@
+// Data Master Project is a modular and fully automated data platform,
+// built on a serverless, event-driven architecture using AWS services.
+//
+// It implements the Medallion Architecture (raw, bronze, silver, gold),
+// with high-performance processing in Go and PySpark across ingestion,
+// transformation, and analytics layers.
+//
+// The project includes:
+//   - A Go-based CLI for provisioning, cataloging, and orchestration
+//   - Lambda functions for lightweight, event-driven processing
+//   - ECS workers for scalable ingestion of large datasets
+//   - EMR Spark jobs for complex ETL workflows
+//   - Integrated benchmarking tools to compare processing performance
+//
+// Governance, cost optimization, and observability are built-in,
+// making the platform suitable for both experimentation and production workloads.
 package main
 
 import (

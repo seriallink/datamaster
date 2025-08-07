@@ -4,6 +4,15 @@ import (
 	"github.com/jackc/pgtype"
 )
 
+// PgIndex represents an index definition in the PostgreSQL system catalog (pg_index).
+//
+// It describes structural properties of an index, including uniqueness,
+// clustering, validity, replication identity, and expression-based logic.
+// It also stores references to indexed columns, collation, access methods,
+// and predicate conditions (for partial indexes).
+//
+// This model is used to reconstruct index metadata during schema introspection
+// and to understand constraint enforcement or performance optimization strategies.
 type PgIndex struct {
 	IndexRelId     pgtype.OID    `json:"indexrelid"              gorm:"column:indexrelid;type:oid;primary_key"`
 	IndRelId       pgtype.OID    `json:"indrelid"                gorm:"column:indrelid;type:oid"`

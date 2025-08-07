@@ -2,6 +2,15 @@ package dialect
 
 import "github.com/jackc/pgtype"
 
+// PgClass represents a relation (table, view, index, etc.) in the PostgreSQL system catalog (pg_class).
+//
+// Each instance contains metadata about a database object, including its name,
+// storage parameters, owner, persistence settings, and structural flags.
+// This model is used to extract schema definitions during catalog introspection
+// and to generate Glue table metadata in the Data Master pipeline.
+//
+// It includes foreign key associations to attributes and constraints,
+// enabling traversal of a table's full logical structure.
 type PgClass struct {
 	Oid                 pgtype.OID          `json:"oid"                      gorm:"column:oid;type:oid;primary_key"`
 	RelName             pgtype.Name         `json:"relname"                  gorm:"column:relname;type:name"`

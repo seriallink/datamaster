@@ -5,6 +5,17 @@ import (
 	"gorm.io/gorm"
 )
 
+// PgConstraint represents a constraint definition in the PostgreSQL system catalog (pg_constraint).
+//
+// It includes metadata for primary keys, foreign keys, unique constraints, check constraints,
+// and exclusion constraints, including their type, validation status, and relationships
+// to tables, types, and other constraints.
+//
+// This model is used to reconstruct table-level constraints during schema introspection
+// and Glue Catalog generation.
+//
+// Some fields are array-encoded to describe composite keys or relationships
+// across multiple columns or operations.
 type PgConstraint struct {
 	Oid           pgtype.OID       `json:"oid"                     gorm:"column:oid;type:oid;primary_key"`
 	ConName       pgtype.Name      `json:"conname"                 gorm:"column:conname;type:name"`

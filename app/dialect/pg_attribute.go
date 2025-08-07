@@ -2,6 +2,17 @@ package dialect
 
 import "github.com/jackc/pgtype"
 
+// PgAttribute represents a column definition in the PostgreSQL system catalog (pg_attribute).
+//
+// Each instance corresponds to a single attribute (column) in a table or view,
+// and includes metadata such as name, data type, nullability, default value, storage settings,
+// and additional behavioral flags.
+//
+// This struct is used during catalog introspection to generate table schemas
+// for the Glue Catalog and support type resolution during data ingestion.
+//
+// Most fields are mapped directly from pg_attribute, with types compatible
+// with the pgtype package and relationships resolved via GORM.
 type PgAttribute struct {
 	AttRelId      pgtype.OID          `json:"attrelid"          gorm:"column:attrelid;type:oid"`
 	AttName       pgtype.Name         `json:"attname"           gorm:"column:attname;type:name"`

@@ -2,6 +2,15 @@ package dialect
 
 import "github.com/jackc/pgtype"
 
+// PgDepend represents a dependency relationship between PostgreSQL objects,
+// as defined in the pg_depend system catalog.
+//
+// It is used to track how objects such as constraints, indexes, and columns
+// depend on one another, which is critical for understanding inheritance,
+// cascading behavior, and internal linkage within the catalog.
+//
+// This model is used to resolve indirect relationships during schema introspection,
+// such as linking constraints to indexes or types to attributes.
 type PgDepend struct {
 	ClassId       pgtype.OID     `json:"classid,omitempty"        gorm:"column:classid;type:oid"`
 	ObjId         pgtype.OID     `json:"objid,omitempty"          gorm:"column:objid;type:oid"`
