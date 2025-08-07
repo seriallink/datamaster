@@ -7,7 +7,7 @@ param (
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 
 # Define the Dockerfile location
-$DockerfileDir = Join-Path $ScriptDir "..\builders\$ImageName"
+$DockerfileDir = Join-Path $ScriptDir "..\workers\$ImageName"
 $DockerfilePath = Join-Path $DockerfileDir "Dockerfile"
 
 # Define the root of the repo (project base with go.mod)

@@ -7,7 +7,7 @@ param (
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 
 # Define the Lambda function source path
-$FunctionPath = Join-Path $ScriptDir "..\builders\$FunctionName"
+$FunctionPath = Join-Path $ScriptDir "..\workers\$FunctionName"
 
 # Define the output zip path
 $OutputDir = Join-Path $ScriptDir "..\artifacts"
