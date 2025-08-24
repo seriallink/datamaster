@@ -154,7 +154,7 @@ O fluxo de dados e visualizações segue três eixos principais:
 
 ---
 
-Este documento oferece uma visão completa da arquitetura do Data Master. Novos componentes e melhorias futuras podem ser integrados de forma incremental, aproveitando a base serverless, modular e governada já estabelecida.
+> Este documento oferece uma visão completa da arquitetura do Data Master. Novos componentes e melhorias futuras podem ser integrados de forma incremental, aproveitando a base serverless, modular e governada já estabelecida.
 
 ---
 
