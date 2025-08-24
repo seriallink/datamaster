@@ -121,10 +121,6 @@ Foi criado um **usuário IAM de demonstração** com acesso **exclusivo à camad
 
 ---
 
-Se quiser, posso gerar um diff formatado ou aplicar isso direto no `README.md` ou `docs/overview.md`, conforme sua estrutura. Deseja?
-
----
-
 ## DataViz e Observabilidade com Grafana AWS Managed Workspace
 
 A etapa de **DataViz e Observabilidade** integra o pilar analítico e o monitoramento operacional da arquitetura, utilizando o **Grafana AWS Managed Workspace** como camada de visualização central. Essa solução foi escolhida por oferecer integração nativa com **Athena**, **CloudWatch** e **métricas de billing da AWS**, viabilizando uma visão completa dos dados, operações e custos do lake house.
