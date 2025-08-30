@@ -377,7 +377,7 @@ Provisiona todo o pipeline de ingestão por CDC (Change Data Capture), conectand
 
 * **DMS Replication Instance e Task:**
 
-  * Instância: `dms.t3.micro`, pública para facilitar testes
+  * Instância: `dms.t3.small`, pública para facilitar testes
   * Task: realiza `full-load-and-cdc` do schema `dm_core` com performance otimizada (`ParallelApplyThreads`, `BatchApplyEnabled`, etc.)
 
 * **Subnets e Grupos de Segurança:**
