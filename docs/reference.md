@@ -16,7 +16,7 @@ O repositório é organizado em módulos independentes que refletem as camadas d
 │   ├── bronze/                 # Modelos Parquet da camada bronze
 │   ├── cmd/                    # Comandos CLI (deploy, catalog, process, etc.)
 │   ├── core/                   # Núcleo reutilizável: AWS SDK, controle, etc.
-│   ├── dialect/                # Dialetos de SQL para Athena, DuckDB, etc.
+│   ├── dialect/                # Dialetos de SQL para PostgreSQL.
 │   ├── enum/                   # Constantes e tipos enumerados
 │   ├── help/                   # Mensagens de ajuda e instruções interativas
 │   ├── misc/                   # Funções auxiliares (genéricas)
