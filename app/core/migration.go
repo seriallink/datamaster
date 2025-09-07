@@ -26,6 +26,7 @@ func RunAllMigrations(fs embed.FS) error {
 		misc.MigrationCoreScript,
 		misc.MigrationViewScript,
 		misc.MigrationMartScript,
+		misc.MigrationPluginsScript,
 	}
 
 	for _, script := range scripts {

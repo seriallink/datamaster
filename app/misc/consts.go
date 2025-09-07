@@ -30,9 +30,10 @@ const (
 )
 
 const (
-	MigrationCoreScript = "database/migrations/001_create_dm_core.sql"
-	MigrationViewScript = "database/migrations/002_create_dm_view.sql"
-	MigrationMartScript = "database/migrations/003_create_dm_mart.sql"
+	MigrationCoreScript    = "database/migrations/001_create_dm_core.sql"
+	MigrationViewScript    = "database/migrations/002_create_dm_view.sql"
+	MigrationMartScript    = "database/migrations/003_create_dm_mart.sql"
+	MigrationPluginsScript = "database/migrations/004_create_dm_plugins.sql"
 )
 
 const (
