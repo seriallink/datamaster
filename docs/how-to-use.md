@@ -153,8 +153,8 @@ Para uma dashboard específica:
 Dashboards disponíveis:
 
 * `analytics`: mostra top beers, breweries, drinkers, styles e volume de reviews
-* `logs`: (futuro) logs de erro e execução
-* `costs`: (futuro) métricas de custo e alertas
+* `health`: inclui métricas de execução e contagens de erros dos serviços (Lambda, EMR, ECS)
+* `costs`: exibe métricas de custo com base no AWS Cost and Usage Report (CUR)
 
 ---
 
